@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="hi">
 <head>
@@ -10,7 +9,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #0f0f15; color: #ffffff; padding-bottom: 20px; }
         
-        /* --- हेडर --- */
         header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: #161622; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         header h1 { font-size: 20px; color: #ff3366; letter-spacing: 1px; }
         .menu-container { position: relative; }
@@ -19,7 +17,6 @@
         .dropdown-menu button { width: 100%; background: none; border: none; color: white; padding: 12px 15px; text-align: left; font-size: 14px; cursor: pointer; }
         .dropdown-menu button:hover { background-color: #2b2b40; }
         
-        /* --- वॉलपेपर गैलरी --- */
         .category-container { margin: 30px 20px; }
         .category-title { font-size: 20px; color: #00e6e6; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 8px; }
         .wallpaper-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
@@ -27,7 +24,6 @@
         .wallpaper-card:hover { transform: scale(1.05); }
         .wallpaper-card img { width: 100%; height: 220px; object-fit: cover; display: block; }
         
-        /* --- मॉड्यूल्स (लॉगिन, रजिस्टर, फॉरगेट पासवर्ड) --- */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
         .auth-box { background-color: #1e1e2f; padding: 30px 25px; border-radius: 16px; width: 100%; max-width: 360px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #2b2b40; }
         .auth-box h2 { font-size: 22px; margin-bottom: 10px; color: #ff3366; }
@@ -35,16 +31,15 @@
         .auth-box input, .auth-box select { width: 100%; padding: 12px; background-color: #11111a; border: 1px solid #3b3b54; border-radius: 8px; color: white; font-size: 16px; margin-bottom: 15px; text-align: left; }
         .auth-box input:focus, .auth-box select:focus { outline: none; border-color: #ff3366; }
         .auth-btn { width: 100%; padding: 12px; background: linear-gradient(45deg, #ff3366, #ff6633); border: none; border-radius: 8px; color: white; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .google-btn { background: #4285F4; margin-top: 15px; box-shadow: 0 4px 15px rgba(66, 133, 244, 0.4); }
         .link-btn { background: none; border: none; color: #00e6e6; cursor: pointer; margin-top: 15px; font-size: 14px; display: block; width: 100%; }
         .close-btn { background: none; border: none; color: #777; margin-top: 15px; cursor: pointer; font-size: 14px; }
         
-        /* --- चैट डैशबोर्ड (नया डिज़ाइन) --- */
         #chat-dashboard { display: none; max-width: 600px; margin: 0 auto; height: 100vh; flex-direction: column; background-color: #161622; }
         .chat-header { background-color: #1e1e2f; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2b2b40; }
         .chat-header h2 { font-size: 18px; color: #00ffcc; display: flex; align-items: center; gap: 10px; }
         .profile-icon { background: #ff3366; border-radius: 50%; width: 35px; height: 35px; display: flex; justify-content: center; align-items: center; font-weight: bold; }
         
-        /* Add Friend Section */
         .add-friend-section { padding: 15px; background: #11111a; display: flex; gap: 10px; border-bottom: 1px solid #2b2b40; }
         .add-friend-section input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #3b3b54; background: #1e1e2f; color: white; }
         .add-friend-section button { padding: 10px 15px; background: #00ffcc; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: #000; }
@@ -62,7 +57,6 @@
 </head>
 <body>
 
-    <!-- मेन वेबसाइट (वॉलपेपर) -->
     <div id="main-website">
         <header>
             <h1>🌟 Premium Wallpapers</h1>
@@ -75,7 +69,7 @@
             </div>
         </header>
 
-        <!-- 1. Cars & Motorcycles -->
+        <!-- Category 1: Cars & Bikes -->
         <div class="category-container">
             <div class="category-title">🏎️ गाड़ियां और बाइक्स</div>
             <div class="wallpaper-grid">
@@ -83,10 +77,12 @@
                 <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=400" loading="lazy" alt="Bike"></div>
                 <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1503376269666-41f274a49c95?w=400" loading="lazy" alt="Car"></div>
                 <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400" loading="lazy" alt="Bike"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400" loading="lazy" alt="Car"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1558980663-3685c1d673c4?w=400" loading="lazy" alt="Bike"></div>
             </div>
         </div>
 
-        <!-- 2. Nature Wallpapers -->
+        <!-- Category 2: Nature -->
         <div class="category-container">
             <div class="category-title">🌿 प्राकृतिक और सुंदर दृश्य</div>
             <div class="wallpaper-grid">
@@ -94,10 +90,12 @@
                 <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400" loading="lazy" alt="Nature"></div>
                 <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=400" loading="lazy" alt="Nature"></div>
                 <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=400" loading="lazy" alt="Nature"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400" loading="lazy" alt="Nature"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400" loading="lazy" alt="Beach"></div>
             </div>
         </div>
 
-        <!-- 3. AI & Art -->
+        <!-- Category 3: AI & Art -->
         <div class="category-container">
             <div class="category-title">🤖 AI और आर्ट डिज़ाइन्स</div>
             <div class="wallpaper-grid">
@@ -105,11 +103,12 @@
                 <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1563089145-599997674d42?w=400" loading="lazy" alt="AI"></div>
                 <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=400" loading="lazy" alt="Art"></div>
                 <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=400" loading="lazy" alt="Art"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=400" loading="lazy" alt="Art"></div>
             </div>
         </div>
     </div>
 
-    <!-- 🟢 LOGIN MODAL (पुराने यूज़र के लिए) -->
+    <!-- LOGIN MODAL -->
     <div class="modal-overlay" id="loginModal">
         <div class="auth-box">
             <h2>लॉगिन करें</h2>
@@ -117,60 +116,64 @@
             <input type="text" id="loginUser" placeholder="यूज़रनेम (Username)">
             <input type="password" id="loginPass" placeholder="सीक्रेट पासवर्ड">
             <button class="auth-btn" onclick="processLogin()">लॉगिन करें</button>
+            
+            <!-- Google लॉगिन बटन -->
+            <button class="auth-btn google-btn" onclick="signInWithGoogle()">🌐 Google (Gmail) से लॉगिन करें</button>
+            
             <button class="link-btn" onclick="openModal('forgotPasswordModal')">पासवर्ड भूल गए? (Forgot Password)</button>
             <button class="close-btn" onclick="closeAllModals()">बंद करें</button>
         </div>
     </div>
 
-    <!-- 🟢 REGISTER MODAL (8-Steps Flowchart के अनुसार) -->
+    <!-- REGISTER MODAL -->
     <div class="modal-overlay" id="registerModal">
         <div class="auth-box">
             <h2>नया अकाउंट बनाएं</h2>
-            <p>स्टेप 1 से 5: अपनी डिटेल्स भरें</p>
-            <input type="number" id="regPhone" placeholder="फ़ोन न० (Phone No.)">
+            <p>OTP या Gmail द्वारा वेरिफिकेशन</p>
+            <input type="number" id="regPhone" placeholder="फ़ोन न० (10 अंकों का)">
             <input type="text" id="regName" placeholder="पूरा नाम (Name)">
-            <input type="text" id="regUsername" placeholder="यूज़रनेम बनाएं (Username)">
-            <select id="regGender">
-                <option value="">Gender चुनें</option>
-                <option value="male">Male (लड़का)</option>
-                <option value="female">Female (लड़की)</option>
-            </select>
             <input type="password" id="regPass" placeholder="नया सीक्रेट पासवर्ड (New Password)">
-            <button class="auth-btn" onclick="processRegister()">OTP भेजें और अकाउंट बनाएं</button>
+            
+            <button class="auth-btn" id="sendOtpBtn" onclick="sendOTP('register')">SMS OTP भेजें</button>
+            
+            <p style="margin: 15px 0 5px 0; color: #aaa;">या</p>
+            
+            <!-- Google बटन -->
+            <button class="auth-btn google-btn" onclick="signInWithGoogle()">🌐 सीधा Google से अकाउंट बनाएं</button>
+
             <button class="close-btn" onclick="closeAllModals()">बंद करें</button>
         </div>
     </div>
 
-    <!-- 🟢 FORGOT PASSWORD MODAL -->
+    <!-- FORGOT PASSWORD MODAL -->
     <div class="modal-overlay" id="forgotPasswordModal">
         <div class="auth-box">
             <h2>पासवर्ड रीसेट करें</h2>
             <p>अपना रजिस्टर्ड नंबर डालें</p>
-            <input type="number" id="forgotPhone" placeholder="फ़ोन न० (Phone No.)">
+            <input type="number" id="forgotPhone" placeholder="फ़ोन न० (10 अंकों का)">
             <input type="password" id="newPass" placeholder="नया पासवर्ड बनाएं">
-            <button class="auth-btn" onclick="processForgot()">OTP से वेरीफाई करें</button>
+            <button class="auth-btn" id="forgotOtpBtn" onclick="sendOTP('forgot')">OTP भेजें</button>
             <button class="link-btn" onclick="openModal('loginModal')">वापस लॉगिन पर जाएँ</button>
         </div>
     </div>
 
-    <!-- 🟢 OTP MODAL (वेरिफिकेशन के लिए) -->
+    <!-- OTP MODAL -->
     <div class="modal-overlay" id="otpModal">
         <div class="auth-box">
             <h2>OTP वेरिफिकेशन</h2>
             <p>आपके नंबर पर भेजा गया कोड डालें</p>
-            <input type="number" id="otpInput" placeholder="4-अंकीय OTP (Demo: 1234)">
-            <button class="auth-btn" onclick="verifyOTP()">कन्फर्म करें</button>
+            <input type="number" id="otpInput" placeholder="6-अंकीय OTP">
+            <button class="auth-btn" onclick="verifyFirebaseOTP()">कन्फर्म करें</button>
         </div>
     </div>
 
-    <!-- 🟢 CHAT DASHBOARD (स्टेप 6, 7 और 8) -->
+    <!-- CHAT DASHBOARD -->
     <div id="chat-dashboard">
         <div class="chat-header">
             <h2><div class="profile-icon">U</div> प्राइवेट मैसेंजर</h2>
             <button class="close-btn" onclick="logout()" style="margin:0; color:white;">लॉगआउट</button>
         </div>
         
-        <!-- Add Friend (यूज़रनेम सर्च) -->
         <div class="add-friend-section">
             <input type="text" id="searchFriend" placeholder="दोस्त का यूज़रनेम सर्च करें...">
             <button onclick="addFriend()">Add Friend</button>
@@ -185,11 +188,13 @@
         </div>
     </div>
 
+    <div id="recaptcha-container"></div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // आपकी पुरानी Firebase सेटिंग्स (सेफ रखी गई है)
         const firebaseConfig = {
             apiKey: "AIzaSyCyOPrvdTFdwz5bFTYBf6KJ5webyBJj_1A",
             authDomain: "himanshuchatapp-785b4.firebaseapp.com",
@@ -201,8 +206,9 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
 
-        // UI Controls
         window.toggleDropdown = () => { 
             const menu = document.getElementById('dropdownMenu'); 
             menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; 
@@ -218,51 +224,83 @@
             document.getElementById(modalId).style.display = 'flex';
         };
 
-        // Simulated Auth Logic (Demo UI)
+        // --- Google Login Logic ---
+        window.signInWithGoogle = () => {
+            signInWithPopup(auth, googleProvider)
+            .then((result) => {
+                const user = result.user;
+                closeAllModals();
+                document.getElementById('main-website').style.display = 'none';
+                document.getElementById('chat-dashboard').style.display = 'flex';
+                alert(`लॉगिन सफल! स्वागत है, ${user.displayName}`);
+            }).catch((error) => {
+                alert("Google लॉगिन में कुछ समस्या आई: " + error.message);
+            });
+        };
+
+        // --- Phone Auth Logic ---
+        auth.useDeviceLanguage();
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+            'size': 'invisible'
+        });
+
         let currentAuthAction = "";
 
+        window.sendOTP = (action) => {
+            let phoneInput = action === 'register' ? document.getElementById('regPhone').value : document.getElementById('forgotPhone').value;
+            
+            if(phoneInput.length >= 10) {
+                const phoneNumber = "+91" + phoneInput;
+                const btnId = action === 'register' ? 'sendOtpBtn' : 'forgotOtpBtn';
+                document.getElementById(btnId).innerText = "OTP भेजा जा रहा है...";
+                
+                signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier)
+                    .then((confirmationResult) => {
+                        window.confirmationResult = confirmationResult;
+                        currentAuthAction = action;
+                        openModal('otpModal');
+                        document.getElementById(btnId).innerText = "OTP भेजें";
+                    }).catch((error) => {
+                        alert("SMS भेजने में एरर: सुनिश्चित करें कि Firebase Settings > Authorized domains में वेबसाइट का लिंक जुड़ा है।");
+                        document.getElementById(btnId).innerText = "OTP भेजें";
+                        window.recaptchaVerifier.render().then(function(widgetId) {
+                            grecaptcha.reset(widgetId);
+                        });
+                    });
+            } else {
+                alert("कृपया 10 अंकों का सही मोबाइल नंबर डालें!");
+            }
+        };
+
+        window.verifyFirebaseOTP = () => {
+            const code = document.getElementById('otpInput').value;
+            if(code.length === 6 && window.confirmationResult) {
+                window.confirmationResult.confirm(code).then((result) => {
+                    closeAllModals();
+                    if(currentAuthAction === "forgot") {
+                        alert("OTP वेरीफाई हो गया! आपका पासवर्ड सफलतापूर्वक बदल गया है।");
+                        openModal('loginModal');
+                    } else {
+                        document.getElementById('main-website').style.display = 'none';
+                        document.getElementById('chat-dashboard').style.display = 'flex';
+                    }
+                }).catch((error) => {
+                    alert("गलत OTP डाला गया है! कृपया फिर से चेक करें।");
+                });
+            } else {
+                alert("कृपया 6 अंकों का सही OTP दर्ज करें!");
+            }
+        };
+
+        // --- Fallback Login ---
         window.processLogin = () => {
             const pass = document.getElementById('loginPass').value;
             if(pass !== "") {
-                openModal('otpModal');
-                currentAuthAction = "login";
+                closeAllModals();
+                document.getElementById('main-website').style.display = 'none';
+                document.getElementById('chat-dashboard').style.display = 'flex';
             } else {
                 alert("कृपया पासवर्ड दर्ज करें!");
-            }
-        };
-
-        window.processRegister = () => {
-            if(document.getElementById('regPhone').value && document.getElementById('regUsername').value) {
-                openModal('otpModal');
-                currentAuthAction = "register";
-            } else {
-                alert("कृपया सभी डिटेल्स भरें!");
-            }
-        };
-
-        window.processForgot = () => {
-            if(document.getElementById('forgotPhone').value && document.getElementById('newPass').value) {
-                openModal('otpModal');
-                currentAuthAction = "forgot";
-            } else {
-                alert("अपना नंबर और नया पासवर्ड डालें!");
-            }
-        };
-
-        window.verifyOTP = () => {
-            // UI Demo के लिए OTP "1234" रखा गया है
-            if(document.getElementById('otpInput').value === "1234") {
-                closeAllModals();
-                if(currentAuthAction === "forgot") {
-                    alert("आपका पासवर्ड सफलतापूर्वक बदल गया है! अब आप नए पासवर्ड से लॉगिन कर सकते हैं।");
-                    openModal('loginModal');
-                } else {
-                    // Dashboard खोलें
-                    document.getElementById('main-website').style.display = 'none';
-                    document.getElementById('chat-dashboard').style.display = 'flex';
-                }
-            } else {
-                alert("गलत OTP! कृपया 1234 दर्ज करें।");
             }
         };
 
@@ -274,7 +312,7 @@
         window.addFriend = () => {
             const friend = document.getElementById('searchFriend').value;
             if(friend) {
-                alert(`फ़्रेंड रिक्वेस्ट '${friend}' को भेज दी गई है! एक्सेप्ट होने पर आप चैट कर सकेंगे।`);
+                alert(`फ़्रेंड रिक्वेस्ट '${friend}' को भेज दी गई है!`);
                 document.getElementById('searchFriend').value = "";
             }
         };
@@ -282,21 +320,18 @@
         window.sendMessage = async () => {
             const input = document.getElementById('messageInput');
             if(input.value.trim() !== "") {
-                // UI में मेसेज दिखाना
                 const msgDiv = document.createElement('div');
                 msgDiv.className = "message outgoing";
                 msgDiv.innerHTML = input.value;
                 document.getElementById('chatMessages').appendChild(msgDiv);
                 
-                // Firebase में सेव करना
                 try {
                     await addDoc(collection(db, "messages"), { text: input.value, createdAt: new Date() });
-                } catch(e) { console.log("Firebase save error", e); }
+                } catch(e) { console.log("Firebase error", e); }
                 
                 input.value = "";
             }
         };
     </script>
 </body>
-    </html>
-    
+</html>
