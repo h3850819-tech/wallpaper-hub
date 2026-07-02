@@ -1,13 +1,16 @@
+
 <!DOCTYPE html>
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium Wallpaper Hub</title>
+    <title>Premium Wallpaper Hub & Chat</title>
     <style>
-        /* --- 1. बेसिक और थीम स्टाइल --- */
+        /* --- बेसिक और थीम स्टाइल --- */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #0f0f15; color: #ffffff; padding-bottom: 20px; }
+        
+        /* --- हेडर --- */
         header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: #161622; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         header h1 { font-size: 20px; color: #ff3366; letter-spacing: 1px; }
         .menu-container { position: relative; }
@@ -15,29 +18,43 @@
         .dropdown-menu { display: none; position: absolute; right: 0; top: 40px; background-color: #1e1e2f; border-radius: 8px; min-width: 150px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); overflow: hidden; }
         .dropdown-menu button { width: 100%; background: none; border: none; color: white; padding: 12px 15px; text-align: left; font-size: 14px; cursor: pointer; }
         .dropdown-menu button:hover { background-color: #2b2b40; }
-        .gallery-container { padding: 20px; }
-        .gallery-title { font-size: 18px; margin-bottom: 15px; color: #aaaaaa; }
-        .wallpaper-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
-        .wallpaper-card { background-color: #161622; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: transform 0.2s; }
-        .wallpaper-card:active { transform: scale(0.95); }
-        .wallpaper-card img { width: 100%; height: 200px; object-fit: cover; display: block; }
-        .wallpaper-info { padding: 10px; font-size: 12px; text-align: center; color: #ddd; }
+        
+        /* --- वॉलपेपर गैलरी --- */
+        .category-container { margin: 30px 20px; }
+        .category-title { font-size: 20px; color: #00e6e6; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 8px; }
+        .wallpaper-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+        .wallpaper-card { background-color: #161622; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: transform 0.2s; cursor: pointer; }
+        .wallpaper-card:hover { transform: scale(1.05); }
+        .wallpaper-card img { width: 100%; height: 220px; object-fit: cover; display: block; }
+        
+        /* --- मॉड्यूल्स (लॉगिन, रजिस्टर, फॉरगेट पासवर्ड) --- */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
         .auth-box { background-color: #1e1e2f; padding: 30px 25px; border-radius: 16px; width: 100%; max-width: 360px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #2b2b40; }
         .auth-box h2 { font-size: 22px; margin-bottom: 10px; color: #ff3366; }
         .auth-box p { font-size: 14px; color: #aaa; margin-bottom: 20px; }
-        .auth-box input { width: 100%; padding: 12px; background-color: #11111a; border: 1px solid #3b3b54; border-radius: 8px; color: white; font-size: 16px; margin-bottom: 20px; text-align: center; }
-        .auth-box input:focus { outline: none; border-color: #ff3366; }
-        .auth-btn { width: 100%; padding: 12px; background: linear-gradient(45deg, #ff3366, #ff6633); border: none; border-radius: 8px; color: white; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(255, 51, 102, 0.4); }
+        .auth-box input, .auth-box select { width: 100%; padding: 12px; background-color: #11111a; border: 1px solid #3b3b54; border-radius: 8px; color: white; font-size: 16px; margin-bottom: 15px; text-align: left; }
+        .auth-box input:focus, .auth-box select:focus { outline: none; border-color: #ff3366; }
+        .auth-btn { width: 100%; padding: 12px; background: linear-gradient(45deg, #ff3366, #ff6633); border: none; border-radius: 8px; color: white; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .link-btn { background: none; border: none; color: #00e6e6; cursor: pointer; margin-top: 15px; font-size: 14px; display: block; width: 100%; }
         .close-btn { background: none; border: none; color: #777; margin-top: 15px; cursor: pointer; font-size: 14px; }
-        #chat-dashboard { display: none; max-width: 600px; margin: 0 auto; height: 90vh; flex-direction: column; background-color: #161622; }
-        .chat-header { background-color: #1e1e2f; padding: 15px; text-align: center; border-bottom: 1px solid #2b2b40; }
-        .chat-header h2 { font-size: 18px; color: #00ffcc; }
+        
+        /* --- चैट डैशबोर्ड (नया डिज़ाइन) --- */
+        #chat-dashboard { display: none; max-width: 600px; margin: 0 auto; height: 100vh; flex-direction: column; background-color: #161622; }
+        .chat-header { background-color: #1e1e2f; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2b2b40; }
+        .chat-header h2 { font-size: 18px; color: #00ffcc; display: flex; align-items: center; gap: 10px; }
+        .profile-icon { background: #ff3366; border-radius: 50%; width: 35px; height: 35px; display: flex; justify-content: center; align-items: center; font-weight: bold; }
+        
+        /* Add Friend Section */
+        .add-friend-section { padding: 15px; background: #11111a; display: flex; gap: 10px; border-bottom: 1px solid #2b2b40; }
+        .add-friend-section input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #3b3b54; background: #1e1e2f; color: white; }
+        .add-friend-section button { padding: 10px 15px; background: #00ffcc; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: #000; }
+        
         .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background-color: #0f0f15; }
         .message { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; }
         .message.incoming { background-color: #232335; align-self: flex-start; border-bottom-left-radius: 2px; }
         .message.outgoing { background: linear-gradient(45deg, #00b4db, #0083b0); align-self: flex-end; border-bottom-right-radius: 2px; }
         .message .username { font-size: 11px; font-weight: bold; margin-bottom: 4px; color: #ffcc00; }
+        
         .chat-input-area { padding: 15px; background-color: #1e1e2f; display: flex; gap: 10px; }
         .chat-input-area input { flex: 1; padding: 12px; background-color: #11111a; border: 1px solid #3b3b54; border-radius: 8px; color: white; }
         .send-btn { padding: 0 20px; background-color: #00ffcc; border: none; border-radius: 8px; color: #121212; font-weight: bold; cursor: pointer; }
@@ -45,55 +62,125 @@
 </head>
 <body>
 
+    <!-- मेन वेबसाइट (वॉलपेपर) -->
     <div id="main-website">
         <header>
-            <h1>WALLPAPERS</h1>
+            <h1>🌟 Premium Wallpapers</h1>
             <div class="menu-container">
                 <button class="three-dot-btn" onclick="toggleDropdown()">⋮</button>
                 <div class="dropdown-menu" id="dropdownMenu">
-                    <button onclick="openPasswordModal()">सीक्रेट लॉगिन</button>
+                    <button onclick="openModal('loginModal')">🔒 प्राइवेट चैट (लॉगिन)</button>
+                    <button onclick="openModal('registerModal')">📝 नया अकाउंट बनाएं</button>
                 </div>
             </div>
         </header>
 
-        <div class="gallery-container">
-            <div class="gallery-title">ट्रेंडिंग वॉलपेपर्स</div>
+        <!-- 1. Cars & Motorcycles -->
+        <div class="category-container">
+            <div class="category-title">🏎️ गाड़ियां और बाइक्स</div>
             <div class="wallpaper-grid">
-                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=400" alt="Wallpaper"><div class="wallpaper-info">Neon Glow</div></div>
-                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400" alt="Wallpaper"><div class="wallpaper-info">Abstract Art</div></div>
-                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400" alt="Wallpaper"><div class="wallpaper-info">Ocean Wave</div></div>
-                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=400" alt="Wallpaper"><div class="wallpaper-info">Sunset Peak</div></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=400" loading="lazy" alt="Car"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=400" loading="lazy" alt="Bike"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1503376269666-41f274a49c95?w=400" loading="lazy" alt="Car"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400" loading="lazy" alt="Bike"></div>
+            </div>
+        </div>
+
+        <!-- 2. Nature Wallpapers -->
+        <div class="category-container">
+            <div class="category-title">🌿 प्राकृतिक और सुंदर दृश्य</div>
+            <div class="wallpaper-grid">
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=400" loading="lazy" alt="Nature"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400" loading="lazy" alt="Nature"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=400" loading="lazy" alt="Nature"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=400" loading="lazy" alt="Nature"></div>
+            </div>
+        </div>
+
+        <!-- 3. AI & Art -->
+        <div class="category-container">
+            <div class="category-title">🤖 AI और आर्ट डिज़ाइन्स</div>
+            <div class="wallpaper-grid">
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400" loading="lazy" alt="AI"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1563089145-599997674d42?w=400" loading="lazy" alt="AI"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=400" loading="lazy" alt="Art"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=400" loading="lazy" alt="Art"></div>
             </div>
         </div>
     </div>
 
-    <div class="modal-overlay" id="passwordModal">
+    <!-- 🟢 LOGIN MODAL (पुराने यूज़र के लिए) -->
+    <div class="modal-overlay" id="loginModal">
         <div class="auth-box">
-            <h2>सीक्रेट एक्सेस</h2>
-            <p>गुप्त कोड दर्ज करें</p>
-            <input type="password" id="secretPassword" placeholder="पासवर्ड यहाँ लिखें">
-            <button class="auth-btn" onclick="verifyPassword()">वेरीफाई करें</button>
-            <br><button class="close-btn" onclick="closeAllModals()">बंद करें</button>
+            <h2>लॉगिन करें</h2>
+            <p>अपनी प्राइवेट चैट देखने के लिए</p>
+            <input type="text" id="loginUser" placeholder="यूज़रनेम (Username)">
+            <input type="password" id="loginPass" placeholder="सीक्रेट पासवर्ड">
+            <button class="auth-btn" onclick="processLogin()">लॉगिन करें</button>
+            <button class="link-btn" onclick="openModal('forgotPasswordModal')">पासवर्ड भूल गए? (Forgot Password)</button>
+            <button class="close-btn" onclick="closeAllModals()">बंद करें</button>
         </div>
     </div>
 
+    <!-- 🟢 REGISTER MODAL (8-Steps Flowchart के अनुसार) -->
+    <div class="modal-overlay" id="registerModal">
+        <div class="auth-box">
+            <h2>नया अकाउंट बनाएं</h2>
+            <p>स्टेप 1 से 5: अपनी डिटेल्स भरें</p>
+            <input type="number" id="regPhone" placeholder="फ़ोन न० (Phone No.)">
+            <input type="text" id="regName" placeholder="पूरा नाम (Name)">
+            <input type="text" id="regUsername" placeholder="यूज़रनेम बनाएं (Username)">
+            <select id="regGender">
+                <option value="">Gender चुनें</option>
+                <option value="male">Male (लड़का)</option>
+                <option value="female">Female (लड़की)</option>
+            </select>
+            <input type="password" id="regPass" placeholder="नया सीक्रेट पासवर्ड (New Password)">
+            <button class="auth-btn" onclick="processRegister()">OTP भेजें और अकाउंट बनाएं</button>
+            <button class="close-btn" onclick="closeAllModals()">बंद करें</button>
+        </div>
+    </div>
+
+    <!-- 🟢 FORGOT PASSWORD MODAL -->
+    <div class="modal-overlay" id="forgotPasswordModal">
+        <div class="auth-box">
+            <h2>पासवर्ड रीसेट करें</h2>
+            <p>अपना रजिस्टर्ड नंबर डालें</p>
+            <input type="number" id="forgotPhone" placeholder="फ़ोन न० (Phone No.)">
+            <input type="password" id="newPass" placeholder="नया पासवर्ड बनाएं">
+            <button class="auth-btn" onclick="processForgot()">OTP से वेरीफाई करें</button>
+            <button class="link-btn" onclick="openModal('loginModal')">वापस लॉगिन पर जाएँ</button>
+        </div>
+    </div>
+
+    <!-- 🟢 OTP MODAL (वेरिफिकेशन के लिए) -->
     <div class="modal-overlay" id="otpModal">
         <div class="auth-box">
             <h2>OTP वेरिफिकेशन</h2>
-            <p>कोड दर्ज करें</p>
-            <input type="number" id="otpInput" placeholder="4-अंकीय OTP">
-            <button class="auth-btn" onclick="verifyOTP()">लॉगिन कम्पलीट करें</button>
-            <br><button class="close-btn" onclick="closeAllModals()">बंद करें</button>
+            <p>आपके नंबर पर भेजा गया कोड डालें</p>
+            <input type="number" id="otpInput" placeholder="4-अंकीय OTP (Demo: 1234)">
+            <button class="auth-btn" onclick="verifyOTP()">कन्फर्म करें</button>
         </div>
     </div>
 
+    <!-- 🟢 CHAT DASHBOARD (स्टेप 6, 7 और 8) -->
     <div id="chat-dashboard">
-        <div class="chat-header"><h2>🔐 मेंबर्स सीक्रेट चैट</h2></div>
+        <div class="chat-header">
+            <h2><div class="profile-icon">U</div> प्राइवेट मैसेंजर</h2>
+            <button class="close-btn" onclick="logout()" style="margin:0; color:white;">लॉगआउट</button>
+        </div>
+        
+        <!-- Add Friend (यूज़रनेम सर्च) -->
+        <div class="add-friend-section">
+            <input type="text" id="searchFriend" placeholder="दोस्त का यूज़रनेम सर्च करें...">
+            <button onclick="addFriend()">Add Friend</button>
+        </div>
+
         <div class="chat-messages" id="chatMessages">
-            <div class="message incoming"><div class="username">असिस्टेंट</div>बधाई हो! आप सीक्रेट डैशबोर्ड में हैं।</div>
+            <div class="message incoming"><div class="username">सिस्टम</div>आपका अकाउंट सुरक्षित रूप से लॉगिन हो गया है। आप यहाँ 1-on-1 चैट कर सकते हैं।</div>
         </div>
         <div class="chat-input-area">
-            <input type="text" id="messageInput" placeholder="अपना मैसेज लिखें...">
+            <input type="text" id="messageInput" placeholder="मैसेज टाइप करें...">
             <button class="send-btn" onclick="sendMessage()">भेजें</button>
         </div>
     </div>
@@ -102,6 +189,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // आपकी पुरानी Firebase सेटिंग्स (सेफ रखी गई है)
         const firebaseConfig = {
             apiKey: "AIzaSyCyOPrvdTFdwz5bFTYBf6KJ5webyBJj_1A",
             authDomain: "himanshuchatapp-785b4.firebaseapp.com",
@@ -114,19 +202,101 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        window.toggleDropdown = () => { const menu = document.getElementById('dropdownMenu'); menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; };
-        window.openPasswordModal = () => { document.getElementById('dropdownMenu').style.display = 'none'; document.getElementById('passwordModal').style.display = 'flex'; };
-        window.closeAllModals = () => { document.getElementById('passwordModal').style.display = 'none'; document.getElementById('otpModal').style.display = 'none'; };
-        window.verifyPassword = () => { if(document.getElementById('secretPassword').value === "8938") { document.getElementById('passwordModal').style.display = 'none'; document.getElementById('otpModal').style.display = 'flex'; } else { alert("गलत पासवर्ड!"); } };
-        window.verifyOTP = () => { if(document.getElementById('otpInput').value === "1234") { closeAllModals(); document.getElementById('main-website').style.display = 'none'; document.getElementById('chat-dashboard').style.display = 'flex'; } else { alert("गलत OTP!"); } };
+        // UI Controls
+        window.toggleDropdown = () => { 
+            const menu = document.getElementById('dropdownMenu'); 
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; 
+        };
+
+        window.closeAllModals = () => { 
+            document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none');
+            document.getElementById('dropdownMenu').style.display = 'none';
+        };
+
+        window.openModal = (modalId) => {
+            closeAllModals();
+            document.getElementById(modalId).style.display = 'flex';
+        };
+
+        // Simulated Auth Logic (Demo UI)
+        let currentAuthAction = "";
+
+        window.processLogin = () => {
+            const pass = document.getElementById('loginPass').value;
+            if(pass !== "") {
+                openModal('otpModal');
+                currentAuthAction = "login";
+            } else {
+                alert("कृपया पासवर्ड दर्ज करें!");
+            }
+        };
+
+        window.processRegister = () => {
+            if(document.getElementById('regPhone').value && document.getElementById('regUsername').value) {
+                openModal('otpModal');
+                currentAuthAction = "register";
+            } else {
+                alert("कृपया सभी डिटेल्स भरें!");
+            }
+        };
+
+        window.processForgot = () => {
+            if(document.getElementById('forgotPhone').value && document.getElementById('newPass').value) {
+                openModal('otpModal');
+                currentAuthAction = "forgot";
+            } else {
+                alert("अपना नंबर और नया पासवर्ड डालें!");
+            }
+        };
+
+        window.verifyOTP = () => {
+            // UI Demo के लिए OTP "1234" रखा गया है
+            if(document.getElementById('otpInput').value === "1234") {
+                closeAllModals();
+                if(currentAuthAction === "forgot") {
+                    alert("आपका पासवर्ड सफलतापूर्वक बदल गया है! अब आप नए पासवर्ड से लॉगिन कर सकते हैं।");
+                    openModal('loginModal');
+                } else {
+                    // Dashboard खोलें
+                    document.getElementById('main-website').style.display = 'none';
+                    document.getElementById('chat-dashboard').style.display = 'flex';
+                }
+            } else {
+                alert("गलत OTP! कृपया 1234 दर्ज करें।");
+            }
+        };
+
+        window.logout = () => {
+            document.getElementById('chat-dashboard').style.display = 'none';
+            document.getElementById('main-website').style.display = 'block';
+        };
+
+        window.addFriend = () => {
+            const friend = document.getElementById('searchFriend').value;
+            if(friend) {
+                alert(`फ़्रेंड रिक्वेस्ट '${friend}' को भेज दी गई है! एक्सेप्ट होने पर आप चैट कर सकेंगे।`);
+                document.getElementById('searchFriend').value = "";
+            }
+        };
+
         window.sendMessage = async () => {
             const input = document.getElementById('messageInput');
             if(input.value.trim() !== "") {
-                await addDoc(collection(db, "messages"), { text: input.value, createdAt: new Date() });
+                // UI में मेसेज दिखाना
+                const msgDiv = document.createElement('div');
+                msgDiv.className = "message outgoing";
+                msgDiv.innerHTML = input.value;
+                document.getElementById('chatMessages').appendChild(msgDiv);
+                
+                // Firebase में सेव करना
+                try {
+                    await addDoc(collection(db, "messages"), { text: input.value, createdAt: new Date() });
+                } catch(e) { console.log("Firebase save error", e); }
+                
                 input.value = "";
             }
         };
     </script>
 </body>
-</html>
-
+    </html>
+    
