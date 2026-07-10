@@ -36,55 +36,49 @@
         .link-btn { background: none; border: none; color: #00e6e6; cursor: pointer; margin-top: 15px; font-size: 14px; display: block; width: 100%; }
         .close-btn { background: none; border: none; color: #777; margin-top: 15px; cursor: pointer; font-size: 14px; }
         
-        /* --- मैसेंजर डैशबोर्ड (नया डिज़ाइन डार्क थीम में) --- */
+        /* --- मैसेंजर डैशबोर्ड स्टाइल --- */
         #chat-dashboard { display: none; max-width: 500px; margin: 0 auto; min-height: 100vh; flex-direction: column; background-color: #0f0f15; border-left: 1px solid #2b2b40; border-right: 1px solid #2b2b40;}
         .chat-header { background-color: #161622; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2b2b40; position: sticky; top: 0; z-index: 10; }
         .chat-header h2 { font-size: 18px; color: #00e6e6; display: flex; align-items: center; gap: 10px; }
         
-        /* प्रोफाइल और यूज़रनेम सेक्शन */
         .profile-section { text-align: center; padding: 25px 20px 15px; }
         .profile-pic { width: 90px; height: 90px; background-color: #1e1e2f; border-radius: 50%; margin: 0 auto 15px; display: block; object-fit: cover; border: 2px solid #ff3366; }
         .change-dp-btn { background-color: #1e1e2f; color: #00e6e6; border: 1px solid #3b3b54; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; }
         .username-display { margin-top: 15px; font-size: 16px; font-weight: bold; color: #fff; display: flex; justify-content: center; align-items: center; gap: 8px; }
         .username-display input { background: transparent; border: none; border-bottom: 1px dashed #777; color: #00e6e6; font-size: 16px; font-weight: bold; text-align: center; width: 130px; outline: none; }
 
-        /* सर्च बार */
         .search-container { padding: 0 20px 20px; }
         .search-bar { width: 100%; padding: 12px 15px; border: 1px solid #3b3b54; border-radius: 12px; background-color: #1e1e2f; color: white; font-size: 15px; outline: none; }
         .search-bar:focus { border-color: #00e6e6; }
 
-        /* लिस्ट सेक्शन (सर्च, रिक्वेस्ट, मैसेजेस) */
         .list-section { padding: 0 20px 20px; }
         .section-title-chat { font-size: 14px; font-weight: bold; color: #aaa; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #2b2b40; padding-bottom: 5px;}
         
         .user-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #1e1e2f; transition: background 0.2s; }
-        .user-item:hover { background-color: #161622; cursor: pointer; border-radius: 8px; padding: 12px 10px; margin-left: -10px; margin-right: -10px; }
+        .user-item:hover { background-color: #161622; border-radius: 8px; padding: 12px 10px; margin-left: -10px; margin-right: -10px; cursor: pointer; }
         .user-info { display: flex; align-items: center; }
         .user-avatar { width: 45px; height: 45px; background-color: #3b3b54; border-radius: 50%; margin-right: 15px; object-fit: cover; }
         .user-details p { margin: 0; }
         .user-name { font-weight: bold; font-size: 15px; color: #fff; }
         .user-status { font-size: 12px; color: #888; margin-top: 3px; }
 
-        /* ऐड और एक्सेप्ट बटन */
         .btn-add { background-color: #00e6e6; color: #0f0f15; border: none; padding: 7px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; }
-        .btn-add.requested { background-color: #1e1e2f; color: #00e6e6; border: 1px solid #00e6e6; }
+        .btn-add.requested { background-color: #1e1e2f; color: #00e6e6; border: 1px solid #00e6e6; cursor: default; }
         .btn-accept { background-color: #ff3366; color: #fff; border: none; padding: 7px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; }
 
-        /* --- 1-on-1 प्राइवेट चैट रूम (अंदर का हिस्सा) --- */
         #private-chat-room { display: none; flex-direction: column; height: 100vh; background-color: #0f0f15; }
         .chat-room-header { background-color: #161622; padding: 15px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #2b2b40; }
         .back-btn { background: none; border: none; color: #00e6e6; font-size: 20px; cursor: pointer; }
         .chat-room-header .user-avatar { width: 35px; height: 35px; margin-right: 0; }
         
         .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .message { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; }
+        .message { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; word-wrap: break-word; }
         .message.incoming { background-color: #1e1e2f; align-self: flex-start; border-bottom-left-radius: 2px; }
         .message.outgoing { background: linear-gradient(45deg, #00e6e6, #00b3b3); color: #000; align-self: flex-end; border-bottom-right-radius: 2px; }
         
         .chat-input-area { padding: 15px; background-color: #161622; display: flex; gap: 10px; border-top: 1px solid #2b2b40; }
         .chat-input-area input { flex: 1; padding: 12px; background-color: #1e1e2f; border: 1px solid #3b3b54; border-radius: 20px; color: white; outline: none; }
         .send-btn { padding: 0 20px; background-color: #ff3366; border: none; border-radius: 20px; color: white; font-weight: bold; cursor: pointer; }
-
     </style>
 </head>
 <body>
@@ -104,35 +98,19 @@
         <div class="category-container">
             <div class="category-title">🏎️ गाड़ियां और बाइक्स</div>
             <div class="wallpaper-grid">
-                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=400" loading="lazy" alt="Car"></div>
-                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=400" loading="lazy" alt="Bike"></div>
-                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1503376269666-41f274a49c95?w=400" loading="lazy" alt="Car"></div>
-                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400" loading="lazy" alt="Bike"></div>
-                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400" loading="lazy" alt="Car"></div>
-                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1558980663-3685c1d673c4?w=400" loading="lazy" alt="Bike"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=400" loading="lazy"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=400" loading="lazy"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1503376269666-41f274a49c95?w=400" loading="lazy"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400" loading="lazy"></div>
             </div>
         </div>
-
         <div class="category-container">
             <div class="category-title">🌿 प्राकृतिक और सुंदर दृश्य</div>
             <div class="wallpaper-grid">
-                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=400" loading="lazy" alt="Nature"></div>
-                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400" loading="lazy" alt="Nature"></div>
-                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=400" loading="lazy" alt="Nature"></div>
-                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=400" loading="lazy" alt="Nature"></div>
-                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400" loading="lazy" alt="Nature"></div>
-                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400" loading="lazy" alt="Beach"></div>
-            </div>
-        </div>
-
-        <div class="category-container">
-            <div class="category-title">🤖 AI और आर्ट डिज़ाइन्स</div>
-            <div class="wallpaper-grid">
-                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400" loading="lazy" alt="AI"></div>
-                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1563089145-599997674d42?w=400" loading="lazy" alt="AI"></div>
-                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=400" loading="lazy" alt="Art"></div>
-                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=400" loading="lazy" alt="Art"></div>
-                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=400" loading="lazy" alt="Art"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=400" loading="lazy"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400" loading="lazy"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=400" loading="lazy"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=400" loading="lazy"></div>
             </div>
         </div>
     </div>
@@ -140,12 +118,10 @@
     <div class="modal-overlay" id="loginModal">
         <div class="auth-box">
             <h2>लॉगिन करें</h2>
-            <p>अपनी प्राइवेट चैट देखने के लिए</p>
             <input type="text" id="loginUser" placeholder="यूज़रनेम (Username)">
             <input type="password" id="loginPass" placeholder="सीक्रेट पासवर्ड">
             <button class="auth-btn" onclick="processLogin()">लॉगिन करें</button>
-            <button class="auth-btn google-btn" onclick="signInWithGoogle()">🌐 Google (Gmail) से लॉगिन</button>
-            <button class="link-btn" onclick="openModal('forgotPasswordModal')">पासवर्ड भूल गए?</button>
+            <button class="auth-btn google-btn" onclick="signInWithGoogle()">🌐 Google से लॉगिन</button>
             <button class="close-btn" onclick="closeAllModals()">बंद करें</button>
         </div>
     </div>
@@ -153,39 +129,12 @@
     <div class="modal-overlay" id="registerModal">
         <div class="auth-box">
             <h2>नया अकाउंट बनाएं</h2>
-            <p>OTP या Gmail द्वारा वेरिफिकेशन</p>
-            <input type="number" id="regPhone" placeholder="फ़ोन न० (10 अंकों का)">
-            <input type="text" id="regName" placeholder="पूरा नाम (Name)">
-            <input type="password" id="regPass" placeholder="नया सीक्रेट पासवर्ड">
-            <button class="auth-btn" id="sendOtpBtn" onclick="sendOTP('register')">SMS OTP भेजें</button>
-            <p style="margin: 15px 0 5px 0; color: #aaa;">या</p>
-            <button class="auth-btn google-btn" onclick="signInWithGoogle()">🌐 सीधा Google से अकाउंट बनाएं</button>
+            <button class="auth-btn google-btn" onclick="signInWithGoogle()">🌐 Google से अकाउंट बनाएं</button>
             <button class="close-btn" onclick="closeAllModals()">बंद करें</button>
-        </div>
-    </div>
-    
-    <div class="modal-overlay" id="forgotPasswordModal">
-        <div class="auth-box">
-            <h2>पासवर्ड रीसेट करें</h2>
-            <p>अपना रजिस्टर्ड नंबर डालें</p>
-            <input type="number" id="forgotPhone" placeholder="फ़ोन न० (10 अंकों का)">
-            <input type="password" id="newPass" placeholder="नया पासवर्ड बनाएं">
-            <button class="auth-btn" id="forgotOtpBtn" onclick="sendOTP('forgot')">OTP भेजें</button>
-            <button class="link-btn" onclick="openModal('loginModal')">वापस लॉगिन पर जाएँ</button>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="otpModal">
-        <div class="auth-box">
-            <h2>OTP वेरिफिकेशन</h2>
-            <p>आपके नंबर पर भेजा गया कोड डालें</p>
-            <input type="number" id="otpInput" placeholder="6-अंकीय OTP">
-            <button class="auth-btn" onclick="verifyFirebaseOTP()">कन्फर्म करें</button>
         </div>
     </div>
 
     <div id="chat-dashboard">
-        
         <div id="messenger-home">
             <div class="chat-header">
                 <h2>प्राइवेट मैसेंजर</h2>
@@ -193,85 +142,54 @@
             </div>
             
             <div class="profile-section">
-                <img src="https://via.placeholder.com/100" alt="Profile" class="profile-pic" id="myProfilePic">
+                <img src="https://via.placeholder.com/100" class="profile-pic" id="myProfilePic">
                 <button class="change-dp-btn">📷 Change DP</button>
                 <div class="username-display">
-                    Username: <input type="text" value="Enter Username" id="myUsername"> ✏️
+                    Username: <input type="text" placeholder="Enter Username" id="myUsername"> ✏️
                 </div>
             </div>
 
             <div class="search-container">
-                <input type="text" class="search-bar" placeholder="🔍 Search user name (जैसे: Vineet 0123)">
+                <input type="text" class="search-bar" id="searchUserBar" placeholder="🔍 Search user name (जैसे: Vineet)">
             </div>
 
-            <div class="list-section">
+            <div class="list-section" id="search-results-section" style="display: none;">
                 <div class="section-title-chat">Search Result</div>
-                <div class="user-item">
-                    <div class="user-info">
-                        <img src="https://via.placeholder.com/45" alt="Vineet" class="user-avatar">
-                        <div class="user-details">
-                            <p class="user-name">Vineet 0123</p>
-                        </div>
-                    </div>
-                    <button class="btn-add" onclick="this.innerText='Requested'; this.classList.add('requested');">Add</button>
-                </div>
+                <div id="search-results-list"></div>
             </div>
 
-            <div class="list-section">
+            <div class="list-section" id="requests-received-section" style="display: none;">
                 <div class="section-title-chat">Requests Received</div>
-                <div class="user-item">
-                    <div class="user-info">
-                        <img src="https://via.placeholder.com/45" alt="Himanshu" class="user-avatar">
-                        <div class="user-details">
-                            <p class="user-name">Himanshu</p>
-                            <p class="user-status">Wants to chat</p>
-                        </div>
-                    </div>
-                    <button class="btn-accept" onclick="this.innerText='Accepted';">Accept</button>
-                </div>
+                <div id="requests-received-list"></div>
             </div>
 
             <div class="list-section">
                 <div class="section-title-chat">Messages</div>
-                <div class="user-item" onclick="openPrivateChat('Friend_B')">
-                    <div class="user-info">
-                        <img src="https://via.placeholder.com/45" alt="Friend" class="user-avatar">
-                        <div class="user-details">
-                            <p class="user-name">Friend_B</p>
-                            <p class="user-status">2 new messages • 5h</p>
-                        </div>
+                <div id="friends-list">
                     </div>
-                </div>
             </div>
         </div>
 
         <div id="private-chat-room">
             <div class="chat-room-header">
                 <button class="back-btn" onclick="closePrivateChat()">←</button>
-                <img src="https://via.placeholder.com/45" alt="User" class="user-avatar">
-                <h3 style="font-size: 16px; color: white;" id="chattingWithName">Friend_B</h3>
+                <img src="https://via.placeholder.com/45" class="user-avatar" id="chattingWithAvatar">
+                <h3 style="font-size: 16px; color: white;" id="chattingWithName">Friend</h3>
             </div>
-            
             <div class="chat-messages" id="chatMessages">
-                <div class="message incoming">हेलो! क्या हाल हैं?</div>
-            </div>
-            
+                </div>
             <div class="chat-input-area">
                 <input type="text" id="messageInput" placeholder="मैसेज टाइप करें...">
                 <button class="send-btn" onclick="sendMessage()">भेजें</button>
             </div>
         </div>
-
     </div>
-
-    <div id="recaptcha-container"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, query, where, getDocs, addDoc, onSnapshot, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // आपकी पुरानी फायरबेस सेटिंग (कोई बदलाव नहीं)
         const firebaseConfig = {
             apiKey: "AIzaSyCyOPrvdTFdwz5bFTYBf6KJ5webyBJj_1A",
             authDomain: "himanshuchatapp-785b4.firebaseapp.com",
@@ -286,22 +204,120 @@
         const auth = getAuth(app);
         const googleProvider = new GoogleAuthProvider();
 
+        let currentUserUID = null; 
+        let currentChatId = null; // जिस दोस्त से चैट हो रही है उसकी रूम ID
+        let chatListenerUnsubscribe = null; // चैट को बंद करने के लिए
+
+        // --- UI Modals ---
         window.toggleDropdown = () => { 
             const menu = document.getElementById('dropdownMenu'); 
             menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; 
         };
-
         window.closeAllModals = () => { 
             document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none');
             document.getElementById('dropdownMenu').style.display = 'none';
         };
-
         window.openModal = (modalId) => {
             closeAllModals();
             document.getElementById(modalId).style.display = 'flex';
         };
-
-        // --- लॉगिन सक्सेस फंक्शन ---
         function showDashboard() {
             closeAllModals();
-            document.getElementById('main-website')
+            document.getElementById('main-website').style.display = 'none';
+            document.getElementById('chat-dashboard').style.display = 'flex';
+            document.getElementById('messenger-home').style.display = 'block';
+            document.getElementById('private-chat-room').style.display = 'none';
+        }
+
+        // --- AUTH & PROFILE LOGIC ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUserUID = user.uid;
+                const userRef = doc(db, "users", user.uid);
+                const userSnap = await getDoc(userRef);
+
+                if (!userSnap.exists()) {
+                    await setDoc(userRef, {
+                        uid: user.uid,
+                        name: user.displayName || "New User",
+                        username: "",
+                        photoURL: user.photoURL || "https://via.placeholder.com/100"
+                    });
+                } else {
+                    const userData = userSnap.data();
+                    if(userData.username) document.getElementById('myUsername').value = userData.username;
+                    if(userData.photoURL) document.getElementById('myProfilePic').src = userData.photoURL;
+                }
+                
+                // लॉगिन होते ही डाटा मंगाना शुरू
+                listenForRequests();
+                listenForFriends();
+            }
+        });
+
+        // Username Save
+        document.getElementById('myUsername').addEventListener('change', async (e) => {
+            if(currentUserUID) {
+                const newUsername = e.target.value.trim();
+                await updateDoc(doc(db, "users", currentUserUID), { username: newUsername });
+                alert("Username सेव हो गया: " + newUsername);
+            }
+        });
+
+        window.signInWithGoogle = () => { signInWithPopup(auth, googleProvider).then(() => { showDashboard(); }).catch(e => alert(e.message)); };
+        window.processLogin = () => { showDashboard(); };
+        window.logout = () => {
+            auth.signOut().then(() => {
+                currentUserUID = null;
+                document.getElementById('chat-dashboard').style.display = 'none';
+                document.getElementById('main-website').style.display = 'block';
+            });
+        };
+
+        // --- LIVE SEARCH LOGIC ---
+        const searchBar = document.getElementById('searchUserBar');
+        searchBar.addEventListener('input', async (e) => {
+            const searchText = e.target.value.trim();
+            const resultsSection = document.getElementById('search-results-section');
+            const resultsList = document.getElementById('search-results-list');
+
+            if(searchText.length > 0) {
+                resultsSection.style.display = 'block';
+                const q = query(collection(db, 'users'), where('username', '>=', searchText), where('username', '<=', searchText + '\uf8ff'));
+                const querySnapshot = await getDocs(q);
+                
+                resultsList.innerHTML = ''; 
+                
+                querySnapshot.forEach((docSnap) => {
+                    const userData = docSnap.data();
+                    if(userData.uid !== currentUserUID && userData.username) {
+                        const userDiv = document.createElement('div');
+                        userDiv.className = 'user-item';
+                        userDiv.innerHTML = `
+                            <div class="user-info">
+                                <img src="${userData.photoURL || 'https://via.placeholder.com/45'}" class="user-avatar">
+                                <div class="user-details">
+                                    <p class="user-name">${userData.username}</p>
+                                </div>
+                            </div>
+                            <button class="btn-add" onclick="sendFriendRequest('${userData.uid}', '${userData.username}', this)">Add</button>
+                        `;
+                        resultsList.appendChild(userDiv);
+                    }
+                });
+            } else {
+                resultsSection.style.display = 'none';
+            }
+        });
+
+        // --- SEND REQUEST LOGIC ---
+        window.sendFriendRequest = async (targetUID, targetName, btnElement) => {
+            if(!currentUserUID) return;
+            btnElement.innerText = 'Requested';
+            btnElement.classList.add('requested');
+            btnElement.disabled = true;
+
+            try {
+                const myUsername = document.getElementById('myUsername').value || 'Unknown';
+                await addDoc(collection(db, 'friend_requests'), {
+                  
