@@ -24,6 +24,7 @@
         .wallpaper-card:hover { transform: scale(1.05); }
         .wallpaper-card img { width: 100%; height: 220px; object-fit: cover; display: block; }
         
+        /* --- मोडल (लॉगिन/रजिस्टर) स्टाइल --- */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
         .auth-box { background-color: #1e1e2f; padding: 30px 25px; border-radius: 16px; width: 100%; max-width: 360px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #2b2b40; }
         .auth-box h2 { font-size: 22px; margin-bottom: 10px; color: #ff3366; }
@@ -35,24 +36,55 @@
         .link-btn { background: none; border: none; color: #00e6e6; cursor: pointer; margin-top: 15px; font-size: 14px; display: block; width: 100%; }
         .close-btn { background: none; border: none; color: #777; margin-top: 15px; cursor: pointer; font-size: 14px; }
         
-        #chat-dashboard { display: none; max-width: 600px; margin: 0 auto; height: 100vh; flex-direction: column; background-color: #161622; }
-        .chat-header { background-color: #1e1e2f; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2b2b40; }
-        .chat-header h2 { font-size: 18px; color: #00ffcc; display: flex; align-items: center; gap: 10px; }
-        .profile-icon { background: #ff3366; border-radius: 50%; width: 35px; height: 35px; display: flex; justify-content: center; align-items: center; font-weight: bold; }
+        /* --- मैसेंजर डैशबोर्ड (नया डिज़ाइन डार्क थीम में) --- */
+        #chat-dashboard { display: none; max-width: 500px; margin: 0 auto; min-height: 100vh; flex-direction: column; background-color: #0f0f15; border-left: 1px solid #2b2b40; border-right: 1px solid #2b2b40;}
+        .chat-header { background-color: #161622; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2b2b40; position: sticky; top: 0; z-index: 10; }
+        .chat-header h2 { font-size: 18px; color: #00e6e6; display: flex; align-items: center; gap: 10px; }
         
-        .add-friend-section { padding: 15px; background: #11111a; display: flex; gap: 10px; border-bottom: 1px solid #2b2b40; }
-        .add-friend-section input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #3b3b54; background: #1e1e2f; color: white; }
-        .add-friend-section button { padding: 10px 15px; background: #00ffcc; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: #000; }
+        /* प्रोफाइल और यूज़रनेम सेक्शन */
+        .profile-section { text-align: center; padding: 25px 20px 15px; }
+        .profile-pic { width: 90px; height: 90px; background-color: #1e1e2f; border-radius: 50%; margin: 0 auto 15px; display: block; object-fit: cover; border: 2px solid #ff3366; }
+        .change-dp-btn { background-color: #1e1e2f; color: #00e6e6; border: 1px solid #3b3b54; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .username-display { margin-top: 15px; font-size: 16px; font-weight: bold; color: #fff; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .username-display input { background: transparent; border: none; border-bottom: 1px dashed #777; color: #00e6e6; font-size: 16px; font-weight: bold; text-align: center; width: 130px; outline: none; }
+
+        /* सर्च बार */
+        .search-container { padding: 0 20px 20px; }
+        .search-bar { width: 100%; padding: 12px 15px; border: 1px solid #3b3b54; border-radius: 12px; background-color: #1e1e2f; color: white; font-size: 15px; outline: none; }
+        .search-bar:focus { border-color: #00e6e6; }
+
+        /* लिस्ट सेक्शन (सर्च, रिक्वेस्ट, मैसेजेस) */
+        .list-section { padding: 0 20px 20px; }
+        .section-title-chat { font-size: 14px; font-weight: bold; color: #aaa; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #2b2b40; padding-bottom: 5px;}
         
-        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background-color: #0f0f15; }
+        .user-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #1e1e2f; transition: background 0.2s; }
+        .user-item:hover { background-color: #161622; cursor: pointer; border-radius: 8px; padding: 12px 10px; margin-left: -10px; margin-right: -10px; }
+        .user-info { display: flex; align-items: center; }
+        .user-avatar { width: 45px; height: 45px; background-color: #3b3b54; border-radius: 50%; margin-right: 15px; object-fit: cover; }
+        .user-details p { margin: 0; }
+        .user-name { font-weight: bold; font-size: 15px; color: #fff; }
+        .user-status { font-size: 12px; color: #888; margin-top: 3px; }
+
+        /* ऐड और एक्सेप्ट बटन */
+        .btn-add { background-color: #00e6e6; color: #0f0f15; border: none; padding: 7px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; }
+        .btn-add.requested { background-color: #1e1e2f; color: #00e6e6; border: 1px solid #00e6e6; }
+        .btn-accept { background-color: #ff3366; color: #fff; border: none; padding: 7px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; }
+
+        /* --- 1-on-1 प्राइवेट चैट रूम (अंदर का हिस्सा) --- */
+        #private-chat-room { display: none; flex-direction: column; height: 100vh; background-color: #0f0f15; }
+        .chat-room-header { background-color: #161622; padding: 15px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #2b2b40; }
+        .back-btn { background: none; border: none; color: #00e6e6; font-size: 20px; cursor: pointer; }
+        .chat-room-header .user-avatar { width: 35px; height: 35px; margin-right: 0; }
+        
+        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
         .message { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; }
-        .message.incoming { background-color: #232335; align-self: flex-start; border-bottom-left-radius: 2px; }
-        .message.outgoing { background: linear-gradient(45deg, #00b4db, #0083b0); align-self: flex-end; border-bottom-right-radius: 2px; }
-        .message .username { font-size: 11px; font-weight: bold; margin-bottom: 4px; color: #ffcc00; }
+        .message.incoming { background-color: #1e1e2f; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .message.outgoing { background: linear-gradient(45deg, #00e6e6, #00b3b3); color: #000; align-self: flex-end; border-bottom-right-radius: 2px; }
         
-        .chat-input-area { padding: 15px; background-color: #1e1e2f; display: flex; gap: 10px; }
-        .chat-input-area input { flex: 1; padding: 12px; background-color: #11111a; border: 1px solid #3b3b54; border-radius: 8px; color: white; }
-        .send-btn { padding: 0 20px; background-color: #00ffcc; border: none; border-radius: 8px; color: #121212; font-weight: bold; cursor: pointer; }
+        .chat-input-area { padding: 15px; background-color: #161622; display: flex; gap: 10px; border-top: 1px solid #2b2b40; }
+        .chat-input-area input { flex: 1; padding: 12px; background-color: #1e1e2f; border: 1px solid #3b3b54; border-radius: 20px; color: white; outline: none; }
+        .send-btn { padding: 0 20px; background-color: #ff3366; border: none; border-radius: 20px; color: white; font-weight: bold; cursor: pointer; }
+
     </style>
 </head>
 <body>
@@ -69,7 +101,6 @@
             </div>
         </header>
 
-        <!-- Category 1: Cars & Bikes -->
         <div class="category-container">
             <div class="category-title">🏎️ गाड़ियां और बाइक्स</div>
             <div class="wallpaper-grid">
@@ -82,7 +113,6 @@
             </div>
         </div>
 
-        <!-- Category 2: Nature -->
         <div class="category-container">
             <div class="category-title">🌿 प्राकृतिक और सुंदर दृश्य</div>
             <div class="wallpaper-grid">
@@ -95,7 +125,6 @@
             </div>
         </div>
 
-        <!-- Category 3: AI & Art -->
         <div class="category-container">
             <div class="category-title">🤖 AI और आर्ट डिज़ाइन्स</div>
             <div class="wallpaper-grid">
@@ -108,7 +137,6 @@
         </div>
     </div>
 
-    <!-- LOGIN MODAL -->
     <div class="modal-overlay" id="loginModal">
         <div class="auth-box">
             <h2>लॉगिन करें</h2>
@@ -116,36 +144,26 @@
             <input type="text" id="loginUser" placeholder="यूज़रनेम (Username)">
             <input type="password" id="loginPass" placeholder="सीक्रेट पासवर्ड">
             <button class="auth-btn" onclick="processLogin()">लॉगिन करें</button>
-            
-            <!-- Google लॉगिन बटन -->
-            <button class="auth-btn google-btn" onclick="signInWithGoogle()">🌐 Google (Gmail) से लॉगिन करें</button>
-            
-            <button class="link-btn" onclick="openModal('forgotPasswordModal')">पासवर्ड भूल गए? (Forgot Password)</button>
+            <button class="auth-btn google-btn" onclick="signInWithGoogle()">🌐 Google (Gmail) से लॉगिन</button>
+            <button class="link-btn" onclick="openModal('forgotPasswordModal')">पासवर्ड भूल गए?</button>
             <button class="close-btn" onclick="closeAllModals()">बंद करें</button>
         </div>
     </div>
 
-    <!-- REGISTER MODAL -->
     <div class="modal-overlay" id="registerModal">
         <div class="auth-box">
             <h2>नया अकाउंट बनाएं</h2>
             <p>OTP या Gmail द्वारा वेरिफिकेशन</p>
             <input type="number" id="regPhone" placeholder="फ़ोन न० (10 अंकों का)">
             <input type="text" id="regName" placeholder="पूरा नाम (Name)">
-            <input type="password" id="regPass" placeholder="नया सीक्रेट पासवर्ड (New Password)">
-            
+            <input type="password" id="regPass" placeholder="नया सीक्रेट पासवर्ड">
             <button class="auth-btn" id="sendOtpBtn" onclick="sendOTP('register')">SMS OTP भेजें</button>
-            
             <p style="margin: 15px 0 5px 0; color: #aaa;">या</p>
-            
-            <!-- Google बटन -->
             <button class="auth-btn google-btn" onclick="signInWithGoogle()">🌐 सीधा Google से अकाउंट बनाएं</button>
-
             <button class="close-btn" onclick="closeAllModals()">बंद करें</button>
         </div>
     </div>
-
-    <!-- FORGOT PASSWORD MODAL -->
+    
     <div class="modal-overlay" id="forgotPasswordModal">
         <div class="auth-box">
             <h2>पासवर्ड रीसेट करें</h2>
@@ -157,7 +175,6 @@
         </div>
     </div>
 
-    <!-- OTP MODAL -->
     <div class="modal-overlay" id="otpModal">
         <div class="auth-box">
             <h2>OTP वेरिफिकेशन</h2>
@@ -167,25 +184,84 @@
         </div>
     </div>
 
-    <!-- CHAT DASHBOARD -->
     <div id="chat-dashboard">
-        <div class="chat-header">
-            <h2><div class="profile-icon">U</div> प्राइवेट मैसेंजर</h2>
-            <button class="close-btn" onclick="logout()" style="margin:0; color:white;">लॉगआउट</button>
-        </div>
         
-        <div class="add-friend-section">
-            <input type="text" id="searchFriend" placeholder="दोस्त का यूज़रनेम सर्च करें...">
-            <button onclick="addFriend()">Add Friend</button>
+        <div id="messenger-home">
+            <div class="chat-header">
+                <h2>प्राइवेट मैसेंजर</h2>
+                <button class="close-btn" onclick="logout()" style="margin:0; color:white;">लॉगआउट</button>
+            </div>
+            
+            <div class="profile-section">
+                <img src="https://via.placeholder.com/100" alt="Profile" class="profile-pic" id="myProfilePic">
+                <button class="change-dp-btn">📷 Change DP</button>
+                <div class="username-display">
+                    Username: <input type="text" value="Enter Username" id="myUsername"> ✏️
+                </div>
+            </div>
+
+            <div class="search-container">
+                <input type="text" class="search-bar" placeholder="🔍 Search user name (जैसे: Vineet 0123)">
+            </div>
+
+            <div class="list-section">
+                <div class="section-title-chat">Search Result</div>
+                <div class="user-item">
+                    <div class="user-info">
+                        <img src="https://via.placeholder.com/45" alt="Vineet" class="user-avatar">
+                        <div class="user-details">
+                            <p class="user-name">Vineet 0123</p>
+                        </div>
+                    </div>
+                    <button class="btn-add" onclick="this.innerText='Requested'; this.classList.add('requested');">Add</button>
+                </div>
+            </div>
+
+            <div class="list-section">
+                <div class="section-title-chat">Requests Received</div>
+                <div class="user-item">
+                    <div class="user-info">
+                        <img src="https://via.placeholder.com/45" alt="Himanshu" class="user-avatar">
+                        <div class="user-details">
+                            <p class="user-name">Himanshu</p>
+                            <p class="user-status">Wants to chat</p>
+                        </div>
+                    </div>
+                    <button class="btn-accept" onclick="this.innerText='Accepted';">Accept</button>
+                </div>
+            </div>
+
+            <div class="list-section">
+                <div class="section-title-chat">Messages</div>
+                <div class="user-item" onclick="openPrivateChat('Friend_B')">
+                    <div class="user-info">
+                        <img src="https://via.placeholder.com/45" alt="Friend" class="user-avatar">
+                        <div class="user-details">
+                            <p class="user-name">Friend_B</p>
+                            <p class="user-status">2 new messages • 5h</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="chat-messages" id="chatMessages">
-            <div class="message incoming"><div class="username">सिस्टम</div>आपका अकाउंट सुरक्षित रूप से लॉगिन हो गया है। आप यहाँ 1-on-1 चैट कर सकते हैं।</div>
+        <div id="private-chat-room">
+            <div class="chat-room-header">
+                <button class="back-btn" onclick="closePrivateChat()">←</button>
+                <img src="https://via.placeholder.com/45" alt="User" class="user-avatar">
+                <h3 style="font-size: 16px; color: white;" id="chattingWithName">Friend_B</h3>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div class="message incoming">हेलो! क्या हाल हैं?</div>
+            </div>
+            
+            <div class="chat-input-area">
+                <input type="text" id="messageInput" placeholder="मैसेज टाइप करें...">
+                <button class="send-btn" onclick="sendMessage()">भेजें</button>
+            </div>
         </div>
-        <div class="chat-input-area">
-            <input type="text" id="messageInput" placeholder="मैसेज टाइप करें...">
-            <button class="send-btn" onclick="sendMessage()">भेजें</button>
-        </div>
+
     </div>
 
     <div id="recaptcha-container"></div>
@@ -195,6 +271,7 @@
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+        // आपकी पुरानी फायरबेस सेटिंग (कोई बदलाव नहीं)
         const firebaseConfig = {
             apiKey: "AIzaSyCyOPrvdTFdwz5bFTYBf6KJ5webyBJj_1A",
             authDomain: "himanshuchatapp-785b4.firebaseapp.com",
@@ -224,114 +301,7 @@
             document.getElementById(modalId).style.display = 'flex';
         };
 
-        // --- Google Login Logic ---
-        window.signInWithGoogle = () => {
-            signInWithPopup(auth, googleProvider)
-            .then((result) => {
-                const user = result.user;
-                closeAllModals();
-                document.getElementById('main-website').style.display = 'none';
-                document.getElementById('chat-dashboard').style.display = 'flex';
-                alert(`लॉगिन सफल! स्वागत है, ${user.displayName}`);
-            }).catch((error) => {
-                alert("Google लॉगिन में कुछ समस्या आई: " + error.message);
-            });
-        };
-
-        // --- Phone Auth Logic ---
-        auth.useDeviceLanguage();
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-            'size': 'invisible'
-        });
-
-        let currentAuthAction = "";
-
-        window.sendOTP = (action) => {
-            let phoneInput = action === 'register' ? document.getElementById('regPhone').value : document.getElementById('forgotPhone').value;
-            
-            if(phoneInput.length >= 10) {
-                const phoneNumber = "+91" + phoneInput;
-                const btnId = action === 'register' ? 'sendOtpBtn' : 'forgotOtpBtn';
-                document.getElementById(btnId).innerText = "OTP भेजा जा रहा है...";
-                
-                signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier)
-                    .then((confirmationResult) => {
-                        window.confirmationResult = confirmationResult;
-                        currentAuthAction = action;
-                        openModal('otpModal');
-                        document.getElementById(btnId).innerText = "OTP भेजें";
-                    }).catch((error) => {
-                        alert("SMS भेजने में एरर: सुनिश्चित करें कि Firebase Settings > Authorized domains में वेबसाइट का लिंक जुड़ा है।");
-                        document.getElementById(btnId).innerText = "OTP भेजें";
-                        window.recaptchaVerifier.render().then(function(widgetId) {
-                            grecaptcha.reset(widgetId);
-                        });
-                    });
-            } else {
-                alert("कृपया 10 अंकों का सही मोबाइल नंबर डालें!");
-            }
-        };
-
-        window.verifyFirebaseOTP = () => {
-            const code = document.getElementById('otpInput').value;
-            if(code.length === 6 && window.confirmationResult) {
-                window.confirmationResult.confirm(code).then((result) => {
-                    closeAllModals();
-                    if(currentAuthAction === "forgot") {
-                        alert("OTP वेरीफाई हो गया! आपका पासवर्ड सफलतापूर्वक बदल गया है।");
-                        openModal('loginModal');
-                    } else {
-                        document.getElementById('main-website').style.display = 'none';
-                        document.getElementById('chat-dashboard').style.display = 'flex';
-                    }
-                }).catch((error) => {
-                    alert("गलत OTP डाला गया है! कृपया फिर से चेक करें।");
-                });
-            } else {
-                alert("कृपया 6 अंकों का सही OTP दर्ज करें!");
-            }
-        };
-
-        // --- Fallback Login ---
-        window.processLogin = () => {
-            const pass = document.getElementById('loginPass').value;
-            if(pass !== "") {
-                closeAllModals();
-                document.getElementById('main-website').style.display = 'none';
-                document.getElementById('chat-dashboard').style.display = 'flex';
-            } else {
-                alert("कृपया पासवर्ड दर्ज करें!");
-            }
-        };
-
-        window.logout = () => {
-            document.getElementById('chat-dashboard').style.display = 'none';
-            document.getElementById('main-website').style.display = 'block';
-        };
-
-        window.addFriend = () => {
-            const friend = document.getElementById('searchFriend').value;
-            if(friend) {
-                alert(`फ़्रेंड रिक्वेस्ट '${friend}' को भेज दी गई है!`);
-                document.getElementById('searchFriend').value = "";
-            }
-        };
-
-        window.sendMessage = async () => {
-            const input = document.getElementById('messageInput');
-            if(input.value.trim() !== "") {
-                const msgDiv = document.createElement('div');
-                msgDiv.className = "message outgoing";
-                msgDiv.innerHTML = input.value;
-                document.getElementById('chatMessages').appendChild(msgDiv);
-                
-                try {
-                    await addDoc(collection(db, "messages"), { text: input.value, createdAt: new Date() });
-                } catch(e) { console.log("Firebase error", e); }
-                
-                input.value = "";
-            }
-        };
-    </script>
-</body>
-</html>
+        // --- लॉगिन सक्सेस फंक्शन ---
+        function showDashboard() {
+            closeAllModals();
+            document.getElementById('main-website')
