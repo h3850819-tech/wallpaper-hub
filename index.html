@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Premium Wallpaper Hub & Chat</title>
     <style>
-        /* --- बेसिक और थीम स्टाइल --- */
+        /* --- बेसिक और थीम स्टाइल (आपका पूरा डिज़ाइन वैसा ही है) --- */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #0f0f15; color: #ffffff; padding-bottom: 20px; }
         
@@ -87,7 +87,8 @@
         <header>
             <h1>🌟 Premium Wallpapers</h1>
             <div class="menu-container">
-                <button class="three-dot-btn" onclick="toggleDropdown()">⋮</button>
+                <!-- यहाँ मैंने 'event' पास किया है ताकि थ्री-डॉट फिक्स हो जाए -->
+                <button class="three-dot-btn" onclick="toggleDropdown(event)">⋮</button>
                 <div class="dropdown-menu" id="dropdownMenu">
                     <button onclick="openModal('loginModal')">🔒 प्राइवेट चैट (लॉगिन)</button>
                     <button onclick="openModal('registerModal')">📝 नया अकाउंट बनाएं</button>
@@ -205,22 +206,35 @@
         const googleProvider = new GoogleAuthProvider();
 
         let currentUserUID = null; 
-        let currentChatId = null; // जिस दोस्त से चैट हो रही है उसकी रूम ID
-        let chatListenerUnsubscribe = null; // चैट को बंद करने के लिए
+        let currentChatId = null; 
+        let chatListenerUnsubscribe = null; 
 
-        // --- UI Modals ---
-        window.toggleDropdown = () => { 
+        // --- UI Modals (यहीं पर मैंने थ्री-डॉट फिक्स किया है) ---
+        window.toggleDropdown = (event) => { 
+            if(event) event.stopPropagation(); // यह क्लिक को सही जगह रोकता है
             const menu = document.getElementById('dropdownMenu'); 
             menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; 
         };
+
+        // मेनू के बाहर क्लिक करने पर मेनू बंद हो जाएगा
+        document.addEventListener('click', (event) => {
+            const menu = document.getElementById('dropdownMenu');
+            const btn = document.querySelector('.three-dot-btn');
+            if (menu && menu.style.display === 'block' && !menu.contains(event.target) && !btn.contains(event.target)) {
+                menu.style.display = 'none';
+            }
+        });
+
         window.closeAllModals = () => { 
             document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none');
             document.getElementById('dropdownMenu').style.display = 'none';
         };
+        
         window.openModal = (modalId) => {
             closeAllModals();
             document.getElementById(modalId).style.display = 'flex';
         };
+        
         function showDashboard() {
             closeAllModals();
             document.getElementById('main-website').style.display = 'none';
@@ -249,13 +263,11 @@
                     if(userData.photoURL) document.getElementById('myProfilePic').src = userData.photoURL;
                 }
                 
-                // लॉगिन होते ही डाटा मंगाना शुरू
                 listenForRequests();
                 listenForFriends();
             }
         });
 
-        // Username Save
         document.getElementById('myUsername').addEventListener('change', async (e) => {
             if(currentUserUID) {
                 const newUsername = e.target.value.trim();
@@ -310,7 +322,7 @@
             }
         });
 
-        // --- SEND REQUEST LOGIC ---
+        // --- SEND REQUEST LOGIC (यहाँ से आपका कोड कट गया था, मैंने पूरा कर दिया है) ---
         window.sendFriendRequest = async (targetUID, targetName, btnElement) => {
             if(!currentUserUID) return;
             btnElement.innerText = 'Requested';
@@ -320,4 +332,150 @@
             try {
                 const myUsername = document.getElementById('myUsername').value || 'Unknown';
                 await addDoc(collection(db, 'friend_requests'), {
-                  
+                    senderId: currentUserUID,
+                    receiverId: targetUID,
+                    senderName: myUsername,
+                    receiverName: targetName,
+                    status: 'pending',
+                    timestamp: serverTimestamp()
+                });
+                alert("रिक्वेस्ट भेज दी गई है!");
+            } catch(e) {
+                console.error("रिक्वेस्ट भेजने में एरर:", e);
+            }
+        };
+
+        // --- LISTEN FOR PENDING REQUESTS ---
+        function listenForRequests() {
+            if(!currentUserUID) return;
+            const q = query(collection(db, 'friend_requests'), where('receiverId', '==', currentUserUID), where('status', '==', 'pending'));
+            onSnapshot(q, (snapshot) => {
+                const requestsSection = document.getElementById('requests-received-section');
+                const requestsList = document.getElementById('requests-received-list');
+                requestsList.innerHTML = '';
+
+                if(snapshot.empty) {
+                    requestsSection.style.display = 'none';
+                } else {
+                    requestsSection.style.display = 'block';
+                    snapshot.forEach(docSnap => {
+                        const reqData = docSnap.data();
+                        const reqDiv = document.createElement('div');
+                        reqDiv.className = 'user-item';
+                        reqDiv.innerHTML = `
+                            <div class="user-info">
+                                <img src="https://via.placeholder.com/45" class="user-avatar">
+                                <div class="user-details">
+                                    <p class="user-name">${reqData.senderName}</p>
+                                    <p class="user-status">Wants to chat</p>
+                                </div>
+                            </div>
+                            <button class="btn-accept" onclick="acceptFriendRequest('${docSnap.id}', this)">Accept</button>
+                        `;
+                        requestsList.appendChild(reqDiv);
+                    });
+                }
+            });
+        }
+
+        // --- ACCEPT REQUEST ---
+        window.acceptFriendRequest = async (requestId, btnElement) => {
+            try {
+                btnElement.innerText = 'Accepted';
+                btnElement.style.backgroundColor = '#1e1e2f';
+                btnElement.style.border = '1px solid #ff3366';
+                btnElement.disabled = true;
+                await updateDoc(doc(db, 'friend_requests', requestId), { status: 'accepted' });
+                alert("दोस्ती की रिक्वेस्ट स्वीकार कर ली गई!");
+            } catch(e) { console.error("एरर:", e); }
+        };
+
+        // --- LISTEN FOR ACCEPTED FRIENDS ---
+        function listenForFriends() {
+            if(!currentUserUID) return;
+            const friendsList = document.getElementById('friends-list');
+            friendsList.innerHTML = ''; 
+
+            const q1 = query(collection(db, 'friend_requests'), where('receiverId', '==', currentUserUID), where('status', '==', 'accepted'));
+            onSnapshot(q1, (snap) => {
+                snap.docChanges().forEach(change => {
+                    if(change.type === 'added') appendFriendToList(change.doc.data().senderId, change.doc.data().senderName);
+                });
+            });
+
+            const q2 = query(collection(db, 'friend_requests'), where('senderId', '==', currentUserUID), where('status', '==', 'accepted'));
+            onSnapshot(q2, (snap) => {
+                snap.docChanges().forEach(change => {
+                    if(change.type === 'added') appendFriendToList(change.doc.data().receiverId, change.doc.data().receiverName);
+                });
+            });
+        }
+
+        function appendFriendToList(friendId, friendName) {
+            const friendsList = document.getElementById('friends-list');
+            const fDiv = document.createElement('div');
+            fDiv.className = 'user-item';
+            fDiv.onclick = () => openPrivateChat(friendId, friendName);
+            fDiv.innerHTML = `
+                <div class="user-info">
+                    <img src="https://via.placeholder.com/45" class="user-avatar">
+                    <div class="user-details">
+                        <p class="user-name">${friendName}</p>
+                        <p class="user-status">Click to chat</p>
+                    </div>
+                </div>
+            `;
+            friendsList.appendChild(fDiv);
+        }
+
+        // --- CHAT LOGIC ---
+        window.openPrivateChat = (friendId, friendName) => {
+            document.getElementById('messenger-home').style.display = 'none';
+            document.getElementById('private-chat-room').style.display = 'flex';
+            document.getElementById('chattingWithName').innerText = friendName;
+            currentChatId = [currentUserUID, friendId].sort().join('_');
+            
+            if(chatListenerUnsubscribe) chatListenerUnsubscribe();
+
+            const chatBox = document.getElementById('chatMessages');
+            const q = query(collection(db, "chats", currentChatId, "messages"), orderBy("timestamp", "asc"));
+            
+            chatListenerUnsubscribe = onSnapshot(q, (snapshot) => {
+                chatBox.innerHTML = ''; 
+                snapshot.forEach((docSnap) => {
+                    const msg = docSnap.data();
+                    const isMe = msg.senderId === currentUserUID;
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = isMe ? 'message outgoing' : 'message incoming';
+                    msgDiv.innerText = msg.text;
+                    chatBox.appendChild(msgDiv);
+                });
+                chatBox.scrollTop = chatBox.scrollHeight;
+            });
+        };
+
+        window.closePrivateChat = () => {
+            document.getElementById('private-chat-room').style.display = 'none';
+            document.getElementById('messenger-home').style.display = 'block';
+            currentChatId = null;
+        };
+
+        window.sendMessage = async () => {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if(text !== "" && currentChatId && currentUserUID) {
+                input.value = ""; 
+                await addDoc(collection(db, "chats", currentChatId, "messages"), {
+                    text: text,
+                    senderId: currentUserUID,
+                    timestamp: serverTimestamp()
+                });
+            }
+        };
+        
+        document.getElementById('messageInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') { sendMessage(); }
+        });
+    </script>
+</body>
+</html>
