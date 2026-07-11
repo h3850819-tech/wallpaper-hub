@@ -5,15 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Premium Wallpaper Hub & Chat</title>
     <style>
-        /* --- बेसिक और थीम स्टाइल (आपका पूरा डिज़ाइन वैसा ही है) --- */
+        /* --- बेसिक और थीम स्टाइल --- */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #0f0f15; color: #ffffff; padding-bottom: 20px; }
         
         header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: #161622; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         header h1 { font-size: 20px; color: #ff3366; letter-spacing: 1px; }
         .menu-container { position: relative; }
-        .three-dot-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 5px 10px; }
-        .dropdown-menu { display: none; position: absolute; right: 0; top: 40px; background-color: #1e1e2f; border-radius: 8px; min-width: 150px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); overflow: hidden; }
+        .three-dot-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 5px 10px; z-index: 1001; }
+        .dropdown-menu { display: none; position: absolute; right: 0; top: 50px; background-color: #1e1e2f; border-radius: 8px; min-width: 150px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); overflow: hidden; z-index: 1000; }
         .dropdown-menu button { width: 100%; background: none; border: none; color: white; padding: 12px 15px; text-align: left; font-size: 14px; cursor: pointer; }
         .dropdown-menu button:hover { background-color: #2b2b40; }
         
@@ -87,7 +87,6 @@
         <header>
             <h1>🌟 Premium Wallpapers</h1>
             <div class="menu-container">
-                <!-- यहाँ मैंने 'event' पास किया है ताकि थ्री-डॉट फिक्स हो जाए -->
                 <button class="three-dot-btn" onclick="toggleDropdown(event)">⋮</button>
                 <div class="dropdown-menu" id="dropdownMenu">
                     <button onclick="openModal('loginModal')">🔒 प्राइवेट चैट (लॉगिन)</button>
@@ -209,14 +208,13 @@
         let currentChatId = null; 
         let chatListenerUnsubscribe = null; 
 
-        // --- UI Modals (यहीं पर मैंने थ्री-डॉट फिक्स किया है) ---
+        // --- UI Modals (Three-dot Fix included) ---
         window.toggleDropdown = (event) => { 
-            if(event) event.stopPropagation(); // यह क्लिक को सही जगह रोकता है
+            if(event) event.stopPropagation(); 
             const menu = document.getElementById('dropdownMenu'); 
             menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; 
         };
 
-        // मेनू के बाहर क्लिक करने पर मेनू बंद हो जाएगा
         document.addEventListener('click', (event) => {
             const menu = document.getElementById('dropdownMenu');
             const btn = document.querySelector('.three-dot-btn');
@@ -255,6 +253,7 @@
                         uid: user.uid,
                         name: user.displayName || "New User",
                         username: "",
+                        usernameLower: "", // नया फील्ड छोटे अक्षरों में सर्च के लिए
                         photoURL: user.photoURL || "https://via.placeholder.com/100"
                     });
                 } else {
@@ -268,12 +267,61 @@
             }
         });
 
+        // --- NEW: USERNAME SAVE LOGIC (14-Day Limit & Unique Check) ---
         document.getElementById('myUsername').addEventListener('change', async (e) => {
-            if(currentUserUID) {
-                const newUsername = e.target.value.trim();
-                await updateDoc(doc(db, "users", currentUserUID), { username: newUsername });
-                alert("Username सेव हो गया: " + newUsername);
+            if(!currentUserUID) return;
+            const newUsername = e.target.value.trim();
+            
+            if(newUsername.length < 3) {
+                alert("यूज़रनेम कम से कम 3 अक्षरों का होना चाहिए!");
+                return;
             }
+
+            const userRef = doc(db, "users", currentUserUID);
+            const userSnap = await getDoc(userRef);
+            const userData = userSnap.data();
+
+            // 1. 14-दिन का चेक
+            if (userData.lastUsernameChange) {
+                const lastChange = userData.lastUsernameChange.toDate();
+                const now = new Date();
+                const diffTime = Math.abs(now - lastChange);
+                const diffDays = diffTime / (1000 * 60 * 60 * 24);
+                
+                if (diffDays < 14) {
+                    const daysLeft = Math.ceil(14 - diffDays);
+                    alert(`आप 14 दिन में केवल एक बार यूज़रनेम बदल सकते हैं। कृपया ${daysLeft} दिन और प्रतीक्षा करें।`);
+                    document.getElementById('myUsername').value = userData.username; // पुराना नाम वापस
+                    return;
+                }
+            }
+
+            // 2. यूज़रनेम यूनिक (Unique) होने का चेक
+            const usernameLower = newUsername.toLowerCase();
+            const q = query(collection(db, "users"), where("usernameLower", "==", usernameLower));
+            const querySnapshot = await getDocs(q);
+            
+            let isUnique = true;
+            querySnapshot.forEach((docSnap) => {
+                if (docSnap.id !== currentUserUID) {
+                    isUnique = false;
+                }
+            });
+
+            if (!isUnique) {
+                alert("यह यूज़रनेम पहले से किसी ने ले लिया है। कृपया कोई दूसरा नाम चुनें (जैसे: " + newUsername + "123)");
+                document.getElementById('myUsername').value = userData.username || "";
+                return;
+            }
+
+            // 3. सेव करना
+            await updateDoc(userRef, { 
+                username: newUsername,
+                usernameLower: usernameLower,
+                lastUsernameChange: serverTimestamp() 
+            });
+            
+            alert("शानदार! आपका यूज़रनेम सेव हो गया: " + newUsername);
         });
 
         window.signInWithGoogle = () => { signInWithPopup(auth, googleProvider).then(() => { showDashboard(); }).catch(e => alert(e.message)); };
@@ -286,16 +334,17 @@
             });
         };
 
-        // --- LIVE SEARCH LOGIC ---
+        // --- NEW: LIVE SEARCH LOGIC (Case Insensitive) ---
         const searchBar = document.getElementById('searchUserBar');
         searchBar.addEventListener('input', async (e) => {
-            const searchText = e.target.value.trim();
+            const searchText = e.target.value.trim().toLowerCase(); 
             const resultsSection = document.getElementById('search-results-section');
             const resultsList = document.getElementById('search-results-list');
 
             if(searchText.length > 0) {
                 resultsSection.style.display = 'block';
-                const q = query(collection(db, 'users'), where('username', '>=', searchText), where('username', '<=', searchText + '\uf8ff'));
+                
+                const q = query(collection(db, 'users'), where('usernameLower', '>=', searchText), where('usernameLower', '<=', searchText + '\uf8ff'));
                 const querySnapshot = await getDocs(q);
                 
                 resultsList.innerHTML = ''; 
@@ -322,7 +371,7 @@
             }
         });
 
-        // --- SEND REQUEST LOGIC (यहाँ से आपका कोड कट गया था, मैंने पूरा कर दिया है) ---
+        // --- SEND REQUEST LOGIC ---
         window.sendFriendRequest = async (targetUID, targetName, btnElement) => {
             if(!currentUserUID) return;
             btnElement.innerText = 'Requested';
@@ -340,9 +389,7 @@
                     timestamp: serverTimestamp()
                 });
                 alert("रिक्वेस्ट भेज दी गई है!");
-            } catch(e) {
-                console.error("रिक्वेस्ट भेजने में एरर:", e);
-            }
+            } catch(e) { console.error("रिक्वेस्ट भेजने में एरर:", e); }
         };
 
         // --- LISTEN FOR PENDING REQUESTS ---
