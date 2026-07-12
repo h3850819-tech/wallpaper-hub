@@ -87,7 +87,8 @@
         <header>
             <h1>🌟 Premium Wallpapers</h1>
             <div class="menu-container">
-                <button class="three-dot-btn" onclick="toggleDropdown(event)">⋮</button>
+                <!-- यहाँ से मैंने onclick हटा दिया है, ताकि यह बुलेटप्रूफ स्क्रिप्ट से ही चले -->
+                <button class="three-dot-btn">⋮</button>
                 <div class="dropdown-menu" id="dropdownMenu">
                     <button onclick="openModal('loginModal')">🔒 प्राइवेट चैट (लॉगिन)</button>
                     <button onclick="openModal('registerModal')">📝 नया अकाउंट बनाएं</button>
@@ -185,6 +186,49 @@
         </div>
     </div>
 
+    <!-- UI फिक्स स्क्रिप्ट (यह हमेशा काम करेगी) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const threeDotBtn = document.querySelector('.three-dot-btn');
+            const dropdownMenu = document.getElementById('dropdownMenu');
+
+            if (threeDotBtn && dropdownMenu) {
+                threeDotBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // यह क्लिक को रोकता है ताकि मेनू तुरंत बंद न हो
+                    dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+                });
+            }
+
+            document.addEventListener('click', (e) => {
+                if (dropdownMenu && dropdownMenu.style.display === 'block' && !dropdownMenu.contains(e.target) && !threeDotBtn.contains(e.target)) {
+                    dropdownMenu.style.display = 'none';
+                }
+            });
+        });
+
+        window.closeAllModals = () => { 
+            document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none');
+            const menu = document.getElementById('dropdownMenu');
+            if(menu) menu.style.display = 'none';
+        };
+        
+        window.openModal = (modalId) => {
+            window.closeAllModals();
+            document.getElementById(modalId).style.display = 'flex';
+        };
+        
+        window.showDashboard = () => {
+            window.closeAllModals();
+            document.getElementById('main-website').style.display = 'none';
+            document.getElementById('chat-dashboard').style.display = 'flex';
+            document.getElementById('messenger-home').style.display = 'block';
+            document.getElementById('private-chat-room').style.display = 'none';
+        };
+        
+        window.processLogin = () => { window.showDashboard(); };
+    </script>
+
+    <!-- फायरबेस स्क्रिप्ट (चैट, सर्च और 14-दिन का रूल) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, query, where, getDocs, addDoc, onSnapshot, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -208,39 +252,6 @@
         let currentChatId = null; 
         let chatListenerUnsubscribe = null; 
 
-        // --- 1. UI Modals & Three-dot Fix ---
-        window.toggleDropdown = (event) => { 
-            if(event) event.stopPropagation(); 
-            const menu = document.getElementById('dropdownMenu'); 
-            menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; 
-        };
-        document.addEventListener('click', (event) => {
-            const menu = document.getElementById('dropdownMenu');
-            const btn = document.querySelector('.three-dot-btn');
-            if (menu && menu.style.display === 'block' && !menu.contains(event.target) && !btn.contains(event.target)) {
-                menu.style.display = 'none';
-            }
-        });
-
-        window.closeAllModals = () => { 
-            document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none');
-            document.getElementById('dropdownMenu').style.display = 'none';
-        };
-        
-        window.openModal = (modalId) => {
-            closeAllModals();
-            document.getElementById(modalId).style.display = 'flex';
-        };
-        
-        function showDashboard() {
-            closeAllModals();
-            document.getElementById('main-website').style.display = 'none';
-            document.getElementById('chat-dashboard').style.display = 'flex';
-            document.getElementById('messenger-home').style.display = 'block';
-            document.getElementById('private-chat-room').style.display = 'none';
-        }
-
-        // --- AUTH & PROFILE LOGIC ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUserUID = user.uid;
@@ -266,7 +277,7 @@
             }
         });
 
-        // --- 2. USERNAME SAVE LOGIC (14-Day Limit & Unique Check) ---
+        // 14-Day Limit & Unique Check
         document.getElementById('myUsername').addEventListener('change', async (e) => {
             if(!currentUserUID) return;
             const newUsername = e.target.value.trim();
@@ -318,15 +329,5 @@
             alert("शानदार! आपका यूज़रनेम सेव हो गया: " + newUsername);
         });
 
-        window.signInWithGoogle = () => { signInWithPopup(auth, googleProvider).then(() => { showDashboard(); }).catch(e => alert(e.message)); };
-        window.processLogin = () => { showDashboard(); };
-        window.logout = () => {
-            auth.signOut().then(() => {
-                currentUserUID = null;
-                document.getElementById('chat-dashboard').style.display = 'none';
-                document.getElementById('main-website').style.display = 'block';
-            });
-        };
-
-        // --- 3. LIVE SEARCH LOGIC (Case Insensitive) ---
-        const searchBar = document.getElementById('sear
+        window.signInWithGoogle = () => { signInWithPopup(auth, googleProvider).then(() => { window.showDashboard(); }).catch(e => alert(e.message)); };
+        window.logout =
