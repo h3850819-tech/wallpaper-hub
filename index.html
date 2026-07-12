@@ -186,6 +186,47 @@
         </div>
     </div>
 
+    <!-- UI स्क्रिप्ट: यह कोड फायरबेस से पूरी तरह अलग है। अब बटन कभी नहीं अटकेगा -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuBtn = document.getElementById('menuToggleBtn');
+            const menu = document.getElementById('dropdownMenu');
+
+            if(menuBtn && menu) {
+                menuBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+                });
+            }
+
+            document.addEventListener('click', (e) => {
+                if (menu && menu.style.display === 'block' && !menuBtn.contains(e.target) && !menu.contains(e.target)) {
+                    menu.style.display = 'none';
+                }
+            });
+        });
+
+        window.closeAllModals = () => { 
+            document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none');
+            const menu = document.getElementById('dropdownMenu');
+            if(menu) menu.style.display = 'none';
+        };
+        
+        window.openModal = (modalId) => {
+            window.closeAllModals();
+            document.getElementById(modalId).style.display = 'flex';
+        };
+
+        window.showDashboard = () => {
+            window.closeAllModals();
+            document.getElementById('main-website').style.display = 'none';
+            document.getElementById('chat-dashboard').style.display = 'flex';
+            document.getElementById('messenger-home').style.display = 'block';
+            document.getElementById('private-chat-room').style.display = 'none';
+        }
+    </script>
+
+    <!-- फायरबेस स्क्रिप्ट: डेटाबेस और चैट के लिए -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, query, where, getDocs, addDoc, onSnapshot, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -209,40 +250,11 @@
         let currentChatId = null; 
         let chatListenerUnsubscribe = null; 
 
-        // --- 1. UI MODALS & THREE-DOT FIX ---
-        document.getElementById('menuToggleBtn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            const menu = document.getElementById('dropdownMenu');
-            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-        });
-
-        document.addEventListener('click', () => {
-            document.getElementById('dropdownMenu').style.display = 'none';
-        });
-
-        window.closeAllModals = () => { 
-            document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none');
-            document.getElementById('dropdownMenu').style.display = 'none';
-        };
-        
-        window.openModal = (modalId) => {
-            window.closeAllModals();
-            document.getElementById(modalId).style.display = 'flex';
-        };
-
-        function showDashboard() {
-            window.closeAllModals();
-            document.getElementById('main-website').style.display = 'none';
-            document.getElementById('chat-dashboard').style.display = 'flex';
-            document.getElementById('messenger-home').style.display = 'block';
-            document.getElementById('private-chat-room').style.display = 'none';
-        }
-
-        // --- 2. GOOGLE LOGIN FIX ---
+        // Google Login
         const handleGoogleLogin = async () => {
             try {
-                const result = await signInWithPopup(auth, googleProvider);
-                showDashboard();
+                await signInWithPopup(auth, googleProvider);
+                window.showDashboard();
             } catch (error) {
                 alert("Login Error: " + error.message);
             }
@@ -258,7 +270,6 @@
             });
         });
 
-        // --- AUTH STATE & PROFILE FETCH ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUserUID = user.uid;
@@ -283,7 +294,7 @@
             }
         });
 
-        // --- 3. 14-DAY USERNAME LOCK & SAVE BUTTON FIX ---
+        // 14-Day Username Lock & Save Button
         document.getElementById('saveUserBtn').addEventListener('click', async () => {
             if(!currentUserUID) return;
             const newUsername = document.getElementById('myUsername').value.trim();
@@ -297,7 +308,6 @@
             const userSnap = await getDoc(userRef);
             const userData = userSnap.data();
 
-            // 14-day check
             if (userData.lastUsernameChange) {
                 const lastChange = userData.lastUsernameChange.toDate();
                 const diffDays = (new Date() - lastChange) / (1000 * 60 * 60 * 24);
@@ -309,7 +319,6 @@
                 }
             }
 
-            // Unique check
             const usernameLower = newUsername.toLowerCase();
             const q = query(collection(db, "users"), where("usernameLower", "==", usernameLower));
             const querySnapshot = await getDocs(q);
@@ -331,7 +340,131 @@
                 lastUsernameChange: serverTimestamp() 
             });
             
-            alert("शानदार! आपका यूज़रनेम सेव हो गया।");
+            alert("शानदार! आपका यूज़रनेम सेव हो गया। अब आप दोस्तों को सर्च कर सकते हैं।");
         });
 
-        // ---
+        // Smart Search Bar
+        document.getElementById('searchUserBar').addEventListener('input', async (e) => {
+            const searchText = e.target.value.trim().toLowerCase();
+            const resultsSection = document.getElementById('search-results-section');
+            const resultsList = document.getElementById('search-results-list');
+
+            if(searchText.length > 0) {
+                resultsSection.style.display = 'block';
+                const q = query(collection(db, 'users'), where('usernameLower', '>=', searchText), where('usernameLower', '<=', searchText + '\uf8ff'));
+                const querySnapshot = await getDocs(q);
+                
+                resultsList.innerHTML = ''; 
+                querySnapshot.forEach((docSnap) => {
+                    const userData = docSnap.data();
+                    if(userData.uid !== currentUserUID && userData.username) {
+                        const userDiv = document.createElement('div');
+                        userDiv.className = 'user-item';
+                        userDiv.innerHTML = `
+                            <div class="user-info">
+                                <img src="${userData.photoURL || 'https://via.placeholder.com/45'}" class="user-avatar">
+                                <div class="user-details">
+                                    <p class="user-name">${userData.username}</p>
+                                </div>
+                            </div>
+                            <button class="btn-add" onclick="sendFriendRequest('${userData.uid}', '${userData.username}', this)">Add</button>
+                        `;
+                        resultsList.appendChild(userDiv);
+                    }
+                });
+            } else {
+                resultsSection.style.display = 'none';
+            }
+        });
+
+        window.sendFriendRequest = async (targetUID, targetName, btnElement) => {
+            if(!currentUserUID) return;
+            btnElement.innerText = 'Requested';
+            btnElement.classList.add('requested');
+            btnElement.disabled = true;
+            await addDoc(collection(db, 'friend_requests'), { senderId: currentUserUID, receiverId: targetUID, senderName: document.getElementById('myUsername').value || 'Unknown', receiverName: targetName, status: 'pending', timestamp: serverTimestamp() });
+            alert("रिक्वेस्ट भेज दी गई है!");
+        };
+
+        function listenForRequests() {
+            if(!currentUserUID) return;
+            onSnapshot(query(collection(db, 'friend_requests'), where('receiverId', '==', currentUserUID), where('status', '==', 'pending')), (snapshot) => {
+                const requestsSection = document.getElementById('requests-received-section');
+                const requestsList = document.getElementById('requests-received-list');
+                requestsList.innerHTML = '';
+                if(snapshot.empty) requestsSection.style.display = 'none';
+                else {
+                    requestsSection.style.display = 'block';
+                    snapshot.forEach(docSnap => {
+                        const reqData = docSnap.data();
+                        const reqDiv = document.createElement('div');
+                        reqDiv.className = 'user-item';
+                        reqDiv.innerHTML = `
+                            <div class="user-info">
+                                <img src="https://via.placeholder.com/45" class="user-avatar">
+                                <div class="user-details"><p class="user-name">${reqData.senderName}</p><p class="user-status">Wants to chat</p></div>
+                            </div>
+                            <button class="btn-accept" onclick="acceptFriendRequest('${docSnap.id}', this)">Accept</button>
+                        `;
+                        requestsList.appendChild(reqDiv);
+                    });
+                }
+            });
+        }
+
+        window.acceptFriendRequest = async (requestId, btnElement) => {
+            btnElement.innerText = 'Accepted'; btnElement.style.backgroundColor = '#1e1e2f'; btnElement.style.border = '1px solid #ff3366'; btnElement.disabled = true;
+            await updateDoc(doc(db, 'friend_requests', requestId), { status: 'accepted' });
+            alert("दोस्ती की रिक्वेस्ट स्वीकार कर ली गई!");
+        };
+
+        function listenForFriends() {
+            if(!currentUserUID) return;
+            const friendsList = document.getElementById('friends-list');
+            friendsList.innerHTML = ''; 
+            onSnapshot(query(collection(db, 'friend_requests'), where('receiverId', '==', currentUserUID), where('status', '==', 'accepted')), (snap) => { snap.docChanges().forEach(change => { if(change.type === 'added') appendFriendToList(change.doc.data().senderId, change.doc.data().senderName); }); });
+            onSnapshot(query(collection(db, 'friend_requests'), where('senderId', '==', currentUserUID), where('status', '==', 'accepted')), (snap) => { snap.docChanges().forEach(change => { if(change.type === 'added') appendFriendToList(change.doc.data().receiverId, change.doc.data().receiverName); }); });
+        }
+
+        function appendFriendToList(friendId, friendName) {
+            const friendsList = document.getElementById('friends-list');
+            const fDiv = document.createElement('div');
+            fDiv.className = 'user-item';
+            fDiv.onclick = () => window.openPrivateChat(friendId, friendName);
+            fDiv.innerHTML = `<div class="user-info"><img src="https://via.placeholder.com/45" class="user-avatar"><div class="user-details"><p class="user-name">${friendName}</p><p class="user-status">Click to chat</p></div></div>`;
+            friendsList.appendChild(fDiv);
+        }
+
+        window.openPrivateChat = (friendId, friendName) => {
+            document.getElementById('messenger-home').style.display = 'none'; document.getElementById('private-chat-room').style.display = 'flex'; document.getElementById('chattingWithName').innerText = friendName;
+            currentChatId = [currentUserUID, friendId].sort().join('_');
+            if(chatListenerUnsubscribe) chatListenerUnsubscribe();
+            const chatBox = document.getElementById('chatMessages');
+            chatListenerUnsubscribe = onSnapshot(query(collection(db, "chats", currentChatId, "messages"), orderBy("timestamp", "asc")), (snapshot) => {
+                chatBox.innerHTML = ''; 
+                snapshot.forEach((docSnap) => {
+                    const msg = docSnap.data();
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = msg.senderId === currentUserUID ? 'message outgoing' : 'message incoming';
+                    msgDiv.innerText = msg.text;
+                    chatBox.appendChild(msgDiv);
+                });
+                chatBox.scrollTop = chatBox.scrollHeight;
+            });
+        };
+
+        window.closePrivateChat = () => { document.getElementById('private-chat-room').style.display = 'none'; document.getElementById('messenger-home').style.display = 'block'; currentChatId = null; };
+
+        window.sendMessage = async () => {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if(text !== "" && currentChatId && currentUserUID) {
+                input.value = ""; 
+                await addDoc(collection(db, "chats", currentChatId, "messages"), { text: text, senderId: currentUserUID, timestamp: serverTimestamp() });
+            }
+        };
+        
+        document.getElementById('messageInput').addEventListener('keypress', function (e) { if (e.key === 'Enter') { window.sendMessage(); } });
+    </script>
+</body>
+</html>
