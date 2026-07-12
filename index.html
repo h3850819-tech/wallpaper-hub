@@ -45,7 +45,11 @@
         .profile-pic { width: 90px; height: 90px; background-color: #1e1e2f; border-radius: 50%; margin: 0 auto 15px; display: block; object-fit: cover; border: 2px solid #ff3366; }
         .change-dp-btn { background-color: #1e1e2f; color: #00e6e6; border: 1px solid #3b3b54; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; }
         .username-display { margin-top: 15px; font-size: 16px; font-weight: bold; color: #fff; display: flex; justify-content: center; align-items: center; gap: 8px; }
-        .username-display input { background: transparent; border: none; border-bottom: 1px dashed #777; color: #00e6e6; font-size: 16px; font-weight: bold; text-align: center; width: 130px; outline: none; }
+        .username-display input { background: #11111a; border: 1px solid #3b3b54; border-radius: 6px; padding: 5px 10px; color: #00e6e6; font-size: 15px; font-weight: bold; text-align: center; width: 140px; outline: none; }
+        
+        /* नया सेव बटन डिज़ाइन */
+        #saveUserBtn { background: #00e6e6; color: #0f0f15; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        #saveUserBtn:hover { background: #00b3b3; }
 
         .search-container { padding: 0 20px 20px; }
         .search-bar { width: 100%; padding: 12px 15px; border: 1px solid #3b3b54; border-radius: 12px; background-color: #1e1e2f; color: white; font-size: 15px; outline: none; }
@@ -87,8 +91,7 @@
         <header>
             <h1>🌟 Premium Wallpapers</h1>
             <div class="menu-container">
-                <!-- यहाँ से मैंने onclick हटा दिया है, ताकि यह बुलेटप्रूफ स्क्रिप्ट से ही चले -->
-                <button class="three-dot-btn">⋮</button>
+                <button class="three-dot-btn" id="menuToggleBtn">⋮</button>
                 <div class="dropdown-menu" id="dropdownMenu">
                     <button onclick="openModal('loginModal')">🔒 प्राइवेट चैट (लॉगिन)</button>
                     <button onclick="openModal('registerModal')">📝 नया अकाउंट बनाएं</button>
@@ -119,10 +122,7 @@
     <div class="modal-overlay" id="loginModal">
         <div class="auth-box">
             <h2>लॉगिन करें</h2>
-            <input type="text" id="loginUser" placeholder="यूज़रनेम (Username)">
-            <input type="password" id="loginPass" placeholder="सीक्रेट पासवर्ड">
-            <button class="auth-btn" onclick="processLogin()">लॉगिन करें</button>
-            <button class="auth-btn google-btn" onclick="signInWithGoogle()">🌐 Google से लॉगिन</button>
+            <button class="auth-btn google-btn" id="googleLoginBtn">🌐 Google से लॉगिन</button>
             <button class="close-btn" onclick="closeAllModals()">बंद करें</button>
         </div>
     </div>
@@ -130,7 +130,7 @@
     <div class="modal-overlay" id="registerModal">
         <div class="auth-box">
             <h2>नया अकाउंट बनाएं</h2>
-            <button class="auth-btn google-btn" onclick="signInWithGoogle()">🌐 Google से अकाउंट बनाएं</button>
+            <button class="auth-btn google-btn" id="googleRegBtn">🌐 Google से अकाउंट बनाएं</button>
             <button class="close-btn" onclick="closeAllModals()">बंद करें</button>
         </div>
     </div>
@@ -139,14 +139,16 @@
         <div id="messenger-home">
             <div class="chat-header">
                 <h2>प्राइवेट मैसेंजर</h2>
-                <button class="close-btn" onclick="logout()" style="margin:0; color:white;">लॉगआउट</button>
+                <button class="close-btn" id="logoutBtn" style="margin:0; color:white;">लॉगआउट</button>
             </div>
             
             <div class="profile-section">
                 <img src="https://via.placeholder.com/100" class="profile-pic" id="myProfilePic">
                 <button class="change-dp-btn">📷 Change DP</button>
                 <div class="username-display">
-                    Username: <input type="text" placeholder="Enter Username" id="myUsername"> ✏️
+                    Username: 
+                    <input type="text" placeholder="Enter Name" id="myUsername"> 
+                    <button id="saveUserBtn">Save</button>
                 </div>
             </div>
 
@@ -166,8 +168,7 @@
 
             <div class="list-section">
                 <div class="section-title-chat">Messages</div>
-                <div id="friends-list">
-                    </div>
+                <div id="friends-list"></div>
             </div>
         </div>
 
@@ -177,8 +178,7 @@
                 <img src="https://via.placeholder.com/45" class="user-avatar" id="chattingWithAvatar">
                 <h3 style="font-size: 16px; color: white;" id="chattingWithName">Friend</h3>
             </div>
-            <div class="chat-messages" id="chatMessages">
-                </div>
+            <div class="chat-messages" id="chatMessages"></div>
             <div class="chat-input-area">
                 <input type="text" id="messageInput" placeholder="मैसेज टाइप करें...">
                 <button class="send-btn" onclick="sendMessage()">भेजें</button>
@@ -186,53 +186,10 @@
         </div>
     </div>
 
-    <!-- UI फिक्स स्क्रिप्ट (यह हमेशा काम करेगी) -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const threeDotBtn = document.querySelector('.three-dot-btn');
-            const dropdownMenu = document.getElementById('dropdownMenu');
-
-            if (threeDotBtn && dropdownMenu) {
-                threeDotBtn.addEventListener('click', (e) => {
-                    e.stopPropagation(); // यह क्लिक को रोकता है ताकि मेनू तुरंत बंद न हो
-                    dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
-                });
-            }
-
-            document.addEventListener('click', (e) => {
-                if (dropdownMenu && dropdownMenu.style.display === 'block' && !dropdownMenu.contains(e.target) && !threeDotBtn.contains(e.target)) {
-                    dropdownMenu.style.display = 'none';
-                }
-            });
-        });
-
-        window.closeAllModals = () => { 
-            document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none');
-            const menu = document.getElementById('dropdownMenu');
-            if(menu) menu.style.display = 'none';
-        };
-        
-        window.openModal = (modalId) => {
-            window.closeAllModals();
-            document.getElementById(modalId).style.display = 'flex';
-        };
-        
-        window.showDashboard = () => {
-            window.closeAllModals();
-            document.getElementById('main-website').style.display = 'none';
-            document.getElementById('chat-dashboard').style.display = 'flex';
-            document.getElementById('messenger-home').style.display = 'block';
-            document.getElementById('private-chat-room').style.display = 'none';
-        };
-        
-        window.processLogin = () => { window.showDashboard(); };
-    </script>
-
-    <!-- फायरबेस स्क्रिप्ट (चैट, सर्च और 14-दिन का रूल) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, query, where, getDocs, addDoc, onSnapshot, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCyOPrvdTFdwz5bFTYBf6KJ5webyBJj_1A",
@@ -252,6 +209,56 @@
         let currentChatId = null; 
         let chatListenerUnsubscribe = null; 
 
+        // --- 1. UI MODALS & THREE-DOT FIX ---
+        document.getElementById('menuToggleBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const menu = document.getElementById('dropdownMenu');
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        });
+
+        document.addEventListener('click', () => {
+            document.getElementById('dropdownMenu').style.display = 'none';
+        });
+
+        window.closeAllModals = () => { 
+            document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none');
+            document.getElementById('dropdownMenu').style.display = 'none';
+        };
+        
+        window.openModal = (modalId) => {
+            window.closeAllModals();
+            document.getElementById(modalId).style.display = 'flex';
+        };
+
+        function showDashboard() {
+            window.closeAllModals();
+            document.getElementById('main-website').style.display = 'none';
+            document.getElementById('chat-dashboard').style.display = 'flex';
+            document.getElementById('messenger-home').style.display = 'block';
+            document.getElementById('private-chat-room').style.display = 'none';
+        }
+
+        // --- 2. GOOGLE LOGIN FIX ---
+        const handleGoogleLogin = async () => {
+            try {
+                const result = await signInWithPopup(auth, googleProvider);
+                showDashboard();
+            } catch (error) {
+                alert("Login Error: " + error.message);
+            }
+        };
+        document.getElementById('googleLoginBtn').addEventListener('click', handleGoogleLogin);
+        document.getElementById('googleRegBtn').addEventListener('click', handleGoogleLogin);
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            signOut(auth).then(() => {
+                currentUserUID = null;
+                document.getElementById('chat-dashboard').style.display = 'none';
+                document.getElementById('main-website').style.display = 'block';
+            });
+        });
+
+        // --- AUTH STATE & PROFILE FETCH ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUserUID = user.uid;
@@ -271,16 +278,15 @@
                     if(userData.username) document.getElementById('myUsername').value = userData.username;
                     if(userData.photoURL) document.getElementById('myProfilePic').src = userData.photoURL;
                 }
-                
                 listenForRequests();
                 listenForFriends();
             }
         });
 
-        // 14-Day Limit & Unique Check
-        document.getElementById('myUsername').addEventListener('change', async (e) => {
+        // --- 3. 14-DAY USERNAME LOCK & SAVE BUTTON FIX ---
+        document.getElementById('saveUserBtn').addEventListener('click', async () => {
             if(!currentUserUID) return;
-            const newUsername = e.target.value.trim();
+            const newUsername = document.getElementById('myUsername').value.trim();
             
             if(newUsername.length < 3) {
                 alert("यूज़रनेम कम से कम 3 अक्षरों का होना चाहिए!");
@@ -291,20 +297,19 @@
             const userSnap = await getDoc(userRef);
             const userData = userSnap.data();
 
+            // 14-day check
             if (userData.lastUsernameChange) {
                 const lastChange = userData.lastUsernameChange.toDate();
-                const now = new Date();
-                const diffTime = Math.abs(now - lastChange);
-                const diffDays = diffTime / (1000 * 60 * 60 * 24);
-                
+                const diffDays = (new Date() - lastChange) / (1000 * 60 * 60 * 24);
                 if (diffDays < 14) {
                     const daysLeft = Math.ceil(14 - diffDays);
                     alert(`आप 14 दिन में केवल एक बार यूज़रनेम बदल सकते हैं। कृपया ${daysLeft} दिन और प्रतीक्षा करें।`);
-                    document.getElementById('myUsername').value = userData.username;
+                    document.getElementById('myUsername').value = userData.username || "";
                     return;
                 }
             }
 
+            // Unique check
             const usernameLower = newUsername.toLowerCase();
             const q = query(collection(db, "users"), where("usernameLower", "==", usernameLower));
             const querySnapshot = await getDocs(q);
@@ -315,7 +320,7 @@
             });
 
             if (!isUnique) {
-                alert("यह यूज़रनेम पहले से किसी ने ले लिया है। कृपया कोई दूसरा नाम चुनें (जैसे: " + newUsername + "123)");
+                alert("यह यूज़रनेम किसी और ने ले लिया है। कोई दूसरा नाम चुनें!");
                 document.getElementById('myUsername').value = userData.username || "";
                 return;
             }
@@ -326,8 +331,7 @@
                 lastUsernameChange: serverTimestamp() 
             });
             
-            alert("शानदार! आपका यूज़रनेम सेव हो गया: " + newUsername);
+            alert("शानदार! आपका यूज़रनेम सेव हो गया।");
         });
 
-        window.signInWithGoogle = () => { signInWithPopup(auth, googleProvider).then(() => { window.showDashboard(); }).catch(e => alert(e.message)); };
-        window.logout =
+        // ---
