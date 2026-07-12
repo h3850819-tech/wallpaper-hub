@@ -5,26 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Premium Wallpaper Hub & Chat</title>
     <style>
-        /* --- CSS: वही शानदार डिज़ाइन --- */
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: #0f0f15; color: #ffffff; }
-        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: #161622; position: sticky; top: 0; z-index: 100; }
+        /* --- बेसिक और थीम स्टाइल --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #0f0f15; color: #ffffff; padding-bottom: 20px; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: #161622; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        header h1 { font-size: 20px; color: #ff3366; letter-spacing: 1px; }
         .menu-container { position: relative; }
         .three-dot-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 5px 10px; z-index: 1001; }
-        .dropdown-menu { display: none; position: absolute; right: 0; top: 50px; background-color: #1e1e2f; border-radius: 8px; min-width: 150px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 1000; }
-        .dropdown-menu button { width: 100%; background: none; border: none; color: white; padding: 12px 15px; text-align: left; cursor: pointer; }
+        .dropdown-menu { display: none; position: absolute; right: 0; top: 50px; background-color: #1e1e2f; border-radius: 8px; min-width: 150px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); overflow: hidden; z-index: 1000; }
+        .dropdown-menu button { width: 100%; background: none; border: none; color: white; padding: 12px 15px; text-align: left; font-size: 14px; cursor: pointer; }
+        .dropdown-menu button:hover { background-color: #2b2b40; }
         
-        #chat-dashboard { display: none; max-width: 500px; margin: 0 auto; min-height: 100vh; flex-direction: column; background-color: #0f0f15; }
-        .user-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #1e1e2f; }
-        .search-bar { width: 90%; margin: 10px 20px; padding: 12px; border-radius: 12px; background: #1e1e2f; border: 1px solid #3b3b54; color: white; }
-        .btn-add { background: #00e6e6; color: #0f0f15; border: none; padding: 7px 18px; border-radius: 20px; cursor: pointer; }
+        .category-container { margin: 30px 20px; }
+        .category-title { font-size: 20px; color: #00e6e6; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 8px; }
+        .wallpaper-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+        .wallpaper-card { background-color: #161622; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: transform 0.2s; cursor: pointer; }
+        .wallpaper-card:hover { transform: scale(1.05); }
+        .wallpaper-card img { width: 100%; height: 220px; object-fit: cover; display: block; }
         
-        #private-chat-room { display: none; flex-direction: column; height: 100vh; }
-        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; }
-        .message { padding: 10px; margin: 5px; border-radius: 10px; max-width: 75%; }
-        .incoming { background: #1e1e2f; align-self: flex-start; }
-        .outgoing { background: #00b3b3; align-self: flex-end; }
-        .chat-input-area { padding: 15px; display: flex; gap: 10px; background: #161622; }
+        /* --- मोडल (लॉगिन/रजिस्टर) स्टाइल --- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
+        .auth-box { background-color: #1e1e2f; padding: 30px 25px; border-radius: 16px; width: 100%; max-width: 360px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #2b2b40; }
+        .auth-box h2 { font-size: 22px; margin-bottom: 10px; color: #ff3366; }
+        .auth-box p { font-size: 14px; color: #aaa; margin-bottom: 20px; }
+        .auth-box input, .auth-box select { width: 100%; padding: 12px; background-color: #11111a; border: 1px solid #3b3b54; border-radius: 8px; color: white; font-size: 16px; margin-bottom: 15px; text-align: left; }
+        .auth-box input:focus, .auth-box select:focus { outline: none; border-color: #ff3366; }
+        .auth-btn { width: 100%; padding: 12px; background: linear-gradient(45deg, #ff3366, #ff6633); border: none; border-radius: 8px; color: white; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .google-btn { background: #4285F4; margin-top: 15px; box-shadow: 0 4px 15px rgba(66, 133, 244, 0.4); }
+        .link-btn { background: none; border: none; color: #00e6e6; cursor: pointer; margin-top: 15px; font-size: 14px; display: block; width: 100%; }
+        .close-btn { background: none; border: none; color: #777; margin-top: 15px; cursor: pointer; font-size: 14px; }
+        
+        /* --- मैसेंजर डैशबोर्ड स्टाइल --- */
+        #chat-dashboard { display: none; max-width: 500px; margin: 0 auto; min-height: 100vh; flex-direction: column; background-color: #0f0f15; border-left: 1px solid #2b2b40; border-right: 1px solid #2b2b40;}
+        .chat-header { background-color: #161622; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2b2b40; position: sticky; top: 0; z-index: 10; }
+        .chat-header h2 { font-size: 18px; color: #00e6e6; display: flex; align-items: center; gap: 10px; }
+        
+        .profile-section { text-align: center; padding: 25px 20px 15px; }
+        .profile-pic { width: 90px; height: 90px; background-color: #1e1e2f; border-radius: 50%; margin: 0 auto 15px; display: block; object-fit: cover; border: 2px solid #ff3366; }
+        .change-dp-btn { background-color: #1e1e2f; color: #00e6e6; border: 1px solid #3b3b54; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .username-display { margin-top: 15px; font-size: 16px; font-weight: bold; color: #fff; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .username-display input { background: transparent; border: none; border-bottom: 1px dashed #777; color: #00e6e6; font-size: 16px; font-weight: bold; text-align: center; width: 130px; outline: none; }
+
+        .search-container { padding: 0 20px 20px; }
+        .search-bar { width: 100%; padding: 12px 15px; border: 1px solid #3b3b54; border-radius: 12px; background-color: #1e1e2f; color: white; font-size: 15px; outline: none; }
+        .search-bar:focus { border-color: #00e6e6; }
+
+        .list-section { padding: 0 20px 20px; }
+        .section-title-chat { font-size: 14px; font-weight: bold; color: #aaa; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #2b2b40; padding-bottom: 5px;}
+        
+        .user-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #1e1e2f; transition: background 0.2s; }
+        .user-item:hover { background-color: #161622; border-radius: 8px; padding: 12px 10px; margin-left: -10px; margin-right: -10px; cursor: pointer; }
+        .user-info { display: flex; align-items: center; }
+        .user-avatar { width: 45px; height: 45px; background-color: #3b3b54; border-radius: 50%; margin-right: 15px; object-fit: cover; }
+        .user-details p { margin: 0; }
+        .user-name { font-weight: bold; font-size: 15px; color: #fff; }
+        .user-status { font-size: 12px; color: #888; margin-top: 3px; }
+
+        .btn-add { background-color: #00e6e6; color: #0f0f15; border: none; padding: 7px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; }
+        .btn-add.requested { background-color: #1e1e2f; color: #00e6e6; border: 1px solid #00e6e6; cursor: default; }
+        .btn-accept { background-color: #ff3366; color: #fff; border: none; padding: 7px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; }
+
+        #private-chat-room { display: none; flex-direction: column; height: 100vh; background-color: #0f0f15; }
+        .chat-room-header { background-color: #161622; padding: 15px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #2b2b40; }
+        .back-btn { background: none; border: none; color: #00e6e6; font-size: 20px; cursor: pointer; }
+        .chat-room-header .user-avatar { width: 35px; height: 35px; margin-right: 0; }
+        
+        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .message { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; word-wrap: break-word; }
+        .message.incoming { background-color: #1e1e2f; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .message.outgoing { background: linear-gradient(45deg, #00e6e6, #00b3b3); color: #000; align-self: flex-end; border-bottom-right-radius: 2px; }
+        
+        .chat-input-area { padding: 15px; background-color: #161622; display: flex; gap: 10px; border-top: 1px solid #2b2b40; }
+        .chat-input-area input { flex: 1; padding: 12px; background-color: #1e1e2f; border: 1px solid #3b3b54; border-radius: 20px; color: white; outline: none; }
+        .send-btn { padding: 0 20px; background-color: #ff3366; border: none; border-radius: 20px; color: white; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -35,66 +89,244 @@
             <div class="menu-container">
                 <button class="three-dot-btn" onclick="toggleDropdown(event)">⋮</button>
                 <div class="dropdown-menu" id="dropdownMenu">
-                    <button onclick="openModal('loginModal')">🔒 प्राइवेट चैट</button>
-                    <button onclick="openModal('registerModal')">📝 नया अकाउंट</button>
+                    <button onclick="openModal('loginModal')">🔒 प्राइवेट चैट (लॉगिन)</button>
+                    <button onclick="openModal('registerModal')">📝 नया अकाउंट बनाएं</button>
                 </div>
             </div>
         </header>
-        <!-- वॉलपेपर ग्रिड और बाकी चीज़ें वही रहेंगी -->
+
+        <div class="category-container">
+            <div class="category-title">🏎️ गाड़ियां और बाइक्स</div>
+            <div class="wallpaper-grid">
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=400" loading="lazy"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=400" loading="lazy"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1503376269666-41f274a49c95?w=400" loading="lazy"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400" loading="lazy"></div>
+            </div>
+        </div>
+        <div class="category-container">
+            <div class="category-title">🌿 प्राकृतिक और सुंदर दृश्य</div>
+            <div class="wallpaper-grid">
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=400" loading="lazy"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400" loading="lazy"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=400" loading="lazy"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=400" loading="lazy"></div>
+            </div>
+        </div>
     </div>
 
-    <!-- चैट डैशबोर्ड और बाकी HTML वही है जो हमने पहले बनाया था -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="auth-box">
+            <h2>लॉगिन करें</h2>
+            <input type="text" id="loginUser" placeholder="यूज़रनेम (Username)">
+            <input type="password" id="loginPass" placeholder="सीक्रेट पासवर्ड">
+            <button class="auth-btn" onclick="processLogin()">लॉगिन करें</button>
+            <button class="auth-btn google-btn" onclick="signInWithGoogle()">🌐 Google से लॉगिन</button>
+            <button class="close-btn" onclick="closeAllModals()">बंद करें</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="registerModal">
+        <div class="auth-box">
+            <h2>नया अकाउंट बनाएं</h2>
+            <button class="auth-btn google-btn" onclick="signInWithGoogle()">🌐 Google से अकाउंट बनाएं</button>
+            <button class="close-btn" onclick="closeAllModals()">बंद करें</button>
+        </div>
+    </div>
+
     <div id="chat-dashboard">
-        <!-- [HTML स्ट्रक्चर वही रखें] -->
+        <div id="messenger-home">
+            <div class="chat-header">
+                <h2>प्राइवेट मैसेंजर</h2>
+                <button class="close-btn" onclick="logout()" style="margin:0; color:white;">लॉगआउट</button>
+            </div>
+            
+            <div class="profile-section">
+                <img src="https://via.placeholder.com/100" class="profile-pic" id="myProfilePic">
+                <button class="change-dp-btn">📷 Change DP</button>
+                <div class="username-display">
+                    Username: <input type="text" placeholder="Enter Username" id="myUsername"> ✏️
+                </div>
+            </div>
+
+            <div class="search-container">
+                <input type="text" class="search-bar" id="searchUserBar" placeholder="🔍 Search user name (जैसे: Vineet)">
+            </div>
+
+            <div class="list-section" id="search-results-section" style="display: none;">
+                <div class="section-title-chat">Search Result</div>
+                <div id="search-results-list"></div>
+            </div>
+
+            <div class="list-section" id="requests-received-section" style="display: none;">
+                <div class="section-title-chat">Requests Received</div>
+                <div id="requests-received-list"></div>
+            </div>
+
+            <div class="list-section">
+                <div class="section-title-chat">Messages</div>
+                <div id="friends-list">
+                    </div>
+            </div>
+        </div>
+
+        <div id="private-chat-room">
+            <div class="chat-room-header">
+                <button class="back-btn" onclick="closePrivateChat()">←</button>
+                <img src="https://via.placeholder.com/45" class="user-avatar" id="chattingWithAvatar">
+                <h3 style="font-size: 16px; color: white;" id="chattingWithName">Friend</h3>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                </div>
+            <div class="chat-input-area">
+                <input type="text" id="messageInput" placeholder="मैसेज टाइप करें...">
+                <button class="send-btn" onclick="sendMessage()">भेजें</button>
+            </div>
+        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, query, where, getDocs, addDoc, onSnapshot, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        const firebaseConfig = { /* आपकी कॉन्फ़िग */ };
+        const firebaseConfig = {
+            apiKey: "AIzaSyCyOPrvdTFdwz5bFTYBf6KJ5webyBJj_1A",
+            authDomain: "himanshuchatapp-785b4.firebaseapp.com",
+            projectId: "himanshuchatapp-785b4",
+            storageBucket: "himanshuchatapp-785b4.firebasestorage.app",
+            messagingSenderId: "817427879739",
+            appId: "1:817427879739:web:d39dbf1c89b54400f3c91e"
+        };
+
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
 
-        // --- थ्री-डॉट फिक्स ---
+        let currentUserUID = null; 
+        let currentChatId = null; 
+        let chatListenerUnsubscribe = null; 
+
+        // --- 1. UI Modals & Three-dot Fix ---
         window.toggleDropdown = (event) => { 
-            event.stopPropagation();
+            if(event) event.stopPropagation(); 
             const menu = document.getElementById('dropdownMenu'); 
-            menu.style.display = (menu.style.display === 'block') ? 'none' : 'block'; 
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; 
         };
-        document.addEventListener('click', () => { document.getElementById('dropdownMenu').style.display = 'none'; });
+        document.addEventListener('click', (event) => {
+            const menu = document.getElementById('dropdownMenu');
+            const btn = document.querySelector('.three-dot-btn');
+            if (menu && menu.style.display === 'block' && !menu.contains(event.target) && !btn.contains(event.target)) {
+                menu.style.display = 'none';
+            }
+        });
 
-        // --- 14-दिन वाला और यूज़रनेम फिक्स ---
+        window.closeAllModals = () => { 
+            document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none');
+            document.getElementById('dropdownMenu').style.display = 'none';
+        };
+        
+        window.openModal = (modalId) => {
+            closeAllModals();
+            document.getElementById(modalId).style.display = 'flex';
+        };
+        
+        function showDashboard() {
+            closeAllModals();
+            document.getElementById('main-website').style.display = 'none';
+            document.getElementById('chat-dashboard').style.display = 'flex';
+            document.getElementById('messenger-home').style.display = 'block';
+            document.getElementById('private-chat-room').style.display = 'none';
+        }
+
+        // --- AUTH & PROFILE LOGIC ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUserUID = user.uid;
+                const userRef = doc(db, "users", user.uid);
+                const userSnap = await getDoc(userRef);
+
+                if (!userSnap.exists()) {
+                    await setDoc(userRef, {
+                        uid: user.uid,
+                        name: user.displayName || "New User",
+                        username: "",
+                        usernameLower: "", 
+                        photoURL: user.photoURL || "https://via.placeholder.com/100"
+                    });
+                } else {
+                    const userData = userSnap.data();
+                    if(userData.username) document.getElementById('myUsername').value = userData.username;
+                    if(userData.photoURL) document.getElementById('myProfilePic').src = userData.photoURL;
+                }
+                
+                listenForRequests();
+                listenForFriends();
+            }
+        });
+
+        // --- 2. USERNAME SAVE LOGIC (14-Day Limit & Unique Check) ---
         document.getElementById('myUsername').addEventListener('change', async (e) => {
-            const uid = auth.currentUser.uid;
-            const newName = e.target.value.trim().toLowerCase();
-            const userRef = doc(db, "users", uid);
-            const userSnap = await getDoc(userRef);
-            const data = userSnap.data();
-
-            // 14 दिन चेक
-            const lastChange = data.lastUsernameChange ? data.lastUsernameChange.toDate() : 0;
-            if (lastChange && (new Date() - lastChange) < (14 * 24 * 60 * 60 * 1000)) {
-                alert("आप 14 दिन में केवल एक बार नाम बदल सकते हैं!");
+            if(!currentUserUID) return;
+            const newUsername = e.target.value.trim();
+            
+            if(newUsername.length < 3) {
+                alert("यूज़रनेम कम से कम 3 अक्षरों का होना चाहिए!");
                 return;
             }
 
-            await updateDoc(userRef, { username: newName, usernameLower: newName, lastUsernameChange: serverTimestamp() });
-            alert("नाम सेव हो गया!");
+            const userRef = doc(db, "users", currentUserUID);
+            const userSnap = await getDoc(userRef);
+            const userData = userSnap.data();
+
+            if (userData.lastUsernameChange) {
+                const lastChange = userData.lastUsernameChange.toDate();
+                const now = new Date();
+                const diffTime = Math.abs(now - lastChange);
+                const diffDays = diffTime / (1000 * 60 * 60 * 24);
+                
+                if (diffDays < 14) {
+                    const daysLeft = Math.ceil(14 - diffDays);
+                    alert(`आप 14 दिन में केवल एक बार यूज़रनेम बदल सकते हैं। कृपया ${daysLeft} दिन और प्रतीक्षा करें।`);
+                    document.getElementById('myUsername').value = userData.username;
+                    return;
+                }
+            }
+
+            const usernameLower = newUsername.toLowerCase();
+            const q = query(collection(db, "users"), where("usernameLower", "==", usernameLower));
+            const querySnapshot = await getDocs(q);
+            
+            let isUnique = true;
+            querySnapshot.forEach((docSnap) => {
+                if (docSnap.id !== currentUserUID) isUnique = false;
+            });
+
+            if (!isUnique) {
+                alert("यह यूज़रनेम पहले से किसी ने ले लिया है। कृपया कोई दूसरा नाम चुनें (जैसे: " + newUsername + "123)");
+                document.getElementById('myUsername').value = userData.username || "";
+                return;
+            }
+
+            await updateDoc(userRef, { 
+                username: newUsername,
+                usernameLower: usernameLower,
+                lastUsernameChange: serverTimestamp() 
+            });
+            
+            alert("शानदार! आपका यूज़रनेम सेव हो गया: " + newUsername);
         });
 
-        // --- सर्च बार फिक्स (केस इन-सेंसिटिव) ---
-        document.getElementById('searchUserBar').addEventListener('input', async (e) => {
-            const val = e.target.value.toLowerCase();
-            if(val.length < 2) return;
-            const q = query(collection(db, "users"), where("usernameLower", ">=", val), where("usernameLower", "<=", val + "\uf8ff"));
-            const snap = await getDocs(q);
-            // यहाँ resultsList में अपडेट करें (जैसा पिछले कोड में था)
-        });
+        window.signInWithGoogle = () => { signInWithPopup(auth, googleProvider).then(() => { showDashboard(); }).catch(e => alert(e.message)); };
+        window.processLogin = () => { showDashboard(); };
+        window.logout = () => {
+            auth.signOut().then(() => {
+                currentUserUID = null;
+                document.getElementById('chat-dashboard').style.display = 'none';
+                document.getElementById('main-website').style.display = 'block';
+            });
+        };
 
-        // बाकी सारा Chat, Login और Request लॉजिक वैसा ही है...
-    </script>
-</body>
-</html>
+        // --- 3. LIVE SEARCH LOGIC (Case Insensitive) ---
+        const searchBar = document.getElementById('sear
