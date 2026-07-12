@@ -465,6 +465,42 @@
         };
         
         document.getElementById('messageInput').addEventListener('keypress', function (e) { if (e.key === 'Enter') { window.sendMessage(); } });
+        // --- ये नया कोड अपनी पुरानी फाइल में सबसे नीचे पेस्ट करें ---
+
+// 1. नाम सेव करने के लिए बटन की फंक्शनलिटी
+document.getElementById('saveUserBtn').addEventListener('click', async () => {
+    const newUsername = document.getElementById('myUsername').value.trim();
+    if(newUsername.length < 3) { alert("यूज़रनेम कम से कम 3 अक्षर का हो!"); return; }
+    
+    // यहाँ Firebase से कनेक्ट करके सेव करने का लॉजिक है
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    await updateDoc(userRef, { 
+        username: newUsername, 
+        usernameLower: newUsername.toLowerCase(),
+        lastUsernameChange: serverTimestamp() 
+    });
+    alert("नाम सेव हो गया!");
+});
+
+// 2. स्मार्ट सर्च (जो नाम ढूँढेगा)
+document.getElementById('searchUserBar').addEventListener('input', async (e) => {
+    const searchText = e.target.value.trim().toLowerCase();
+    const resultsList = document.getElementById('search-results-list');
+    
+    if(searchText.length > 0) {
+        document.getElementById('search-results-section').style.display = 'block';
+        const q = query(collection(db, 'users'), where('usernameLower', '>=', searchText), where('usernameLower', '<=', searchText + '\uf8ff'));
+        const snap = await getDocs(q);
+        resultsList.innerHTML = ''; 
+        snap.forEach((docSnap) => {
+            const userData = docSnap.data();
+            if(userData.uid !== auth.currentUser.uid) {
+                resultsList.innerHTML += `<div class="user-item"><p>${userData.username}</p><button class="btn-add">Add</button></div>`;
+            }
+        });
+    }
+});
+
     </script>
 </body>
 </html>
