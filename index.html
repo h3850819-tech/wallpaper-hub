@@ -182,7 +182,7 @@
     </div>
 
     <script>
-        // थ्री-डॉट मेनू का कोड (फायरबेस से अलग ताकि कभी हैंग ना हो)
+        // थ्री-डॉट मेनू का कोड 
         document.getElementById('menuBtn').addEventListener('click', function(e) {
             e.stopPropagation();
             const menu = document.getElementById('dropdownMenu');
@@ -292,7 +292,7 @@
             }
         });
 
-        // 14-दिन का लॉक और सेव बटन (पक्का फिक्स)
+        // 14-दिन का लॉक और सेव बटन (पक्का फिक्स - एरर फ्री)
         document.getElementById('saveUserBtn').addEventListener('click', async () => {
             if(!currentUserUID) { alert("लॉगिन ज़रूरी है!"); return; }
             
@@ -310,16 +310,18 @@
             try {
                 const userRef = doc(db, "users", currentUserUID);
                 const userSnap = await getDoc(userRef);
-                const userData = userSnap.data();
+                
+                // एरर को रोकने का पक्का तरीका
+                const userData = userSnap.exists() ? userSnap.data() : null;
 
                 // 14-दिन चेक
-                if (userData.lastUsernameChange) {
+                if (userData && userData.lastUsernameChange) {
                     const lastChange = userData.lastUsernameChange.toDate();
                     const diffDays = (new Date() - lastChange) / (1000 * 60 * 60 * 24);
                     if (diffDays < 14) {
                         const daysLeft = Math.ceil(14 - diffDays);
                         alert(`आप 14 दिन में केवल एक बार नाम बदल सकते हैं। ${daysLeft} दिन और इंतज़ार करें!`);
-                        document.getElementById('myUsername').value = userData.username || ""; // नाम वापस पुराना कर दो
+                        document.getElementById('myUsername').value = userData.username || ""; 
                         btn.innerText = "Save";
                         btn.disabled = false;
                         return;
@@ -338,18 +340,18 @@
 
                 if (!isUnique) {
                     alert("यह नाम पहले से किसी ने ले लिया है। कोई दूसरा नाम सोचें!");
-                    document.getElementById('myUsername').value = userData.username || "";
+                    document.getElementById('myUsername').value = userData && userData.username ? userData.username : "";
                     btn.innerText = "Save";
                     btn.disabled = false;
                     return;
                 }
 
-                // सब ठीक है, तो फायरबेस में सेव कर दो
-                await updateDoc(userRef, { 
+                // सब ठीक है, तो फायरबेस में पक्का सेव कर दो
+                await setDoc(userRef, { 
                     username: newUsername,
                     usernameLower: usernameLower,
                     lastUsernameChange: serverTimestamp() 
-                });
+                }, { merge: true });
                 
                 alert("शानदार! नाम सेव हो गया और 14 दिन के लिए लॉक हो गया।");
                 btn.innerText = "Save";
@@ -453,11 +455,11 @@
             if(!currentUserUID) return;
             const friendsList = document.getElementById('friends-list');
             friendsList.innerHTML = ''; 
-            // जो रिक्वेस्ट मुझे आई और मैंने एक्सेप्ट की
+            
             onSnapshot(query(collection(db, 'friend_requests'), where('receiverId', '==', currentUserUID), where('status', '==', 'accepted')), (snap) => { 
                 snap.docChanges().forEach(change => { if(change.type === 'added') appendFriendToList(change.doc.data().senderId, change.doc.data().senderName); }); 
             });
-            // जो रिक्वेस्ट मैंने भेजी और सामने वाले ने एक्सेप्ट की
+            
             onSnapshot(query(collection(db, 'friend_requests'), where('senderId', '==', currentUserUID), where('status', '==', 'accepted')), (snap) => { 
                 snap.docChanges().forEach(change => { if(change.type === 'added') appendFriendToList(change.doc.data().receiverId, change.doc.data().receiverName); }); 
             });
@@ -478,13 +480,12 @@
             document.getElementById('private-chat-room').style.display = 'flex'; 
             document.getElementById('chattingWithName').innerText = friendName;
             
-            window.currentChatId = [currentUserUID, friendId].sort().join('_'); // चैट आईडी दोनों UID को मिलाकर बनती है
+            window.currentChatId = [currentUserUID, friendId].sort().join('_'); 
             
             if(window.chatListenerUnsubscribe) window.chatListenerUnsubscribe();
             
             const chatBox = document.getElementById('chatMessages');
             
-            // मैसेज डेटाबेस से लाना (Real-time)
             window.chatListenerUnsubscribe = onSnapshot(query(collection(db, "chats", window.currentChatId, "messages"), orderBy("timestamp", "asc")), (snapshot) => {
                 chatBox.innerHTML = ''; 
                 snapshot.forEach((docSnap) => {
@@ -504,7 +505,6 @@
             const text = input.value.trim();
             if(text !== "" && window.currentChatId && currentUserUID) {
                 input.value = ""; 
-                // मैसेज फायरबेस में सेव करना
                 await addDoc(collection(db, "chats", window.currentChatId, "messages"), { 
                     text: text, 
                     senderId: currentUserUID, 
@@ -513,7 +513,6 @@
             }
         };
         
-        // Enter बटन से भी मैसेज भेजना
         document.getElementById('messageInput').addEventListener('keypress', function (e) { 
             if (e.key === 'Enter') window.sendMessage(); 
         });
