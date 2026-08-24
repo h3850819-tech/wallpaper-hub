@@ -1,168 +1,480 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wallpaper Gallery</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        ::-webkit-scrollbar { display: none; }
+<!-- Disguise Home Page -->
+<div id="wallpaper-home" class="w-full min-h-screen bg-gray-100">
+    <!-- 3-Dot Secret Menu -->
+    <div class="absolute top-4 right-4 z-50">
+        <button id="secret-login-btn" class="text-3xl text-gray-800 drop-shadow-md cursor-pointer">⋮</button>
+    </div>
+    
+    <!-- 24 Wallpapers Grid (2 on mobile, 4 on desktop) -->
+    <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-4 gap-2 p-2">
+        <!-- JS will inject 24 images here -->
+    </div>
+</div>
+
+<!-- Secret Dashboard (Hidden by Default) -->
+<div id="secret-dashboard" class="hidden w-full min-h-screen bg-gray-900 text-white">
+    <!-- Phase 2 UI will go here -->
+</div>
+import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+
+const auth = getAuth();
+const provider = new GoogleAuthProvider();
+
+const homePage = document.getElementById('wallpaper-home');
+const dashboard = document.getElementById('secret-dashboard');
+
+// Phase 5: Quick Escape (Panic Feature)
+// रिफ्रेश होने पर हमेशा वॉलपेपर पेज ही दिखेगा
+window.onload = () => {
+    homePage.classList.remove('hidden');
+    dashboard.classList.add('hidden');
+};
+
+// Phase 1: Secret Login
+document.getElementById('secret-login-btn').addEventListener('click', () => {
+    signInWithPopup(auth, provider).then((result) => {
+        // लॉगिन सक्सेस होने पर डैशबोर्ड दिखाएं
+        homePage.classList.add('hidden');
+        dashboard.classList.remove('hidden');
+        console.log("Welcome to the secret side,", result.user.displayName);
+        // यहाँ से Phase 2 का प्रोफाइल लोडिंग फंक्शन कॉल होगा
+    }).catch((error) => {
+        console.error("Login Failed", error);
+    });
+});
+<!-- यह कोड <div id="secret-dashboard"> के अंदर जाएगा -->
+<div class="w-full max-w-md mx-auto h-screen flex flex-col bg-gray-900 text-white relative">
+    
+    <!-- Top Navbar: Profile & Friends Icon -->
+    <div class="flex justify-between items-center p-4 bg-gray-800 shadow-md">
+        <div class="flex items-center gap-3">
+            <div class="relative">
+                <img id="user-dp" src="default-dp.png" alt="Profile" class="w-12 h-12 rounded-full object-cover border-2 border-gray-600 cursor-pointer">
+                <!-- DP चेंज करने के लिए hidden input -->
+                <input type="file" id="dp-upload" class="hidden" accept="image/*">
+            </div>
+            <div>
+                <h2 id="user-username" class="font-bold text-lg truncate w-32">Username</h2>
+                <button id="edit-username-btn" class="text-xs text-blue-400">Edit Name</button>
+            </div>
+        </div>
+        <!-- Friends List (Logo/Icon) -->
+        <button id="friends-list-icon" class="text-3xl hover:scale-110 transition-transform">👥</button>
+    </div>
+
+    <!-- Member Discovery (Search Bar) -->
+    <div class="p-4">
+        <input type="text" id="search-input" placeholder="Search members..." class="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-blue-500">
+        <!-- Search Results -->
+        <div id="search-results" class="mt-3 space-y-2 max-h-40 overflow-y-auto"></div>
+    </div>
+
+    <!-- Friend Requests (New Friends) -->
+    <div class="flex-1 p-4 overflow-y-auto border-t border-gray-800">
+        <h3 class="text-sm font-bold text-gray-400 mb-3 uppercase tracking-wider">New Friends</h3>
+        <div id="friend-requests-list" class="space-y-3">
+            <!-- Requests will be injected here via JS -->
+        </div>
+    </div>
+</div>
+import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, onSnapshot } from "firebase/auth"; // auth imports assumed to be at top
+const db = getFirestore();
+let currentUser = null; // यह Phase 1 के लॉगिन से सेट होगा
+
+// --- 1. 14-Day Username Validation ---
+document.getElementById('edit-username-btn').addEventListener('click', async () => {
+    const newUsername = prompt("Enter new username:");
+    if (!newUsername) return;
+
+    const userRef = doc(db, "users", currentUser.uid);
+    const userSnap = await getDoc(userRef);
+    
+    if (userSnap.exists()) {
+        const data = userSnap.data();
+        const now = Date.now();
         
-        /* आपका 3D सेंड बटन */
-        .custom-send-btn {
-            width: 65px; height: 45px;
-            background: linear-gradient(90deg, #800080, #FFA500, #008000);
-            clip-path: polygon(0 0, 25% 50%, 0 100%, 65% 80%, 65% 100%, 100% 50%, 65% 0, 65% 20%);
-            box-shadow: inset 0px 4px 8px rgba(255, 255, 255, 0.4), 0px 4px 6px rgba(0,0,0,0.3);
-            border: none; cursor: pointer; transition: transform 0.2s ease-in-out;
-        }
-        .custom-send-btn:active { transform: scale(0.90); }
-        .secure-media { filter: blur(4px); transition: filter 0.3s; cursor: pointer; }
-        .secure-media:hover { filter: blur(0px); }
-    </style>
-</head>
-<body class="bg-gray-100 font-sans">
-
-    <!-- ========================================== -->
-    <!-- PHASE 1: HOME PAGE (24 WALLPAPERS)         -->
-    <!-- ========================================== -->
-    <div id="home-screen" class="min-h-screen p-4 block">
-        <!-- 3-Dot Menu -->
-        <div class="flex justify-end mb-2">
-            <button onclick="showGoogleLogin()" class="text-3xl font-bold text-gray-400 hover:text-gray-700 px-2 pb-2">&#8942;</button>
-        </div>
-        
-        <h1 class="text-center text-2xl font-bold mb-6 text-gray-800">Trending Wallpapers</h1>
-        <!-- यहाँ पूरे 24 वॉलपेपर आएंगे -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="wallpaper-grid"></div>
-    </div>
-
-    <!-- Google Auth Modal (छलावा लॉगिन) -->
-    <div id="google-login-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-xl shadow-xl w-80 text-center">
-            <h2 class="text-xl font-bold mb-4">Sign in</h2>
-            <button onclick="loginWithGmail()" class="w-full flex items-center justify-center space-x-2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
-                <span>Sign in with Google (Gmail)</span>
-            </button>
-            <button onclick="hideGoogleLogin()" class="mt-4 text-gray-500 text-sm">Cancel</button>
-        </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- PHASE 2: SECRET DASHBOARD (DP & USERNAME)  -->
-    <!-- ========================================== -->
-    <div id="dashboard-screen" class="min-h-screen bg-gray-900 text-white p-4 hidden">
-        
-        <div class="flex flex-col items-center mb-8 pt-4">
-            <!-- DP Change Option (Click to open gallery) -->
-            <label for="dp-upload" class="w-24 h-24 rounded-full bg-gray-700 mb-2 overflow-hidden border-2 border-purple-500 cursor-pointer relative group">
-                <img id="user-dp" src="https://source.unsplash.com/random/100x100?face" class="w-full h-full object-cover">
-                <div class="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center text-xs">Change</div>
-            </label>
-            <input type="file" id="dp-upload" class="hidden" accept="image/*" onchange="changeDP(event)">
-            
-            <!-- Username Edit -->
-            <input type="text" value="Himanshu_8938" class="text-center bg-transparent border-b border-gray-600 text-xl font-bold outline-none mb-1 focus:border-purple-500">
-            <p class="text-[10px] text-gray-400">Username can only be changed once every 14 days.</p>
-        </div>
-
-        <input type="text" placeholder="Search users..." class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 outline-none mb-6">
-
-        <h3 class="text-purple-400 font-semibold mb-3">New Friends</h3>
-        <div class="flex items-center justify-between bg-gray-800 p-3 rounded-lg mb-6">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-gray-600 rounded-full"></div>
-                <span>Lalit Bariya</span>
-            </div>
-            <button class="bg-green-600 px-4 py-1 rounded-md text-sm font-bold">Accept</button>
-        </div>
-
-        <h3 class="text-orange-400 font-semibold mb-3">All Friends</h3>
-        <div onclick="openChat()" class="flex items-center justify-between bg-gray-800 p-3 rounded-lg cursor-pointer hover:bg-gray-700">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-gray-600 rounded-full"></div>
-                <span>Vinit</span>
-            </div>
-            <span class="text-purple-400 text-sm font-bold">Tap to chat &rarr;</span>
-        </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- PHASE 3: CHAT ROOM (3D BUTTON INCLUDED)    -->
-    <!-- ========================================== -->
-    <div id="chat-screen" class="flex-col h-screen bg-black text-white hidden">
-        <!-- Chat Header -->
-        <div class="flex justify-between items-center p-4 bg-gray-900 border-b border-gray-800">
-            <div class="flex items-center space-x-3 cursor-pointer" onclick="closeChat()">
-                <span class="text-2xl font-bold text-gray-400">&larr;</span>
-                <div class="w-10 h-10 bg-gray-700 rounded-full"></div>
-                <h2 class="font-bold">Vinit</h2>
-            </div>
-            <div class="space-x-6 text-2xl flex">
-                <button>📞</button>
-                <button>📹</button>
-            </div>
-        </div>
-
-        <div class="flex-1 p-4 overflow-y-auto">
-            <div class="text-center text-xs text-gray-600 my-4">Today</div>
-        </div>
-
-        <!-- Bottom Input & 3D Send Button -->
-        <div class="p-3 bg-gray-900 flex items-center space-x-3 w-full pb-6">
-            <button class="text-2xl text-gray-400">📷</button>
-            <button class="text-2xl text-gray-400">🖼️</button>
-            <button class="text-2xl text-gray-400">🎤</button>
-            <input type="text" placeholder="Type..." class="flex-1 px-4 py-2 rounded-full bg-gray-800 text-white outline-none">
-            <button class="custom-send-btn flex-shrink-0"></button>
-        </div>
-    </div>
-
-    <script>
-        // 1. Generate 24 Wallpapers
-        const grid = document.getElementById('wallpaper-grid');
-        for (let i = 1; i <= 24; i++) {
-            grid.innerHTML += `
-                <div class="relative group cursor-pointer overflow-hidden rounded-xl shadow-md">
-                    <img src="https://source.unsplash.com/random/400x600?wallpaper,nature&sig=${i}" class="w-full h-56 object-cover">
-                </div>
-            `;
-        }
-
-        // 2. Google Login Flow
-        function showGoogleLogin() {
-            document.getElementById('google-login-modal').classList.replace('hidden', 'flex');
-        }
-        function hideGoogleLogin() {
-            document.getElementById('google-login-modal').classList.replace('flex', 'hidden');
-        }
-        function loginWithGmail() {
-            hideGoogleLogin();
-            document.getElementById('home-screen').classList.replace('block', 'hidden');
-            document.getElementById('dashboard-screen').classList.replace('hidden', 'block');
-        }
-
-        // 3. DP Change Logic
-        function changeDP(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('user-dp').src = e.target.result;
-                }
-                reader.readAsDataURL(file);
+        // चेक करें कि क्या 14 दिन पूरे हो गए हैं (14 दिन = 1209600000 मिलीसेकंड)
+        if (data.lastUsernameChange) {
+            const daysPassed = (now - data.lastUsernameChange) / (1000 * 60 * 60 * 24);
+            if (daysPassed < 14) {
+                const daysLeft = Math.ceil(14 - daysPassed);
+                alert(`आप ${daysLeft} दिन बाद ही यूज़रनेम बदल सकते हैं।`);
+                return;
             }
         }
+        
+        // अगर 14 दिन हो गए हैं या पहली बार बदल रहा है
+        await updateDoc(userRef, { 
+            username: newUsername, 
+            lastUsernameChange: now 
+        });
+        document.getElementById('user-username').innerText = newUsername;
+        alert("Username Updated!");
+    }
+});
 
-        // Navigation
-        function openChat() {
-            document.getElementById('dashboard-screen').classList.replace('block', 'hidden');
-            document.getElementById('chat-screen').classList.replace('hidden', 'flex');
+// --- 2. Member Discovery (Search) ---
+document.getElementById('search-input').addEventListener('input', async (e) => {
+    const searchTerm = e.target.value.trim();
+    const resultsDiv = document.getElementById('search-results');
+    resultsDiv.innerHTML = ''; // Clear previous
+
+    if (searchTerm.length < 3) return; // 3 अक्षरों से पहले सर्च नहीं
+
+    const usersRef = collection(db, "users");
+    // ध्यान दें: Firebase में सटीक सर्च के लिए '==' या '>=', '<=' का कॉम्बिनेशन लगता है
+    const q = query(usersRef, where("username", ">=", searchTerm), where("username", "<=", searchTerm + '\uf8ff'));
+    
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach((docSnap) => {
+        const userData = docSnap.data();
+        if (docSnap.id === currentUser.uid) return; // खुद को सर्च में मत दिखाओ
+
+        const userHTML = `
+            <div class="flex justify-between items-center bg-gray-800 p-2 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <img src="${userData.dp || 'default-dp.png'}" class="w-10 h-10 rounded-full">
+                    <span>${userData.username}</span>
+                </div>
+                <button onclick="sendFriendRequest('${docSnap.id}')" class="bg-blue-600 px-3 py-1 rounded text-sm hover:bg-blue-500">Add</button>
+            </div>
+        `;
+        resultsDiv.innerHTML += userHTML;
+    });
+});
+
+// --- 3. Send & Load Friend Requests ---
+window.sendFriendRequest = async (targetUid) => {
+    await addDoc(collection(db, "friend_requests"), {
+        from_uid: currentUser.uid,
+        from_name: document.getElementById('user-username').innerText, // Cache name
+        from_dp: document.getElementById('user-dp').src,
+        to_uid: targetUid,
+        status: "pending"
+    });
+    alert("Request Sent!");
+};
+
+// रियल-टाइम में नई फ्रेंड रिक्वेस्ट सुनना
+const loadFriendRequests = () => {
+    const reqQuery = query(collection(db, "friend_requests"), where("to_uid", "==", currentUser.uid), where("status", "==", "pending"));
+    
+    onSnapshot(reqQuery, (snapshot) => {
+        const reqList = document.getElementById('friend-requests-list');
+        reqList.innerHTML = '';
+        
+        snapshot.forEach((docSnap) => {
+            const reqData = docSnap.data();
+            const reqHTML = `
+                <div class="flex justify-between items-center bg-gray-800 p-3 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <img src="${reqData.from_dp}" class="w-10 h-10 rounded-full">
+                        <span class="font-bold">${reqData.from_name}</span>
+                    </div>
+                    <button onclick="acceptRequest('${docSnap.id}', '${reqData.from_uid}')" class="bg-green-600 px-4 py-1 rounded text-sm hover:bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]">Accept</button>
+                </div>
+            `;
+            reqList.innerHTML += reqHTML;
+        });
+    });
+};
+
+// Request Accept करना
+window.acceptRequest = async (reqId, fromUid) => {
+    // 1. Request का स्टेटस अपडेट करें
+    await updateDoc(doc(db, "friend_requests", reqId), { status: "accepted" });
+    
+    // 2. Friends collection में जोड़ें (दोनों तरफ)
+    // इसके लिए Firebase Batch write या अलग-अलग सेट कर सकते हैं
+    await setDoc(doc(db, `users/${currentUser.uid}/friends`, fromUid), { addedAt: Date.now() });
+    await setDoc(doc(db, `users/${fromUid}/friends`, currentUser.uid), { addedAt: Date.now() });
+    
+    alert("Friend Added!");
+};
+        <style>
+    /* 3D Glossy Split-Tail (Fishtail) Arrow Button */
+    .send-btn-wrapper {
+        /* clip-path के बाहर शैडो दिखाने के लिए drop-shadow का इस्तेमाल */
+        filter: drop-shadow(0px 5px 5px rgba(0, 0, 0, 0.4));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 5px;
+    }
+
+    .custom-send-btn {
+        width: 45px;
+        height: 40px;
+        /* यह clip-path इसे Y-Shape / Fishtail Arrow बनाता है */
+        clip-path: polygon(0 10%, 100% 50%, 0 90%, 25% 50%);
+        /* पर्पल, ऑरेंज और ग्रीन का स्मूथ ग्रेडिएंट */
+        background: linear-gradient(135deg, #8b5cf6, #f97316, #22c55e);
+        cursor: pointer;
+        position: relative;
+        transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    /* Glossy (कांच जैसी चमक) 3D इफेक्ट */
+    .custom-send-btn::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 50%;
+        background: linear-gradient(to bottom, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 100%);
+        pointer-events: none; /* क्लिक को ब्लॉक न करे */
+    }
+
+    /* होवर और क्लिक एनीमेशन */
+    .custom-send-btn:hover {
+        transform: scale(1.1);
+        background: linear-gradient(135deg, #7c3aed, #ea580c, #16a34a);
+    }
+    .custom-send-btn:active {
+        transform: scale(0.95);
+    }
+        </style>
+        <!-- Personal Chat Page (Hidden by Default) -->
+<div id="personal-chat-page" class="hidden w-full max-w-md mx-auto h-screen flex flex-col bg-[#0f172a] text-white relative">
+    
+    <!-- Chat Header -->
+    <div class="flex justify-between items-center p-4 bg-gray-900 shadow-md border-b border-gray-800 z-10">
+        <div class="flex items-center gap-3 cursor-pointer" id="back-to-friends-btn">
+            <span class="text-xl">⬅️</span>
+            <img id="chat-friend-dp" src="default-dp.png" class="w-10 h-10 rounded-full object-cover border border-gray-600">
+            <h2 id="chat-friend-name" class="font-bold text-lg">Friend Name</h2>
+        </div>
+        <!-- Phase 4: Calling Icons -->
+        <div class="flex gap-4 text-xl">
+            <button id="voice-call-btn" class="hover:text-green-400 transition-colors">📞</button>
+            <button id="video-call-btn" class="hover:text-blue-400 transition-colors">📹</button>
+        </div>
+    </div>
+
+    <!-- Chat Messages Area -->
+    <div id="chat-messages-area" class="flex-1 p-4 overflow-y-auto space-y-4 bg-gray-900 bg-opacity-95">
+        <!-- Messages will be injected here via JS -->
+    </div>
+
+    <!-- Bottom Input Footer -->
+    <div class="p-3 bg-gray-800 border-t border-gray-700 flex items-center gap-3">
+        <!-- Attachment Icons (Camera & Gallery) -->
+        <div class="flex gap-2 text-gray-400 text-xl">
+            <button class="hover:text-white transition">📷</button>
+            <button class="hover:text-white transition">🖼️</button>
+        </div>
+        
+        <!-- Text Input -->
+        <input type="text" id="chat-input" placeholder="Message..." class="flex-1 bg-gray-700 text-white rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+        
+        <!-- Mic Icon -->
+        <button class="text-gray-400 hover:text-white text-xl">🎤</button>
+        
+        <!-- 3D Glossy Send Button -->
+        <div class="send-btn-wrapper" id="send-msg-btn">
+            <div class="custom-send-btn"></div>
+        </div>
+    </div>
+</div>
+        
+        <!-- WebRTC Call Modal / Screen (Hidden by default) -->
+<div id="call-modal" class="hidden fixed inset-0 bg-black bg-opacity-90 z-50 flex flex-col items-center justify-center text-white">
+    <div class="relative w-full max-w-md h-[80vh] flex flex-col justify-between p-4">
+        <!-- Remote User Video (सामने वाले का वीडियो) -->
+        <video id="remote-video" autoplay playsinline class="w-full h-full object-cover rounded-2xl bg-gray-800"></video>
+        
+        <!-- Local User Video (खुद का छोटा वीडियो - Top Right) -->
+        <video id="local-video" autoplay playsinline muted class="absolute top-6 right-6 w-28 h-40 object-cover rounded-xl border-2 border-white shadow-lg bg-gray-900"></video>
+        
+        <!-- Call Control Buttons -->
+        <div class="flex justify-center gap-6 pb-6 z-10">
+            <button id="toggle-audio" class="bg-gray-700 p-4 rounded-full text-xl hover:bg-gray-600">🎤</button>
+            <button id="end-call-btn" class="bg-red-600 p-4 rounded-full text-xl hover:bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.7)]">📞</button>
+            <button id="toggle-video" class="bg-gray-700 p-4 rounded-full text-xl hover:bg-gray-600">📹</button>
+        </div>
+    </div>
+</div>
+
+<!-- Incoming Call Ringing Notification -->
+<div id="incoming-call-modal" class="hidden fixed inset-0 bg-black bg-opacity-80 z-50 flex flex-col items-center justify-center text-white">
+    <div class="bg-gray-800 p-6 rounded-2xl text-center space-y-4 shadow-2xl border border-gray-700">
+        <img id="caller-dp" src="default-dp.png" class="w-20 h-20 rounded-full mx-auto object-cover border-2 border-blue-500">
+        <h3 id="caller-name" class="text-xl font-bold">Incoming Call...</h3>
+        <div class="flex gap-4 justify-center">
+            <button id="reject-call-btn" class="bg-red-600 px-6 py-2 rounded-xl font-bold hover:bg-red-500">Decline</button>
+            <button id="accept-call-btn" class="bg-green-600 px-6 py-2 rounded-xl font-bold hover:bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]">Accept</button>
+        </div>
+    </div>
+</div>
+// WebRTC Configuration (Google के फ्री Public STUN servers का इस्तेमाल)
+const servers = {
+    iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+    ]
+};
+
+let pc; // RTCPeerConnection instance
+let localStream;
+let remoteStream;
+let currentCallDocId = null;
+
+// STUN/ICE सेटअप और मीडिया डिवाइस (Camera/Mic) एक्सेस करना
+async function startLocalMedia(isVideo = true) {
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+            video: isVideo,
+            audio: true
+        });
+        document.getElementById('local-video').srcObject = localStream;
+    } catch (error) {
+        console.error("Camera/Mic permission denied:", error);
+        alert("कैमरा या माइक की अनुमति नहीं मिली!");
+    }
+}
+
+// --- 1. कॉल इनिशिएट करना (Calling someone) ---
+document.getElementById('video-call-btn').addEventListener('click', () => initiateCall(true));
+document.getElementById('voice-call-btn').addEventListener('click', () => initiateCall(false));
+
+async function initiateCall(isVideo) {
+    await startLocalMedia(isVideo);
+    document.getElementById('call-modal').classList.remove('hidden');
+
+    pc = new RTCPeerConnection(servers);
+
+    // लोकल स्ट्रीम के ट्रैक्स को पीयर कनेक्शन में जोड़ें
+    localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+    // सामने वाले की वीडियो/ऑडियो स्ट्रीम रिसीव करना
+    remoteStream = new MediaStream();
+    document.getElementById('remote-video').srcObject = remoteStream;
+    pc.ontrack = (event) => {
+        event.streams[0].getTracks().forEach(track => remoteStream.addTrack(track));
+    };
+
+    // ICE कैंडिडेट्स को कलेक्ट करके Firestore में भेजना
+    const callRef = doc(collection(db, "calls"));
+    currentCallDocId = callRef.id;
+
+    pc.onicecandidate = (event) => {
+        if (event.candidate) {
+            setDoc(callRef, { offerCandidates: arrayUnion(event.candidate.toJSON()) }, { merge: true });
         }
-        function closeChat() {
-            document.getElementById('chat-screen').classList.replace('flex', 'hidden');
-            document.getElementById('dashboard-screen').classList.replace('hidden', 'block');
+    };
+
+    // WebRTC Offer बनाना
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+
+    const callData = {
+        offer: { type: offer.type, sdp: offer.sdp },
+        callerId: currentUser.uid,
+        callerName: document.getElementById('user-username').innerText,
+        callerDp: document.getElementById('user-dp').src,
+        receiverId: currentChatFriendUid, // जिस फ्रेंड से चैट चल रही है
+        status: "ringing"
+    };
+
+    await setDoc(callRef, callData);
+
+    // कॉल डॉक्यूमेंट को सुनना (आंसर का इंतज़ार करना)
+    onSnapshot(callRef, async (snapshot) => {
+        const data = snapshot.data();
+        if (data && data.answer && !pc.currentRemoteDescription) {
+            const answerDescription = new RTCSessionDescription(data.answer);
+            await pc.setRemoteDescription(answerDescription);
         }
-    </script>
-</body>
-</html>
+        if (data && data.answerCandidates) {
+            data.answerCandidates.forEach(async (candidate) => {
+                try {
+                    await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                } catch (e) { console.error(e); }
+            });
+        }
+    });
+}
+
+// --- 2. इनकमिंग कॉल सुनना (Real-time listener for incoming calls) ---
+function listenForIncomingCalls() {
+    const q = query(collection(db, "calls"), where("receiverId", "==", currentUser.uid), where("status", "==", "ringing"));
+    
+    onSnapshot(q, (snapshot) => {
+        snapshot.docChanges().forEach(async (change) => {
+            if (change.type === "added") {
+                const callData = change.doc.data();
+                currentCallDocId = change.doc.id;
+
+                // UI पर इनकमिंग कॉल पॉपअप दिखाना
+                document.getElementById('caller-name').innerText = `${callData.callerName} calling...`;
+                document.getElementById('caller-dp').src = callData.callerDp;
+                document.getElementById('incoming-call-modal').classList.remove('hidden');
+            }
+        });
+    });
+}
+
+// --- 3. कॉल स्वीकार करना (Accept Call) ---
+document.getElementById('accept-call-btn').addEventListener('click', async () => {
+    document.getElementById('incoming-call-modal').classList.add('hidden');
+    document.getElementById('call-modal').classList.remove('hidden');
+
+    await startLocalMedia(true); // डिफ़ॉल्ट वीडियो कॉल मान रहे हैं
+    pc = new RTCPeerConnection(servers);
+
+    localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+    remoteStream = new MediaStream();
+    document.getElementById('remote-video').srcObject = remoteStream;
+    pc.ontrack = (event) => {
+        event.streams[0].getTracks().forEach(track => remoteStream.addTrack(track));
+    };
+
+    const callRef = doc(db, "calls", currentCallDocId);
+    const callSnap = await getDoc(callRef);
+    const callData = callSnap.data();
+
+    pc.onicecandidate = (event) => {
+        if (event.candidate) {
+            updateDoc(callRef, { answerCandidates: arrayUnion(event.candidate.toJSON()) });
+        }
+    };
+
+    // ऑफर सेट करना और आंसर बनाना
+    const offerDescription = new RTCSessionDescription(callData.offer);
+    await pc.setRemoteDescription(offerDescription);
+
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+
+    await updateDoc(callRef, {
+        answer: { type: answer.type, sdp: answer.sdp },
+        status: "connected"
+    });
+
+    // कलेक्टेड ICE कैंडिडेट्स जोड़ना
+    if (callData.offerCandidates) {
+        callData.offerCandidates.forEach(async (candidate) => {
+            await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        });
+    }
+});
+
+// --- 4. कॉल काटना (End Call) ---
+document.getElementById('end-call-btn').addEventListener('click', () => {
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+    }
+    if (pc) {
+        pc.close();
+    }
+    document.getElementById('call-modal').classList.add('hidden');
+    document.getElementById('incoming-call-modal').classList.add('hidden');
+    
+    // Firestore से कॉल स्टेटस अपडेट कर सकते हैं
+    if (currentCallDocId) {
+        updateDoc(doc(db, "calls", currentCallDocId), { status: "ended" });
+    }
+});
+        
