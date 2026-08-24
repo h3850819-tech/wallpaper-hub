@@ -3,328 +3,384 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wallpapers HD</title> <!-- Fake Title -->
+    <title>Wallpapers HD</title> <!-- Fake Title for Secrecy -->
     <style>
         /* =========================================
-           GLOBAL CSS & VARIABLES
+           GLOBAL CSS
            ========================================= */
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: #f0f0f0; overflow-x: hidden; }
         .hidden { display: none !important; }
 
         /* =========================================
-           1. HOME PAGE (THE DISGUISE)
+           FEATURE 9: SECRET NOTIFICATIONS
+           ========================================= */
+        #stealth-notification {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            background: white; padding: 12px 25px; border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: top 0.4s ease-in-out;
+            z-index: 9999; font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 10px;
+        }
+
+        /* =========================================
+           FEATURE 1: HOME PAGE (DISGUISE)
            ========================================= */
         #home-page { padding: 10px; background: #fff; min-height: 100vh; }
-        .header { display: flex; justify-content: space-between; padding: 15px; font-size: 20px; font-weight: bold; }
-        .three-dots { cursor: pointer; padding: 5px 10px; font-size: 24px; }
+        .header { display: flex; justify-content: space-between; padding: 15px; font-size: 20px; font-weight: bold; align-items: center; }
+        .three-dots { cursor: pointer; padding: 5px 15px; font-size: 24px; font-weight: bold; }
         .wallpaper-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
-        .wallpaper-item { width: 100%; height: 250px; background-color: #ddd; border-radius: 10px; background-size: cover; background-position: center; cursor: pointer; transition: transform 0.2s; }
-        .wallpaper-item:active { transform: scale(0.95); }
+        .wallpaper-item { width: 100%; height: 250px; background-color: #ddd; border-radius: 10px; background-size: cover; background-position: center; cursor: pointer; transition: 0.2s; }
+        .wallpaper-item:active { transform: scale(0.96); }
 
         /* =========================================
-           2. SECRET PAGE (PROFILE & MEMBERS)
+           FEATURE 3, 4, 6: SECRET PAGE (PROFILE, SEARCH, ADD)
            ========================================= */
         #secret-page { background: #121212; color: white; min-height: 100vh; padding: 20px; }
-        .top-nav { display: flex; justify-content: space-between; margin-bottom: 20px; }
-        .new-friends-btn { background: #ff4757; padding: 5px 15px; border-radius: 20px; cursor: pointer; font-size: 14px; }
+        .top-nav { display: flex; justify-content: space-between; margin-bottom: 25px; align-items: center; }
+        .new-friends-btn { background: #ff4757; color: white; padding: 6px 15px; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; }
         
-        .profile-section { text-align: center; margin-bottom: 30px; }
-        .profile-dp { width: 100px; height: 100px; border-radius: 50%; background: #555; margin: 0 auto 10px; border: 3px solid #4CAF50; cursor: pointer; }
-        .username { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
-        .cooldown-text { font-size: 12px; color: #aaa; margin-bottom: 15px; }
-        .friends-logo { width: 40px; height: 40px; background: #4CAF50; border-radius: 50%; margin: 10px auto; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .profile-section { text-align: center; margin-bottom: 25px; }
+        .profile-dp { width: 90px; height: 90px; border-radius: 50%; background: #444; margin: 0 auto 10px; border: 2px solid #4CAF50; cursor: pointer; object-fit: cover; }
+        .username { font-size: 22px; font-weight: bold; margin-bottom: 5px; cursor: pointer; }
+        .cooldown-text { font-size: 11px; color: #888; margin-bottom: 15px; }
         
-        .search-bar { width: 100%; padding: 12px; border-radius: 25px; border: none; outline: none; margin-bottom: 20px; background: #222; color: white; }
+        /* FEATURE 5: FRIENDS LOGO */
+        .friends-logo { width: 45px; height: 45px; background: #4CAF50; border-radius: 50%; margin: 10px auto; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; box-shadow: 0 4px 10px rgba(76, 175, 80, 0.4); }
         
-        .user-list { margin-top: 20px; }
-        .user-item { display: flex; align-items: center; justify-content: space-between; background: #1e1e1e; padding: 10px; border-radius: 10px; margin-bottom: 10px; }
+        .search-bar { width: 100%; padding: 12px 20px; border-radius: 25px; border: none; outline: none; margin-bottom: 20px; background: #2a2a2a; color: white; font-size: 15px; }
+        
+        .section-title { font-size: 16px; color: #aaa; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .user-list { display: flex; flex-direction: column; gap: 10px; }
+        .user-item { display: flex; justify-content: space-between; align-items: center; background: #1e1e1e; padding: 12px; border-radius: 12px; }
         .user-info { display: flex; align-items: center; gap: 15px; }
-        .user-item .dp { width: 40px; height: 40px; border-radius: 50%; background: #777; }
-        .add-btn { background: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; }
+        .dp-small { width: 45px; height: 45px; border-radius: 50%; background: #555; background-size: cover; }
+        .add-btn { background: #4CAF50; color: white; border: none; padding: 6px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; }
 
         /* =========================================
-           3. PERSONAL CHAT PAGE
+           FEATURE 6: INSTAGRAM STYLE FRIENDS LIST
            ========================================= */
-        #chat-page { display: flex; flex-direction: column; height: 100vh; background: #e5ddd5; }
-        .chat-header { background: #075e54; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .chat-header-info { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-        .call-buttons span { margin-left: 15px; font-size: 20px; cursor: pointer; }
-        
-        .chat-body { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .message { max-width: 70%; padding: 10px 15px; border-radius: 15px; position: relative; user-select: none; transition: 0.3s; }
-        .msg-received { background: white; align-self: flex-start; border-top-left-radius: 0; }
-        .msg-sent { background: #dcf8c6; align-self: flex-end; border-top-right-radius: 0; }
-        
-        .msg-time { font-size: 10px; color: #888; float: right; margin-top: 5px; margin-left: 10px; }
-        
-        /* 1. DOT SYSTEM (Single, Double, Green) */
-        .status-dots { font-size: 12px; margin-left: 5px; color: #999; font-weight: bold; }
-        .status-dots.read { color: #34b7f1; /* Green/Blue tick feel */ }
+        #friends-page { background: #000; color: white; min-height: 100vh; padding: 20px; }
+        .my-name-header { font-size: 20px; font-weight: bold; text-align: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #333; }
+        .dm-item { display: flex; align-items: center; gap: 15px; padding: 12px 0; cursor: pointer; }
+        .dm-name { font-size: 16px; font-weight: bold; }
 
-        /* 11. Secure Media Image */
-        .secure-image { width: 100%; border-radius: 10px; margin-top: 5px; }
-        .download-btn { display: block; text-align: center; background: rgba(0,0,0,0.6); color: white; padding: 5px; border-radius: 5px; text-decoration: none; margin-top: 5px; font-size: 12px; cursor: pointer; }
-
-        /* 7. CUSTOM 3D GLOSSY SEND BUTTON (Y-Shape/Fish-tail) */
-        .chat-footer { background: #f0f0f0; padding: 10px; display: flex; align-items: center; gap: 10px; }
-        .chat-input { flex: 1; padding: 12px; border-radius: 25px; border: none; outline: none; }
-        .media-icons { display: flex; gap: 10px; font-size: 20px; color: #555; cursor: pointer; }
+        /* =========================================
+           FEATURE 7: PERSONAL CHAT PAGE
+           ========================================= */
+        #chat-page { display: flex; flex-direction: column; height: 100vh; background: #0b141a; color: white; }
+        .chat-header { background: #202c33; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; }
+        .chat-header-info { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .call-buttons span { margin-left: 20px; font-size: 22px; cursor: pointer; }
         
-        .send-btn-custom {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, purple, orange, green);
-            border: none;
-            /* Fish-tail / Arrow Shape */
-            clip-path: polygon(0% 20%, 60% 20%, 60% 0%, 100% 50%, 60% 100%, 60% 80%, 0% 80%, 20% 50%);
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3), inset 0 2px 5px rgba(255,255,255,0.5);
-            transition: transform 0.1s;
+        .chat-body { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background-image: url('https://i.ibb.co/3mN9f3R/bg.png'); background-size: cover; }
+        
+        .message { max-width: 75%; padding: 8px 12px; border-radius: 10px; position: relative; font-size: 15px; word-wrap: break-word; user-select: none; }
+        .msg-received { background: #202c33; align-self: flex-start; border-top-left-radius: 0; }
+        .msg-sent { background: #005c4b; align-self: flex-end; border-top-right-radius: 0; }
+        
+        .msg-info { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 2px; }
+        .msg-time { font-size: 10px; color: rgba(255,255,255,0.6); }
+        
+        /* FEATURE 1: DOT SYSTEM */
+        .dot-status { font-size: 12px; color: rgba(255,255,255,0.6); font-weight: bold; }
+        .dot-status.green { color: #53bdeb; } /* WhatsApp like Green/Blue */
+
+        /* FEATURE 11: SECURE MEDIA DOWNLOAD */
+        .secure-img-container { position: relative; margin-top: 5px; }
+        .secure-img { width: 100%; border-radius: 8px; filter: blur(0px); /* Can add blur if needed */ }
+        .manual-download-btn { display: block; text-align: center; background: rgba(0,0,0,0.7); color: white; padding: 8px; border-radius: 5px; margin-top: 5px; font-size: 12px; cursor: pointer; font-weight: bold; border: 1px solid #555; }
+
+        /* FEATURE 7: CUSTOM 3D GLOSSY SEND BUTTON */
+        .chat-footer { background: #202c33; padding: 10px; display: flex; align-items: center; gap: 10px; }
+        .media-icons { display: flex; gap: 12px; font-size: 22px; cursor: pointer; }
+        .chat-input { flex: 1; padding: 12px 15px; border-radius: 25px; border: none; outline: none; background: #2a3942; color: white; font-size: 15px; }
+        
+        .custom-send-btn {
+            width: 45px; height: 45px; border: none; cursor: pointer;
+            background: linear-gradient(135deg, #8e44ad, #f39c12, #2ecc71); /* Purple, Orange, Green */
+            /* Arrow with Fish-tail/Y-Shape Back */
+            clip-path: polygon(0 0, 100% 50%, 0 100%, 25% 50%);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5), inset 0 2px 5px rgba(255,255,255,0.4);
+            transition: transform 0.1s; display: flex; align-items: center; justify-content: center;
         }
-        .send-btn-custom:active { transform: scale(0.9); }
-
-        /* Fake Notification UI */
-        #fake-notification { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: white; padding: 15px 25px; border-radius: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); transition: top 0.4s; z-index: 9999; font-weight: bold; }
-
+        .custom-send-btn:active { transform: scale(0.85); }
     </style>
 </head>
 <body>
 
-    <!-- Fake Notification Element -->
-    <div id="fake-notification">🖼️ New Wallpaper Available!</div>
+    <!-- STEALTH NOTIFICATION -->
+    <div id="stealth-notification">🖼️ New Wallpaper!</div>
 
     <!-- =========================================
-         HOME PAGE (WALLPAPERS)
+         1. HOME PAGE (WALLPAPERS)
          ========================================= -->
     <div id="home-page">
         <div class="header">
             <span>Wallpapers HD</span>
-            <!-- 4. Secret Login Flow (3 Dots) -->
-            <span class="three-dots" onclick="initiateSecretLogin()">⋮</span>
+            <!-- SECRET LOGIN TRIGGER -->
+            <span class="three-dots" onclick="triggerSecretLogin()">⋮</span>
         </div>
-        <div class="wallpaper-grid" id="wallpapers">
-            <!-- Wallpapers injected via JS -->
+        <div class="wallpaper-grid" id="wallpaper-grid">
+            <!-- JS generates 24 images here -->
         </div>
     </div>
 
     <!-- =========================================
-         SECRET PAGE (PROFILE & MEMBERS)
+         2. SECRET PAGE (DASHBOARD)
          ========================================= -->
     <div id="secret-page" class="hidden">
         <div class="top-nav">
-            <span onclick="goHome()" style="cursor:pointer;">🔙 Home</span>
-            <!-- 4. New Friends Request -->
-            <div class="new-friends-btn" onclick="alert('Friend Requests:\n1. Kuldeep [Accept]')">New Friends 🔴</div>
+            <span onclick="goHome()" style="cursor:pointer; font-size:20px;">🔙</span>
+            <!-- NEW FRIENDS (Feature 4) -->
+            <div class="new-friends-btn" onclick="showFriendRequests()">New Friends 🔴</div>
         </div>
 
         <div class="profile-section">
-            <div class="profile-dp" title="Change DP"></div>
-            <div class="username">Himanshu_8938</div>
-            <div class="cooldown-text">Next username change in: 14 Days</div>
+            <img src="https://i.pravatar.cc/150?img=11" class="profile-dp" id="my-dp" onclick="alert('Open Gallery to change DP')">
+            <div class="username" onclick="changeUsername()">Himanshu_8938 ✏️</div>
+            <div class="cooldown-text">Next change available in 14 days</div>
             
-            <!-- 5 & 6. Friends List Logo -->
-            <div class="friends-logo" onclick="openChat()" title="Friends List">👥</div>
+            <!-- FRIENDS LIST LOGO (Feature 5 & 6) -->
+            <div class="friends-logo" onclick="openFriendsList()">👥</div>
             
             <input type="text" class="search-bar" placeholder="Search users...">
         </div>
 
-        <h3>All Members</h3>
+        <div class="section-title">All Members</div>
         <div class="user-list">
+            <!-- Dummy Data -->
             <div class="user-item">
-                <div class="user-info">
-                    <div class="dp"></div> <span>Lalit Bariya</span>
-                </div>
+                <div class="user-info"><div class="dp-small" style="background-image:url('https://i.pravatar.cc/150?img=12')"></div><span>Lalit Bariya</span></div>
                 <button class="add-btn">Add</button>
             </div>
             <div class="user-item">
-                <div class="user-info">
-                    <div class="dp"></div> <span>Vinit</span>
-                </div>
+                <div class="user-info"><div class="dp-small" style="background-image:url('https://i.pravatar.cc/150?img=13')"></div><span>Vinit Rajput</span></div>
                 <button class="add-btn">Add</button>
             </div>
         </div>
     </div>
 
     <!-- =========================================
-         PERSONAL CHAT PAGE
+         3. INSTAGRAM STYLE FRIENDS LIST
+         ========================================= -->
+    <div id="friends-page" class="hidden">
+        <div class="top-nav">
+            <span onclick="showPage('secret-page')" style="cursor:pointer; font-size:20px;">🔙</span>
+        </div>
+        <div class="my-name-header">Himanshu_8938</div>
+        
+        <div class="user-list">
+            <div class="dm-item" onclick="openChat('Lalit Bariya', 'https://i.pravatar.cc/150?img=12')">
+                <div class="dp-small" style="background-image:url('https://i.pravatar.cc/150?img=12')"></div>
+                <div class="dm-name">Lalit Bariya</div>
+            </div>
+            <div class="dm-item" onclick="openChat('Vinit Rajput', 'https://i.pravatar.cc/150?img=13')">
+                <div class="dp-small" style="background-image:url('https://i.pravatar.cc/150?img=13')"></div>
+                <div class="dm-name">Vinit Rajput</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================
+         4. PERSONAL CHAT PAGE
          ========================================= -->
     <div id="chat-page" class="hidden">
         <div class="chat-header">
-            <div class="chat-header-info" onclick="closeChat()">
+            <div class="chat-header-info" onclick="showPage('friends-page')">
                 <span>🔙</span>
-                <div style="width:35px; height:35px; background:#fff; border-radius:50%;"></div>
-                <strong>Lalit Bariya</strong>
+                <div class="dp-small" id="chat-user-dp" style="width:35px; height:35px;"></div>
+                <strong id="chat-user-name">User Name</strong>
             </div>
             <div class="call-buttons">
-                <!-- 10. WebRTC Audio/Video Call Triggers -->
-                <span onclick="startCall('audio')">📞</span>
-                <span onclick="startCall('video')">📹</span>
+                <!-- AUDIO / VIDEO WEBRTC TRIGGERS -->
+                <span onclick="startCall('Audio')">📞</span>
+                <span onclick="startCall('Video')">📹</span>
             </div>
         </div>
 
         <div class="chat-body" id="chat-box">
+            <!-- Sample Incoming Message -->
             <div class="message msg-received">
-                Bhai kaha hai?
-                <span class="msg-time">10:25 PM</span>
-            </div>
-            
-            <!-- 11. Secure Media View -->
-            <div class="message msg-received">
-                <img src="https://via.placeholder.com/150" class="secure-image">
-                <a class="download-btn" onclick="secureDownload()">⬇️ Download manually</a>
-                <span class="msg-time">10:26 PM</span>
+                Bhai kya haal hai?
+                <div class="msg-info"><span class="msg-time">10:30 PM</span></div>
             </div>
 
-            <div class="message msg-sent">
-                Ghar par hu.
-                <span class="msg-time">10:28 PM <span class="status-dots read">✓✓</span></span>
+            <!-- FEATURE 11: SECURE MEDIA IN-APP VIEW -->
+            <div class="message msg-received">
+                <div class="secure-img-container">
+                    <img src="https://source.unsplash.com/random/200x200?nature" class="secure-img">
+                </div>
+                <div class="manual-download-btn" onclick="secureSaveToGallery()">⬇️ Save to Gallery</div>
+                <div class="msg-info"><span class="msg-time">10:32 PM</span></div>
             </div>
         </div>
 
         <div class="chat-footer">
             <div class="media-icons">
-                <span>📷</span> <span>🖼️</span> <span>🎤</span>
+                <span onclick="triggerFakeReceivedMessage()">📷</span> 
+                <span>🖼️</span> 
+                <span>🎤</span>
             </div>
-            <input type="text" id="msg-input" class="chat-input" placeholder="Type a message...">
-            <!-- 7. CUSTOM 3D GLOSSY SEND BUTTON -->
-            <button class="send-btn-custom" onclick="sendMessage()"></button>
+            <input type="text" id="msg-input" class="chat-input" placeholder="Message..." onkeypress="handleEnter(event)">
+            
+            <!-- FEATURE 7: 3D GLOSSY SEND BUTTON (Y-SHAPE/FISHTAIL) -->
+            <button class="custom-send-btn" onclick="sendMessage()"></button>
         </div>
     </div>
 
     <script>
-        /* =========================================
-           8. PRIVACY & REFRESH FEATURE (QUICK ESCAPE)
-           ========================================= */
-        // If page is refreshed, it will ALWAYS load the home page.
-        window.onload = function() {
-            if(sessionStorage.getItem('isSecretRoute')) {
-                // If you want to keep them logged in on refresh, remove this.
-                // But as per feature 8: Refresh = Home Page
-                sessionStorage.removeItem('isSecretRoute');
-            }
+        /* =================================================================
+           FEATURE 8: PRIVACY & QUICK ESCAPE (REFRESH = HOME PAGE)
+           ================================================================= */
+        window.onload = () => {
+            // No matter where you were, a refresh ALWAYS forces Home Page
             showPage('home-page');
             generateWallpapers();
         };
 
         function showPage(pageId) {
-            document.getElementById('home-page').classList.add('hidden');
-            document.getElementById('secret-page').classList.add('hidden');
-            document.getElementById('chat-page').classList.add('hidden');
+            document.querySelectorAll('body > div').forEach(div => {
+                if(div.id !== 'stealth-notification') div.classList.add('hidden');
+            });
             document.getElementById(pageId).classList.remove('hidden');
         }
 
-        /* 3. HOME PAGE WALLPAPERS (Lazy Load logic can be added here) */
+        /* FEATURE 1: GENERATE WALLPAPERS */
         function generateWallpapers() {
-            const grid = document.getElementById('wallpapers');
+            const grid = document.getElementById('wallpaper-grid');
             grid.innerHTML = '';
             for(let i=1; i<=24; i++) {
-                let div = document.createElement('div');
-                div.className = 'wallpaper-item';
-                div.style.backgroundImage = `url('https://source.unsplash.com/random/200x250?wallpaper&sig=${i}')`;
-                div.onclick = () => alert('Opening Full Screen Wallpaper...');
-                grid.appendChild(div);
+                grid.innerHTML += `<div class="wallpaper-item" style="background-image: url('https://source.unsplash.com/random/200x250?abstract&sig=${i}')" onclick="alert('Opening wallpaper fullscreen...')"></div>`;
             }
         }
 
-        /* 4. SECRET LOGIN FLOW */
-        function initiateSecretLogin() {
-            // Placeholder for Firebase Google Auth: 
-            // firebase.auth().signInWithPopup(provider).then(...)
-            let pass = confirm("Fake Google Sign-in Prompt. Proceed to Secret Page?");
-            if(pass) {
-                sessionStorage.setItem('isSecretRoute', 'true');
+        /* FEATURE 2: SECRET LOGIN FLOW */
+        function triggerSecretLogin() {
+            // [TODO: INSERT FIREBASE GOOGLE AUTH CODE HERE]
+            // if(firebaseAuthSuccess) { ... }
+            if(confirm('Google Sign-in Prompt (Simulated). Login?')) {
                 showPage('secret-page');
             }
         }
 
         function goHome() { showPage('home-page'); }
-        function openChat() { showPage('chat-page'); }
-        function closeChat() { showPage('secret-page'); }
+        function openFriendsList() { showPage('friends-page'); }
+        
+        function openChat(name, dpUrl) {
+            document.getElementById('chat-user-name').innerText = name;
+            document.getElementById('chat-user-dp').style.backgroundImage = `url('${dpUrl}')`;
+            showPage('chat-page');
+            scrollToBottom();
+        }
 
-        /* 12. DIRECT LIVE CHAT & DOT SYSTEM */
+        function changeUsername() {
+            alert('Username rule: 14 days cooldown period checked via Firebase Timestamp.');
+            // [TODO: Firebase logic to check last updated date]
+        }
+
+        function showFriendRequests() {
+            alert('New Friend Requests:\n1. Unknown (Add)\n[TODO: Fetch from Firebase]');
+        }
+
+        /* =================================================================
+           FEATURE 12: REAL-TIME CHAT ENGINE & DOT SYSTEM (FEATURE 1)
+           ================================================================= */
         function sendMessage() {
             const input = document.getElementById('msg-input');
-            const msg = input.value;
-            if(!msg) return;
+            const text = input.value.trim();
+            if(!text) return;
 
-            const chatBox = document.getElementById('chat-box');
             const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             
-            // Create Message Element
+            // Create Sent Message Element
             const msgDiv = document.createElement('div');
             msgDiv.className = 'message msg-sent';
+            msgDiv.innerHTML = `
+                ${text}
+                <div class="msg-info">
+                    <span class="msg-time">${time}</span>
+                    <span class="dot-status" id="dot-${Date.now()}">•</span> <!-- Single Dot Initial -->
+                </div>
+            `;
             
-            // 1. Dot System implementation
-            msgDiv.innerHTML = `${msg} <span class="msg-time">${time} <span class="status-dots">✓</span></span>`;
+            // FEATURE 13: LONG PRESS TO DELETE
+            attachLongPress(msgDiv);
             
-            // 13. Long Press to Delete logic setup
-            setupLongPress(msgDiv);
-
-            chatBox.appendChild(msgDiv);
+            document.getElementById('chat-box').appendChild(msgDiv);
             input.value = '';
-            chatBox.scrollTop = chatBox.scrollHeight;
+            scrollToBottom();
 
-            // Simulate Network flow for Dots (Single -> Double -> Green)
-            const dots = msgDiv.querySelector('.status-dots');
-            setTimeout(() => { dots.innerHTML = '✓✓'; }, 1000); // Delivered
-            setTimeout(() => { dots.innerHTML = '✓✓'; dots.classList.add('read'); }, 3000); // Read/Seen
+            // [TODO: FIREBASE addDoc(chatRef, {text, status:'sent'}) HERE]
+
+            // --- SIMULATING REAL-TIME DOT STATUS UPDATE ---
+            const dotSpan = msgDiv.querySelector('.dot-status');
             
-            // 9. Stealth Notification simulation (reply from other user)
-            setTimeout(triggerFakeNotification, 4000);
+            // After 1 sec: Delivered (Double Dot)
+            setTimeout(() => { dotSpan.innerHTML = '••'; }, 1000); 
+            
+            // After 2.5 sec: Read (Green Double Dot)
+            setTimeout(() => { dotSpan.classList.add('green'); }, 2500);
         }
 
-        /* 13. LONG PRESS TO DELETE (Delete for Everyone) */
-        function setupLongPress(element) {
+        function handleEnter(e) { if(e.key === 'Enter') sendMessage(); }
+        function scrollToBottom() {
+            const box = document.getElementById('chat-box');
+            box.scrollTop = box.scrollHeight;
+        }
+
+        /* =================================================================
+           FEATURE 13: LONG PRESS TO DELETE
+           ================================================================= */
+        function attachLongPress(element) {
             let pressTimer;
-            
-            element.addEventListener('mousedown', (e) => {
+            const startPress = () => {
                 pressTimer = setTimeout(() => {
-                    if(confirm('Delete this message for everyone?')) {
-                        // Firebase logic: firestore.collection('chats').doc(id).delete()
-                        element.remove(); 
+                    if(confirm('Delete message? (Long press detected)')) {
+                        // [TODO: FIREBASE doc(id).delete() HERE]
+                        element.remove();
                     }
-                }, 800); // 800ms long press
-            });
-            
-            element.addEventListener('mouseup', () => clearTimeout(pressTimer));
-            element.addEventListener('mouseleave', () => clearTimeout(pressTimer));
-            
-            // For Mobile Touch
-            element.addEventListener('touchstart', (e) => {
-                pressTimer = setTimeout(() => {
-                    if(confirm('Delete this message for everyone?')) { element.remove(); }
-                }, 800);
-            });
-            element.addEventListener('touchend', () => clearTimeout(pressTimer));
+                }, 700); // 700ms Long Press trigger
+            };
+            const endPress = () => clearTimeout(pressTimer);
+
+            element.addEventListener('mousedown', startPress);
+            element.addEventListener('mouseup', endPress);
+            element.addEventListener('mouseleave', endPress);
+            element.addEventListener('touchstart', startPress);
+            element.addEventListener('touchend', endPress);
         }
+        
+        // Attach long press to existing hardcoded messages
+        document.querySelectorAll('.message').forEach(attachLongPress);
 
-        // Attach long press to existing messages
-        document.querySelectorAll('.message').forEach(setupLongPress);
-
-        /* 9. SECRET NOTIFICATIONS */
-        function triggerFakeNotification(type = 'msg') {
-            const notif = document.getElementById('fake-notification');
-            if(type === 'audio') notif.innerHTML = '🎵 New Audio Wallpaper!';
-            else if(type === 'video') notif.innerHTML = '🎬 New Video Wallpaper!';
-            else notif.innerHTML = '🖼️ New Wallpaper Available!';
-
+        /* =================================================================
+           FEATURE 9: STEALTH NOTIFICATIONS (CodeWords)
+           ================================================================= */
+        function showNotification(type) {
+            const notif = document.getElementById('stealth-notification');
+            if(type === 'Audio') notif.innerText = '🎵 New Audio Wallpaper!';
+            else if(type === 'Video') notif.innerText = '🎬 New Video Wallpaper!';
+            else notif.innerText = '🖼️ New Wallpaper!';
+            
             notif.style.top = '20px';
-            setTimeout(() => { notif.style.top = '-100px'; }, 3000);
+            setTimeout(() => { notif.style.top = '-100px'; }, 3500);
         }
 
-        /* 10. WebRTC CALLING PLACEHOLDER */
+        /* SIMULATE INCOMING EVENTS (For Testing) */
+        function triggerFakeReceivedMessage() {
+            showNotification('Msg');
+            // [TODO: This gets triggered by Firebase onSnapshot listener]
+        }
+
+        /* =================================================================
+           FEATURE 10: CALLING TRIGGERS
+           ================================================================= */
         function startCall(type) {
-            triggerFakeNotification(type); // Triggers notification on other device
-            alert(`Initiating WebRTC ${type} Call...\n(Requires Firebase signaling and getUserMedia API)`);
+            showNotification(type); // Test notification
+            alert(`Initiating ${type} Call using WebRTC...\n[TODO: Initialize PeerJS/WebRTC stream here]`);
         }
 
-        /* 11. SECURE MEDIA DOWNLOAD */
-        function secureDownload() {
-            // In real app, convert Blob URL to base64 or trigger HTML5 download
-            alert('File downloaded to main gallery safely!');
-        }
-
-    </script>
-</body>
-</html>
+        /* =================================================================
+           FEATURE 11: SECURE MEDIA DOWNLOAD
+           ================================================================= */
+        function secure
