@@ -1,207 +1,739 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wallpapers HD</title> 
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: #f0f0f0; overflow-x: hidden; }
-        .hidden { display: none !important; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>WallpaperHub - Free HD Wallpapers</title>
+  
+  <!-- Firebase SDKs (v9 Compat for clean single-file integration) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
-        /* SECRET NOTIFICATIONS */
-        #stealth-notification {
-            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-            background: white; padding: 12px 25px; border-radius: 30px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: top 0.4s ease-in-out;
-            z-index: 9999; font-weight: bold; font-size: 14px;
-        }
+  <style>
+    :root {
+      --bg-color: #0d0e12;
+      --card-bg: #1a1c23;
+      --panel-bg: #15171e;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --accent: #8b5cf6;
+      --border-color: #2e323e;
+      --sent-msg: #3b2d54;
+      --recv-msg: #1e222d;
+    }
 
-        /* 1. HOME PAGE */
-        #home-page { padding: 10px; background: #fff; min-height: 100vh; }
-        .header { display: flex; justify-content: space-between; padding: 15px; font-size: 20px; font-weight: bold; align-items: center; }
-        .three-dots { cursor: pointer; padding: 5px 15px; font-size: 24px; font-weight: bold; }
-        .wallpaper-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
-        .wallpaper-item { width: 100%; height: 250px; background-color: #ddd; border-radius: 10px; background-size: cover; background-position: center; cursor: pointer; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+    }
 
-        /* 2. SECRET PAGE */
-        #secret-page { background: #121212; color: white; min-height: 100vh; padding: 20px; }
-        .top-nav { display: flex; justify-content: space-between; margin-bottom: 25px; align-items: center; }
-        .new-friends-btn { background: #ff4757; color: white; padding: 6px 15px; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; }
-        .profile-section { text-align: center; margin-bottom: 25px; }
-        .profile-dp { width: 90px; height: 90px; border-radius: 50%; background: #444; margin: 0 auto 10px; border: 2px solid #4CAF50; cursor: pointer; }
-        .username { font-size: 22px; font-weight: bold; margin-bottom: 5px; }
-        .cooldown-text { font-size: 11px; color: #888; margin-bottom: 15px; }
-        .friends-logo { width: 45px; height: 45px; background: #4CAF50; border-radius: 50%; margin: 10px auto; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; }
-        .search-bar { width: 100%; padding: 12px 20px; border-radius: 25px; border: none; outline: none; margin-bottom: 20px; background: #2a2a2a; color: white; }
-        .user-list { display: flex; flex-direction: column; gap: 10px; }
-        .user-item { display: flex; justify-content: space-between; align-items: center; background: #1e1e1e; padding: 12px; border-radius: 12px; }
-        .user-info { display: flex; align-items: center; gap: 15px; }
-        .dp-small { width: 45px; height: 45px; border-radius: 50%; background: #555; background-size: cover; }
-        .add-btn { background: #4CAF50; color: white; border: none; padding: 6px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      overflow-x: hidden;
+      height: 100vh;
+    }
 
-        /* 3. FRIENDS LIST */
-        #friends-page { background: #000; color: white; min-height: 100vh; padding: 20px; }
-        .my-name-header { font-size: 20px; font-weight: bold; text-align: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #333; }
-        .dm-item { display: flex; align-items: center; gap: 15px; padding: 12px 0; cursor: pointer; }
+    /* Quick Escape / Views */
+    .view-layer {
+      display: none;
+      width: 100%;
+      min-height: 100vh;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
 
-        /* 4. CHAT PAGE */
-        #chat-page { display: flex; flex-direction: column; height: 100vh; background: #0b141a; color: white; }
-        .chat-header { background: #202c33; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; }
-        .chat-header-info { display: flex; align-items: center; gap: 12px; cursor: pointer; }
-        .call-buttons span { margin-left: 20px; font-size: 22px; cursor: pointer; }
-        .chat-body { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background-color: #0b141a; }
-        .message { max-width: 75%; padding: 8px 12px; border-radius: 10px; position: relative; font-size: 15px; }
-        .msg-received { background: #202c33; align-self: flex-start; border-top-left-radius: 0; }
-        .msg-sent { background: #005c4b; align-self: flex-end; border-top-right-radius: 0; }
-        .msg-info { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 2px; }
-        .msg-time { font-size: 10px; color: rgba(255,255,255,0.6); }
-        
-        .dot-status { font-size: 12px; color: rgba(255,255,255,0.6); font-weight: bold; }
-        .dot-status.green { color: #53bdeb; } 
+    .active-view {
+      display: block;
+    }
 
-        .secure-img { width: 100%; border-radius: 8px; margin-top: 5px; }
-        .manual-download-btn { display: block; text-align: center; background: rgba(0,0,0,0.7); color: white; padding: 8px; border-radius: 5px; margin-top: 5px; font-size: 12px; cursor: pointer; }
+    /* 1. DISGUISE WALLPAPER HOME */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
 
-        .chat-footer { background: #202c33; padding: 10px; display: flex; align-items: center; gap: 10px; }
-        .chat-input { flex: 1; padding: 12px 15px; border-radius: 25px; border: none; outline: none; background: #2a3942; color: white; }
-        .custom-send-btn { width: 45px; height: 45px; border: none; cursor: pointer; background: linear-gradient(135deg, #8e44ad, #f39c12, #2ecc71); clip-path: polygon(0 0, 100% 50%, 0 100%, 25% 50%); }
-    </style>
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      border-radius: 6px;
+    }
+
+    .secret-trigger {
+      font-size: 1.5rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0 5px;
+    }
+
+    .wallpaper-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 15px;
+      padding: 1.5rem;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .wp-card {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--card-bg);
+      aspect-ratio: 9/16;
+      border: 1px solid var(--border-color);
+    }
+
+    .wp-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* 4 & 5. SECRET DASHBOARD / MEMBERS */
+    .dashboard-container {
+      display: flex;
+      height: 100vh;
+      max-width: 1200px;
+      margin: auto;
+      border-left: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+    }
+
+    .sidebar {
+      width: 380px;
+      background: var(--panel-bg);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .user-profile-bar {
+      padding: 15px;
+      background: var(--card-bg);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .avatar-wrapper {
+      position: relative;
+      width: 48px;
+      height: 48px;
+      cursor: pointer;
+    }
+
+    .avatar-img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--accent);
+    }
+
+    .profile-info {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .username-input-group {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .username-input-group input {
+      background: transparent;
+      border: 1px solid transparent;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: bold;
+      width: 100%;
+      border-radius: 4px;
+      padding: 2px 4px;
+    }
+
+    .username-input-group input:focus {
+      border-color: var(--accent);
+      outline: none;
+      background: var(--bg-color);
+    }
+
+    .search-box {
+      padding: 10px 15px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: #fff;
+      outline: none;
+    }
+
+    .scroll-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .section-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin: 10px 0 5px 5px;
+    }
+
+    .member-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+      background: var(--card-bg);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      border: 1px solid transparent;
+      cursor: pointer;
+    }
+
+    .member-item:hover {
+      border-color: var(--accent);
+    }
+
+    .member-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .member-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .btn-action {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+
+    /* 6 & 7. DM CHAT SYSTEM */
+    .chat-view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-color);
+      height: 100%;
+    }
+
+    .chat-header {
+      padding: 15px 20px;
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chat-header-actions {
+      display: flex;
+      gap: 15px;
+    }
+
+    .call-btn {
+      background: transparent;
+      border: none;
+      font-size: 1.25rem;
+      cursor: pointer;
+    }
+
+    .messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .msg {
+      max-width: 65%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 0.95rem;
+      position: relative;
+      word-break: break-word;
+      user-select: none;
+    }
+
+    .msg.sent {
+      align-self: flex-end;
+      background: var(--sent-msg);
+      border-bottom-right-radius: 2px;
+    }
+
+    .msg.received {
+      align-self: flex-start;
+      background: var(--recv-msg);
+      border-bottom-left-radius: 2px;
+    }
+
+    .msg-meta {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* 8. MESSAGE DOT STATUS */
+    .dot-receipt {
+      display: inline-flex;
+      gap: 2px;
+    }
+
+    .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+
+    .dot.green {
+      background: #10b981;
+    }
+
+    /* 10. MEDIA DOWNLOAD OVERLAY */
+    .chat-media-wrapper {
+      position: relative;
+      margin-top: 5px;
+      border-radius: 8px;
+      overflow: hidden;
+      max-width: 250px;
+    }
+
+    .chat-media-wrapper img {
+      width: 100%;
+      display: block;
+      pointer-events: none;
+    }
+
+    .media-dl-btn {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(0, 0, 0, 0.7);
+      border: none;
+      color: #fff;
+      padding: 5px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+
+    /* 11. PREMIUM 3D SEND BUTTON (Y-Shape Split Tail) */
+    .chat-input-bar {
+      padding: 12px 15px;
+      background: var(--panel-bg);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .chat-input-bar input[type="text"] {
+      flex: 1;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 10px 14px;
+      border-radius: 25px;
+      color: #fff;
+      outline: none;
+    }
+
+    .premium-send-btn {
+      width: 42px;
+      height: 42px;
+      border: none;
+      background: linear-gradient(135deg, #a855f7, #f97316, #22c55e);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(249, 115, 22, 0.35), inset 0 2px 2px rgba(255, 255, 255, 0.4);
+      transition: transform 0.1s ease;
+    }
+
+    .premium-send-btn:active {
+      transform: scale(0.92);
+    }
+
+    .arrow-split-icon {
+      width: 20px;
+      height: 20px;
+      fill: #fff;
+      transform: translateX(1px);
+    }
+
+    /* 13. WEBRTC CALL OVERLAY */
+    .call-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 100;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .video-streams {
+      display: flex;
+      width: 100%;
+      height: 70%;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    video {
+      background: #000;
+      border-radius: 12px;
+    }
+
+    #remoteVideo {
+      width: 80%;
+      height: 90%;
+      object-fit: cover;
+    }
+
+    #localVideo {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 120px;
+      height: 160px;
+      object-fit: cover;
+      border: 2px solid var(--accent);
+    }
+
+    .call-controls {
+      margin-top: 20px;
+      display: flex;
+      gap: 20px;
+    }
+
+    .btn-end-call {
+      background: #ef4444;
+      padding: 12px 24px;
+      border-radius: 30px;
+      border: none;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
 
-    <div id="stealth-notification">🖼️ New Wallpaper!</div>
+  <!-- 1. DISGUISE WALLPAPER VIEW (DEFAULT STATE) -->
+  <div id="view-disguise" class="view-layer active-view">
+    <header>
+      <div class="logo-container" onclick="openSecretDMList()">
+        <div class="logo-icon"></div>
+        <h2 style="font-size: 1.1rem; font-weight: 700;">WallpaperHub</h2>
+      </div>
+      <!-- Hidden Secret Login Trigger -->
+      <div class="secret-trigger" onclick="handleSecretAuth()">⋮</div>
+    </header>
+    
+    <main class="wallpaper-grid" id="wallpaperGrid"></main>
+  </div>
 
-    <!-- HOME PAGE -->
-    <div id="home-page">
-        <div class="header">
-            <span>Wallpapers HD</span>
-            <!-- THREE DOT MENU (No Popups now) -->
-            <span class="three-dots" onclick="triggerSecretLogin()">⋮</span>
-        </div>
-        <div class="wallpaper-grid" id="wallpaper-grid"></div>
-    </div>
-
-    <!-- SECRET PAGE -->
-    <div id="secret-page" class="hidden">
-        <div class="top-nav">
-            <span onclick="goHome()" style="cursor:pointer; font-size:20px;">🔙</span>
-            <div class="new-friends-btn">New Friends 🔴</div>
-        </div>
-        <div class="profile-section">
-            <div class="profile-dp"></div>
-            <div class="username">Himanshu_8938 ✏️</div>
-            <div class="cooldown-text">Next change available in 14 days</div>
-            <div class="friends-logo" onclick="openFriendsList()">👥</div>
-            <input type="text" class="search-bar" placeholder="Search users...">
-        </div>
-        <div class="user-list">
-            <div class="user-item">
-                <div class="user-info"><div class="dp-small"></div><span>Lalit Bariya</span></div>
-                <button class="add-btn">Add</button>
+  <!-- 4, 5, 6, 7. SECRET DASHBOARD / CHAT VIEW -->
+  <div id="view-secret" class="view-layer">
+    <div class="dashboard-container">
+      
+      <!-- Sidebar / Members & Profile -->
+      <div class="sidebar">
+        <div class="user-profile-bar">
+          <div class="avatar-wrapper" onclick="triggerDPUpload()">
+            <img id="myAvatar" class="avatar-img" src="https://via.placeholder.com/150" alt="Avatar">
+            <input type="file" id="dpFileInput" style="display: none;" accept="image/*" onchange="uploadDP(event)">
+          </div>
+          <div class="profile-info">
+            <div class="username-input-group">
+              <input type="text" id="myUsername" onchange="updateUsername(this.value)" title="Press Enter to update">
+              <span id="nameCooldownMsg" style="font-size: 0.65rem; color: #ef4444; display: none;">14d Cooldown</span>
             </div>
+            <span style="font-size: 0.7rem; color: var(--text-muted);" id="myUserEmail"></span>
+          </div>
+          <button class="call-btn" onclick="quickEscape()" title="Instant Wallpaper Escape">🚪</button>
         </div>
-    </div>
 
-    <!-- FRIENDS LIST -->
-    <div id="friends-page" class="hidden">
-        <div class="top-nav"><span onclick="showPage('secret-page')" style="cursor:pointer; font-size:20px;">🔙</span></div>
-        <div class="my-name-header">Himanshu_8938</div>
-        <div class="user-list">
-            <div class="dm-item" onclick="openChat('Lalit Bariya')">
-                <div class="dp-small"></div><div class="dm-name">Lalit Bariya</div>
-            </div>
+        <div class="search-box">
+          <input type="text" id="memberSearch" placeholder="Search members..." onkeyup="filterMembers(this.value)">
         </div>
-    </div>
 
-    <!-- CHAT PAGE -->
-    <div id="chat-page" class="hidden">
+        <div class="scroll-list">
+          <div class="section-title">Friend Requests</div>
+          <div id="requestsList"></div>
+
+          <div class="section-title">Direct Messages</div>
+          <div id="friendsList"></div>
+
+          <div class="section-title">All Members</div>
+          <div id="allMembersList"></div>
+        </div>
+      </div>
+
+      <!-- Live Chat Pane -->
+      <div class="chat-view">
         <div class="chat-header">
-            <div class="chat-header-info" onclick="showPage('friends-page')">
-                <span>🔙</span><div class="dp-small" style="width:35px; height:35px;"></div><strong id="chat-user-name">User Name</strong>
-            </div>
-            <div class="call-buttons">
-                <span onclick="showNotification('Audio')">📞</span>
-                <span onclick="showNotification('Video')">📹</span>
-            </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <img id="activeChatAvatar" class="member-avatar" src="https://via.placeholder.com/150" alt="Chat User">
+            <h4 id="activeChatName">Select a chat</h4>
+          </div>
+          <div class="chat-header-actions" id="callActions" style="display: none;">
+            <button class="call-btn" onclick="startCall('audio')">📞</button>
+            <button class="call-btn" onclick="startCall('video')">📹</button>
+          </div>
         </div>
-        <div class="chat-body" id="chat-box">
-            <div class="message msg-received">Bhai kya haal hai?<div class="msg-info"><span class="msg-time">10:30 PM</span></div></div>
+
+        <div class="messages-container" id="messagesBox"></div>
+
+        <div class="chat-input-bar">
+          <button class="call-btn" onclick="triggerChatMediaUpload()">📎</button>
+          <input type="file" id="chatMediaInput" style="display: none;" accept="image/*" onchange="sendMediaMessage(event)">
+          
+          <input type="text" id="msgInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendTextMessage()">
+          
+          <!-- 11. Premium 3D Fish-Tail Send Button -->
+          <button class="premium-send-btn" onclick="sendTextMessage()" title="Send">
+            <svg class="arrow-split-icon" viewBox="0 0 24 24">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2zM2 10l5 2-5 2z"/>
+            </svg>
+          </button>
         </div>
-        <div class="chat-footer">
-            <input type="text" id="msg-input" class="chat-input" placeholder="Message..." onkeypress="handleEnter(event)">
-            <button class="custom-send-btn" onclick="sendMessage()"></button>
-        </div>
+      </div>
+
     </div>
+  </div>
 
-    <script>
-        // DOM Load (Fixes the blank page issue)
-        document.addEventListener("DOMContentLoaded", () => {
-            const grid = document.getElementById('wallpaper-grid');
-            // Changed link to Picsum so images load guaranteed
-            for(let i=1; i<=24; i++) {
-                grid.innerHTML += `<div class="wallpaper-item" style="background-image: url('https://picsum.photos/200/250?random=${i}')"></div>`;
-            }
-        });
+  <!-- 13. WebRTC Call Overlay -->
+  <div id="callModal" class="call-modal">
+    <h3 id="callStatus" style="margin-bottom: 20px;">Calling...</h3>
+    <div class="video-streams">
+      <video id="remoteVideo" autoplay playsinline></video>
+      <video id="localVideo" autoplay playsinline muted></video>
+    </div>
+    <div class="call-controls">
+      <button class="btn-end-call" onclick="endCall()">End Call</button>
+    </div>
+  </div>
 
-        function showPage(pageId) {
-            document.querySelectorAll('body > div').forEach(div => {
-                if(div.id !== 'stealth-notification') div.classList.add('hidden');
-            });
-            document.getElementById(pageId).classList.remove('hidden');
-        }
+  <!-- CORE LOGIC INTEGRATION -->
+  <script>
+    /*************************************************************
+     * FIREBASE CONFIGURATION (PASTE YOUR KEYS HERE)
+     *************************************************************/
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
 
-        // SECRET LOGIN FIXED: No confirm() popups. Direct entry!
-        function triggerSecretLogin() { showPage('secret-page'); }
-        function goHome() { showPage('home-page'); }
-        function openFriendsList() { showPage('friends-page'); }
-        function openChat(name) {
-            document.getElementById('chat-user-name').innerText = name;
-            showPage('chat-page');
-        }
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
 
-        // SEND MESSAGE & DOT SYSTEM
-        function sendMessage() {
-            const input = document.getElementById('msg-input');
-            const text = input.value.trim();
-            if(!text) return;
-            const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'message msg-sent';
-            msgDiv.innerHTML = `${text}<div class="msg-info"><span class="msg-time">${time}</span><span class="dot-status">•</span></div>`;
-            attachLongPress(msgDiv);
-            document.getElementById('chat-box').appendChild(msgDiv);
-            input.value = '';
+    // Global State
+    let currentUser = null;
+    let userProfile = null;
+    let activeChatUser = null;
+    let unsubscribeMessages = null;
+    let longPressTimer = null;
 
-            const dotSpan = msgDiv.querySelector('.dot-status');
-            setTimeout(() => { dotSpan.innerHTML = '••'; }, 1000); 
-            setTimeout(() => { dotSpan.classList.add('green'); }, 2500);
-        }
+    // WebRTC Signaling State
+    let peerConnection = null;
+    let localStream = null;
+    let remoteStream = null;
+    let currentCallId = null;
 
-        function handleEnter(e) { if(e.key === 'Enter') sendMessage(); }
+    const rtcConfig = {
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" }
+      ]
+    };
 
-        // LONG PRESS DELETE
-        function attachLongPress(element) {
-            let pressTimer;
-            const startPress = () => { pressTimer = setTimeout(() => { element.remove(); }, 700); };
-            const endPress = () => clearTimeout(pressTimer);
-            element.addEventListener('mousedown', startPress);
-            element.addEventListener('mouseup', endPress);
-            element.addEventListener('mouseleave', endPress);
-            element.addEventListener('touchstart', startPress);
-            element.addEventListener('touchend', endPress);
-        }
+    /*************************************************************
+     * 1. 24 DISGUISE WALLPAPERS INITIALIZATION
+     *************************************************************/
+    function loadWallpapers() {
+      const grid = document.getElementById("wallpaperGrid");
+      grid.innerHTML = "";
+      for (let i = 1; i <= 24; i++) {
+        const div = document.createElement("div");
+        div.className = "wp-card";
+        div.innerHTML = `<img src="https://picsum.photos/400/700?random=${i + 100}" alt="Wallpaper ${i}" loading="lazy">`;
+        grid.appendChild(div);
+      }
+    }
+    loadWallpapers();
 
-        // SECRET NOTIFICATIONS
-        function showNotification(type) {
-            const notif = document.getElementById('stealth-notification');
-            if(type === 'Audio') notif.innerText = '🎵 New Audio Wallpaper!';
-            else if(type === 'Video') notif.innerText = '🎬 New Video Wallpaper!';
-            else notif.innerText = '🖼️ New Wallpaper!';
-            notif.style.top = '20px';
-            setTimeout(() => { notif.style.top = '-100px'; }, 3500);
-        }
-    </script>
-</body>
-</html>
+    /*************************************************************
+     * 3. QUICK ESCAPE & SESSION ISOLATION
+     *************************************************************/
+    // Critical: Reset to Wallpaper view on fresh page load or manual F5
+    function quickEscape() {
+      document.getElementById("view-secret").classList.remove("active-view");
+      document.getElementById("view-disguise").classList.add("active-view");
+      if (unsubscribeMessages) unsubscribeMessages();
+      activeChatUser = null;
+    }
+
+    /*************************************************************
+     * 2. SECRET LOGIN VIA 3-DOT ICON
+     *************************************************************/
+    async function handleSecretAuth() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      try {
+        const result = await auth.signInWithPopup(provider);
+        currentUser = result.user;
+        await syncUserProfile();
+        openSecretDashboard();
+      } catch (err) {
+        console.error("Auth Fail", err);
+      }
+    }
+
+    function openSecretDashboard() {
+      document.getElementById("view-disguise").classList.remove("active-view");
+      document.getElementById("view-secret").classList.add("active-view");
+      listenToIncomingCalls();
+      listenToRequests();
+      listenToFriends();
+      loadAllMembers();
+    }
+
+    function openSecretDMList() {
+      if (currentUser) {
+        openSecretDashboard();
+      }
+    }
+
+    /*************************************************************
+     * 4. PROFILE & 14-DAY USERNAME COOLDOWN
+     *************************************************************/
+    async function syncUserProfile() {
+      const userRef = db.collection("users").doc(currentUser.uid);
+      const doc = await userRef.get();
+
+      if (!doc.exists) {
+        userProfile = {
+          uid: currentUser.uid,
+          name: currentUser.displayName || "User",
+          email: currentUser.email,
+          photoURL: currentUser.photoURL || "https://via.placeholder.com/150",
+          lastNameUpdate: null
+        };
+        await userRef.set(userProfile);
+      } else {
+        userProfile = doc.data();
+      }
+
+      document.getElementById("myAvatar").src = userProfile.photoURL;
+      document.getElementById("myUsername").value = userProfile.name;
+      document.getElementById("myUserEmail").innerText = userProfile.email;
+    }
+
+    async function updateUsername(newName) {
+      if (!newName || newName === userProfile.name) return;
+
+      const now = Date.now();
+      const fourteenDays = 14 * 24 * 60 * 60 * 1000;
+
+      if (userProfile.lastNameUpdate && (now - userProfile.lastNameUpdate.toMillis()) < fourteenDays) {
+        document.getElementById("nameCooldownMsg").style.display = "inline";
+        document.getElementById("myUsername").value = userProfile.name;
+        return;
+      }
+
+      await db.collection("users").doc(currentUser.uid).update({
+        name: newName,
+        lastNameUpdate: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      userProfile.name = newName;
+      document.getElementById("nameCooldownMsg").style.display = "none";
+    }
+
+    function triggerDPUpload() {
+      document.getElementById("dpFileInput").click();
+    }
+
+    async function uploadDP(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const storageRef = storage.ref(`avatars/${currentUser.uid}`);
+      await storageRef.put(file);
+      const downloadURL = await storageRef.getDownloadURL();
+
+      await db.collection("users").doc(currentUser.uid).update({ photoURL: downloadURL });
+      document.getElementById("myAvatar").src = downloadURL;
+      userProfile.photoURL = downloadURL;
+    }
+
+    /*************************************************************
+     * 5. FRIEND REQUEST SYSTEM & MEMBERS LIST
+     *************************************************************/
+    async function loadAllMembers() {
+      const snapshot = await db.collection("users").get();
+      const list = document.getElementById("allMembersList");
+      list.innerHTML = 
