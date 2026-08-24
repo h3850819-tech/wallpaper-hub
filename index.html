@@ -1,240 +1,168 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium Wallpaper Hub & Secret Chat</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Wallpaper Gallery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* --- बेसिक और प्रीमियम डार्क थीम स्टाइल --- */
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #0f0f15; color: #ffffff; padding-bottom: 20px; overflow-x: hidden; }
+        ::-webkit-scrollbar { display: none; }
         
-        /* हेडर और 3-डॉट मेनू */
-        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: #161622; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        header h1 { font-size: 20px; color: #ff3366; letter-spacing: 1px; }
-        .menu-container { position: relative; }
-        .three-dot-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 5px 10px; z-index: 1001; }
-        .dropdown-menu { display: none; position: absolute; right: 0; top: 50px; background-color: #1e1e2f; border-radius: 8px; min-width: 170px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); overflow: hidden; z-index: 1000; }
-        .dropdown-menu button { width: 100%; background: none; border: none; color: white; padding: 12px 15px; text-align: left; font-size: 14px; cursor: pointer; }
-        .dropdown-menu button:hover { background-color: #2b2b40; }
-        
-        /* 1. वॉलपेपर ग्रिड (24 Wallpapers) */
-        .category-container { margin: 20px; }
-        .wallpaper-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; } /* मोबाइल पर 3 की लाइन */
-        .wallpaper-card { background-color: #161622; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.2); cursor: pointer; }
-        .wallpaper-card img { width: 100%; height: 140px; object-fit: cover; display: block; }
-        
-        /* फुल स्क्रीन वॉलपेपर मोडल */
-        #wallpaper-fullscreen-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
-        #wallpaper-fullscreen-modal img { max-width: 100%; max-height: 100%; object-fit: contain; }
-        .close-fs-btn { position: absolute; top: 20px; right: 20px; color: white; font-size: 35px; cursor: pointer; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
-
-        /* 2. लॉगिन मोडल */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
-        .auth-box { background-color: #1e1e2f; padding: 30px 25px; border-radius: 16px; width: 100%; max-width: 360px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #2b2b40; }
-        .auth-box h2 { font-size: 22px; margin-bottom: 20px; color: #ff3366; }
-        .google-btn { width: 100%; padding: 12px; background: #4285F4; border: none; border-radius: 8px; color: white; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .close-btn { background: none; border: none; color: #aaa; margin-top: 15px; cursor: pointer; font-size: 14px; }
-        
-        /* 3 & 4. मैसेंजर डैशबोर्ड (DP, Username, Members) */
-        #chat-dashboard { display: none; max-width: 500px; margin: 0 auto; min-height: 100vh; flex-direction: column; background-color: #0f0f15; }
-        .chat-header { background-color: #161622; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2b2b40; position: sticky; top: 0; z-index: 10; }
-        .chat-header h2 { font-size: 18px; color: #00e6e6; }
-        
-        .profile-section { text-align: center; padding: 25px 20px 15px; }
-        .profile-pic-wrapper { position: relative; width: 90px; height: 90px; margin: 0 auto 15px; cursor: pointer; }
-        .profile-pic { width: 100%; height: 100%; background-color: #1e1e2f; border-radius: 50%; object-fit: cover; border: 2px solid #ff3366; }
-        .dp-edit-icon { position: absolute; bottom: 0; right: 0; background: #00e6e6; color: #000; border-radius: 50%; padding: 5px; font-size: 12px; }
-        
-        .username-display { margin-top: 15px; display: flex; justify-content: center; align-items: center; gap: 8px; }
-        .username-display input { background: #11111a; border: 1px solid #3b3b54; border-radius: 6px; padding: 8px 10px; color: #00e6e6; font-size: 15px; font-weight: bold; text-align: center; width: 150px; outline: none; }
-        #saveUserBtn { background: #00e6e6; color: #0f0f15; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-
-        .list-section { padding: 20px; }
-        .section-title-chat { font-size: 14px; font-weight: bold; color: #aaa; margin-bottom: 15px; text-transform: uppercase; border-bottom: 1px solid #2b2b40; padding-bottom: 5px; }
-        .user-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; background: #161622; border-radius: 12px; margin-bottom: 10px; }
-        .user-avatar { width: 45px; height: 45px; background-color: #3b3b54; border-radius: 50%; margin-right: 15px; object-fit: cover; }
-        .user-name { font-weight: bold; font-size: 15px; color: #fff; }
-        .btn-add { background-color: #00e6e6; color: #0f0f15; border: none; padding: 7px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; }
-
-        /* 5 से 10. प्राइवेट चैट रूम */
-        #private-chat-room { display: none; flex-direction: column; height: 100vh; background-color: #0f0f15; }
-        .chat-room-header { background-color: #161622; padding: 15px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #2b2b40; }
-        .back-btn { background: none; border: none; color: #00e6e6; font-size: 20px; cursor: pointer; }
-        .header-icons { margin-left: auto; display: flex; gap: 15px; color: #00e6e6; font-size: 18px; }
-        
-        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .message { max-width: 75%; padding: 8px 12px; border-radius: 12px; font-size: 14px; line-height: 1.4; word-wrap: break-word; cursor: pointer; }
-        .message.incoming { background-color: #1e1e2f; align-self: flex-start; border-bottom-left-radius: 2px; }
-        .message.outgoing { background: linear-gradient(45deg, #2b5876, #4e4376); color: #fff; align-self: flex-end; border-bottom-right-radius: 2px; }
-        
-        .msg-info { font-size: 10px; color: #ccc; display: flex; justify-content: flex-end; align-items: center; gap: 5px; margin-top: 4px; }
-        .tick { font-size: 12px; color: #aaa; }
-        .tick-green { color: #00e6e6; text-shadow: 0 0 2px #00e6e6; } /* WhatsApp Blue/Green Tick Effect */
-
-        /* चैट इनपुट और 7. आपका नया सेंड बटन */
-        .chat-input-area { padding: 10px; background-color: #161622; display: flex; gap: 10px; align-items: center; border-top: 1px solid #2b2b40; }
-        .chat-input-area input { flex: 1; padding: 12px; background-color: #1e1e2f; border: 1px solid #3b3b54; border-radius: 20px; color: white; outline: none; }
-        .icon-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #aaa; transition: 0.2s; }
-        .icon-btn:hover { color: #00e6e6; }
-        
-        /* Your Custom Send Button */
-        .send-btn-img { background: transparent; border: none; width: 45px; height: 45px; cursor: pointer; padding: 0; display: flex; justify-content: center; align-items: center; transition: 0.2s; transform: rotate(-10deg); }
-        .send-btn-img img { width: 100%; height: 100%; object-fit: contain; }
-        .send-btn-img:active { transform: scale(0.9) rotate(0deg); }
-
-        /* 11. सीक्रेट नोटिफिकेशन */
-        #secret-notif { display: none; position: fixed; top: 15px; left: 50%; transform: translateX(-50%); background: #161622; color: #00e6e6; padding: 10px 25px; border-radius: 30px; font-weight: bold; font-size: 14px; z-index: 9999; box-shadow: 0 4px 15px rgba(0,230,230,0.2); border: 1px solid #00e6e6; }
-
-        /* 12. कॉलिंग स्क्रीन (Instagram Style) */
-        #call-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f0f15; z-index: 10000; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; }
-        .call-avatar { width: 120px; height: 120px; border-radius: 50%; background: #3b3b54; margin-bottom: 20px; border: 3px solid #00e6e6; }
-        .call-btns { display: flex; gap: 40px; margin-top: auto; margin-bottom: 80px; }
-        .call-btn { width: 65px; height: 65px; border-radius: 50%; border: none; font-size: 24px; color: white; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+        /* आपका 3D सेंड बटन */
+        .custom-send-btn {
+            width: 65px; height: 45px;
+            background: linear-gradient(90deg, #800080, #FFA500, #008000);
+            clip-path: polygon(0 0, 25% 50%, 0 100%, 65% 80%, 65% 100%, 100% 50%, 65% 0, 65% 20%);
+            box-shadow: inset 0px 4px 8px rgba(255, 255, 255, 0.4), 0px 4px 6px rgba(0,0,0,0.3);
+            border: none; cursor: pointer; transition: transform 0.2s ease-in-out;
+        }
+        .custom-send-btn:active { transform: scale(0.90); }
+        .secure-media { filter: blur(4px); transition: filter 0.3s; cursor: pointer; }
+        .secure-media:hover { filter: blur(0px); }
     </style>
 </head>
-<body>
+<body class="bg-gray-100 font-sans">
 
-    <!-- 11. सीक्रेट नोटिफिकेशन बैनर -->
-    <div id="secret-notif">New Wallpaper</div>
-
-    <!-- फुल स्क्रीन वॉलपेपर मोडल -->
-    <div id="wallpaper-fullscreen-modal" onclick="this.style.display='none'">
-        <span class="close-fs-btn">&times;</span>
-        <img id="full-img" src="" alt="Wallpaper">
+    <!-- ========================================== -->
+    <!-- PHASE 1: HOME PAGE (24 WALLPAPERS)         -->
+    <!-- ========================================== -->
+    <div id="home-screen" class="min-h-screen p-4 block">
+        <!-- 3-Dot Menu -->
+        <div class="flex justify-end mb-2">
+            <button onclick="showGoogleLogin()" class="text-3xl font-bold text-gray-400 hover:text-gray-700 px-2 pb-2">&#8942;</button>
+        </div>
+        
+        <h1 class="text-center text-2xl font-bold mb-6 text-gray-800">Trending Wallpapers</h1>
+        <!-- यहाँ पूरे 24 वॉलपेपर आएंगे -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="wallpaper-grid"></div>
     </div>
 
-    <!-- 12. कॉलिंग स्क्रीन -->
-    <div id="call-screen">
-        <div class="call-avatar"></div>
-        <h2 id="callingName" style="font-size: 24px;">Friend</h2>
-        <p style="color:#00e6e6; margin-top:10px; font-size: 16px;">Ringing... 🎵</p>
-        <div class="call-btns">
-            <button class="call-btn" style="background:#ff3366;" onclick="endCall()"><i class="fas fa-phone-slash"></i></button>
-            <button class="call-btn" style="background:#1e1e2f; border: 1px solid #3b3b54;"><i class="fas fa-sync-alt"></i></button>
+    <!-- Google Auth Modal (छलावा लॉगिन) -->
+    <div id="google-login-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-xl shadow-xl w-80 text-center">
+            <h2 class="text-xl font-bold mb-4">Sign in</h2>
+            <button onclick="loginWithGmail()" class="w-full flex items-center justify-center space-x-2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                <span>Sign in with Google (Gmail)</span>
+            </button>
+            <button onclick="hideGoogleLogin()" class="mt-4 text-gray-500 text-sm">Cancel</button>
         </div>
     </div>
 
-    <!-- मेन वेबसाइट (वॉलपेपर पेज) -->
-    <div id="main-website">
-        <header>
-            <h1>🌟 Premium Wallpapers</h1>
-            <div class="menu-container">
-                <button class="three-dot-btn" id="menuBtn">⋮</button>
-                <div class="dropdown-menu" id="dropdownMenu">
-                    <button onclick="openModal('loginModal')"><i class="fas fa-lock"></i> प्राइवेट चैट (लॉगिन)</button>
-                </div>
-            </div>
-        </header>
-
-        <!-- 1. 24 वॉलपेपर ग्रिड (डायरेक्ट HTML ताकि कोई ग्लिच न हो) -->
-        <div class="category-container">
-            <div class="wallpaper-grid">
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=800')"><img src="https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=800')"><img src="https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1503376269666-41f274a49c95?w=800')"><img src="https://images.unsplash.com/photo-1503376269666-41f274a49c95?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=800')"><img src="https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800')"><img src="https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800')"><img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=800')"><img src="https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=800')"><img src="https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=800')"><img src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1532980400857-e8d9d275d858?w=800')"><img src="https://images.unsplash.com/photo-1532980400857-e8d9d275d858?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1511919884226-fd3cad34687c?w=800')"><img src="https://images.unsplash.com/photo-1511919884226-fd3cad34687c?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1449426468159-d96bd59d1469?w=800')"><img src="https://images.unsplash.com/photo-1449426468159-d96bd59d1469?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1469285994282-454ceb49e63c?w=800')"><img src="https://images.unsplash.com/photo-1469285994282-454ceb49e63c?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=800')"><img src="https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1470071131384-001b85755536?w=800')"><img src="https://images.unsplash.com/photo-1470071131384-001b85755536?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800')"><img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1506744626753-f3630f9d9e4c?w=800')"><img src="https://images.unsplash.com/photo-1506744626753-f3630f9d9e4c?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800')"><img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800')"><img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=800')"><img src="https://images.unsplash.com/photo-1473448912268-2022ce9509d8?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1434725039720-aaad6dd32dfe?w=800')"><img src="https://images.unsplash.com/photo-1434725039720-aaad6dd32dfe?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1425913397330-cf8af2ff40a1?w=800')"><img src="https://images.unsplash.com/photo-1425913397330-cf8af2ff40a1?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1472396961693-142e6e269027?w=800')"><img src="https://images.unsplash.com/photo-1472396961693-142e6e269027?w=400"></div>
-                <div class="wallpaper-card" onclick="openFullscreen('https://images.unsplash.com/photo-1511576661531-b34d7da5d0bb?w=800')"><img src="https://images.unsplash.com/photo-1511576661531-b34d7da5d0bb?w=400"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 2. लॉगिन मोडल -->
-    <div class="modal-overlay" id="loginModal">
-        <div class="auth-box">
-            <h2>लॉगिन करें</h2>
-            <button class="google-btn" id="uiLoginBtn"><i class="fab fa-google"></i> Google से लॉगिन</button>
-            <button class="close-btn" onclick="closeAllModals()">बंद करें</button>
-        </div>
-    </div>
-
-    <!-- 3 & 4. मैसेंजर डैशबोर्ड -->
-    <div id="chat-dashboard">
-        <div id="messenger-home">
-            <div class="chat-header">
-                <h2>प्राइवेट मैसेंजर</h2>
-                <button class="close-btn" onclick="logoutUI()" style="margin:0; color:#ff3366;">लॉगआउट</button>
-            </div>
+    <!-- ========================================== -->
+    <!-- PHASE 2: SECRET DASHBOARD (DP & USERNAME)  -->
+    <!-- ========================================== -->
+    <div id="dashboard-screen" class="min-h-screen bg-gray-900 text-white p-4 hidden">
+        
+        <div class="flex flex-col items-center mb-8 pt-4">
+            <!-- DP Change Option (Click to open gallery) -->
+            <label for="dp-upload" class="w-24 h-24 rounded-full bg-gray-700 mb-2 overflow-hidden border-2 border-purple-500 cursor-pointer relative group">
+                <img id="user-dp" src="https://source.unsplash.com/random/100x100?face" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center text-xs">Change</div>
+            </label>
+            <input type="file" id="dp-upload" class="hidden" accept="image/*" onchange="changeDP(event)">
             
-            <div class="profile-section">
-                <input type="file" id="dpUpload" style="display:none;" accept="image/*" onchange="previewDP(event)">
-                <div class="profile-pic-wrapper" onclick="document.getElementById('dpUpload').click()">
-                    <img src="https://via.placeholder.com/100" class="profile-pic" id="myProfilePic">
-                    <i class="fas fa-camera dp-edit-icon"></i>
-                </div>
-                <div class="username-display">
-                    <input type="text" placeholder="Enter Username" id="myUsername"> 
-                    <button id="saveUserBtn">Save</button>
-                </div>
-                <small style="color:gray; font-size:11px; display:block; margin-top:5px;">* Username locks for 14 days after saving</small>
-            </div>
+            <!-- Username Edit -->
+            <input type="text" value="Himanshu_8938" class="text-center bg-transparent border-b border-gray-600 text-xl font-bold outline-none mb-1 focus:border-purple-500">
+            <p class="text-[10px] text-gray-400">Username can only be changed once every 14 days.</p>
+        </div>
 
-            <div class="list-section">
-                <div class="section-title-chat">All Members (New)</div>
-                <!-- मेम्बर 1 -->
-                <div class="user-item">
-                    <div style="display:flex; align-items:center;">
-                        <img src="https://via.placeholder.com/45" class="user-avatar">
-                        <span class="user-name">Lalit Bariya</span>
-                    </div>
-                    <button class="btn-add" onclick="openChat('Lalit Bariya')">Chat</button>
-                </div>
-                <!-- मेम्बर 2 -->
-                <div class="user-item">
-                    <div style="display:flex; align-items:center;">
-                        <img src="https://via.placeholder.com/45" class="user-avatar">
-                        <span class="user-name">Vinit</span>
-                    </div>
-                    <button class="btn-add" onclick="openChat('Vinit')">Chat</button>
-                </div>
-                <!-- मेम्बर 3 -->
-                <div class="user-item">
-                    <div style="display:flex; align-items:center;">
-                        <img src="https://via.placeholder.com/45" class="user-avatar">
-                        <span class="user-name">Vansh</span>
-                    </div>
-                    <button class="btn-add" onclick="openChat('Vansh')">Chat</button>
-                </div>
+        <input type="text" placeholder="Search users..." class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 outline-none mb-6">
+
+        <h3 class="text-purple-400 font-semibold mb-3">New Friends</h3>
+        <div class="flex items-center justify-between bg-gray-800 p-3 rounded-lg mb-6">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gray-600 rounded-full"></div>
+                <span>Lalit Bariya</span>
+            </div>
+            <button class="bg-green-600 px-4 py-1 rounded-md text-sm font-bold">Accept</button>
+        </div>
+
+        <h3 class="text-orange-400 font-semibold mb-3">All Friends</h3>
+        <div onclick="openChat()" class="flex items-center justify-between bg-gray-800 p-3 rounded-lg cursor-pointer hover:bg-gray-700">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gray-600 rounded-full"></div>
+                <span>Vinit</span>
+            </div>
+            <span class="text-purple-400 text-sm font-bold">Tap to chat &rarr;</span>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- PHASE 3: CHAT ROOM (3D BUTTON INCLUDED)    -->
+    <!-- ========================================== -->
+    <div id="chat-screen" class="flex-col h-screen bg-black text-white hidden">
+        <!-- Chat Header -->
+        <div class="flex justify-between items-center p-4 bg-gray-900 border-b border-gray-800">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="closeChat()">
+                <span class="text-2xl font-bold text-gray-400">&larr;</span>
+                <div class="w-10 h-10 bg-gray-700 rounded-full"></div>
+                <h2 class="font-bold">Vinit</h2>
+            </div>
+            <div class="space-x-6 text-2xl flex">
+                <button>📞</button>
+                <button>📹</button>
             </div>
         </div>
 
-        <!-- 5 से 10. प्राइवेट चैट रूम -->
-        <div id="private-chat-room">
-            <div class="chat-room-header">
-                <button class="back-btn" onclick="closePrivateChat()"><i class="fas fa-arrow-left"></i></button>
-                <div style="display:flex; align-items:center; gap:10px; flex:1;">
-                    <img src="https://via.placeholder.com/40" style="width:35px; height:35px; border-radius:50%;">
-                    <h3 style="font-size: 16px; color: white;" id="chattingWithName">Friend</h3>
+        <div class="flex-1 p-4 overflow-y-auto">
+            <div class="text-center text-xs text-gray-600 my-4">Today</div>
+        </div>
+
+        <!-- Bottom Input & 3D Send Button -->
+        <div class="p-3 bg-gray-900 flex items-center space-x-3 w-full pb-6">
+            <button class="text-2xl text-gray-400">📷</button>
+            <button class="text-2xl text-gray-400">🖼️</button>
+            <button class="text-2xl text-gray-400">🎤</button>
+            <input type="text" placeholder="Type..." class="flex-1 px-4 py-2 rounded-full bg-gray-800 text-white outline-none">
+            <button class="custom-send-btn flex-shrink-0"></button>
+        </div>
+    </div>
+
+    <script>
+        // 1. Generate 24 Wallpapers
+        const grid = document.getElementById('wallpaper-grid');
+        for (let i = 1; i <= 24; i++) {
+            grid.innerHTML += `
+                <div class="relative group cursor-pointer overflow-hidden rounded-xl shadow-md">
+                    <img src="https://source.unsplash.com/random/400x600?wallpaper,nature&sig=${i}" class="w-full h-56 object-cover">
                 </div>
-                <div class="header-icons">
-                    <i class="fas fa-phone" onclick="startCall()"></i>
-                    <i class="fas fa-video" onclick="startCall()"></i>
-                </div>
-            </div>
-            
-            <div class="chat-messages" id="chatMessages">
-                <!-- Messages will load here -->
-            </div>
-            
-            <div class="chat-input-area">
-      
+            `;
+        }
+
+        // 2. Google Login Flow
+        function showGoogleLogin() {
+            document.getElementById('google-login-modal').classList.replace('hidden', 'flex');
+        }
+        function hideGoogleLogin() {
+            document.getElementById('google-login-modal').classList.replace('flex', 'hidden');
+        }
+        function loginWithGmail() {
+            hideGoogleLogin();
+            document.getElementById('home-screen').classList.replace('block', 'hidden');
+            document.getElementById('dashboard-screen').classList.replace('hidden', 'block');
+        }
+
+        // 3. DP Change Logic
+        function changeDP(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('user-dp').src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Navigation
+        function openChat() {
+            document.getElementById('dashboard-screen').classList.replace('block', 'hidden');
+            document.getElementById('chat-screen').classList.replace('hidden', 'flex');
+        }
+        function closeChat() {
+            document.getElementById('chat-screen').classList.replace('flex', 'hidden');
+            document.getElementById('dashboard-screen').classList.replace('hidden', 'block');
+        }
+    </script>
+</body>
+</html>
