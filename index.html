@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BerylWalls - Premium</title>
     <style>
-        /* यह CSS है जो डिजाइन को प्रीमियम बनाता है */
+        /* बेसिक रिसेट और फॉन्ट */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f0f4f8; color: #1a202c; }
         
@@ -17,28 +17,48 @@
             position: sticky; top: 0; z-index: 100; 
         }
         .logo { font-size: 22px; font-weight: 700; color: #2d3748; }
-        .menu-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #4a5568; }
+        .menu-btn { background: none; border: none; font-size: 26px; cursor: pointer; color: #4a5568; padding: 0 10px; }
         
-        /* वॉलपेपर ग्रिड डिजाइन */
+        /* वॉलपेपर ग्रिड (बिना सर्च बार के) */
         .container { padding: 20px; max-width: 1200px; margin: 0 auto; }
-        .search-bar { 
-            width: 100%; padding: 14px; border-radius: 10px; 
-            border: 1px solid #e2e8f0; margin-bottom: 25px; 
-            font-size: 15px; outline: none;
-        }
         .grid { 
             display: grid; 
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
             gap: 15px; 
+            margin-top: 10px;
         }
         .card { 
             background: white; border-radius: 12px; 
             overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
         }
         .card img { width: 100%; height: 220px; object-fit: cover; display: block; }
-        .card-info { padding: 12px; }
-        .card-title { font-size: 14px; font-weight: 600; color: #2d3748;}
-        .card-desc { font-size: 12px; color: #718096; margin-top: 4px; }
+        
+        /* नया Google Sign-in पॉपअप डिजाइन */
+        .modal-overlay {
+            display: none; /* शुरुआत में छिपा रहेगा */
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); /* बैकग्राउंड को धुंधला करेगा */
+            justify-content: center; align-items: center; z-index: 200;
+        }
+        .login-box {
+            background: white; padding: 30px; border-radius: 16px;
+            text-align: center; width: 90%; max-width: 320px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .login-box h2 { margin-bottom: 25px; font-size: 22px; color: #2d3748; }
+        .google-btn {
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            width: 100%; padding: 12px; border: 1px solid #cbd5e0;
+            border-radius: 8px; background: white; cursor: pointer;
+            font-size: 16px; font-weight: 600; color: #4a5568;
+            transition: 0.3s;
+        }
+        .google-btn:hover { background: #f7fafc; border-color: #a0aec0; }
+        .google-icon { width: 24px; height: 24px; }
+        .close-btn { 
+            margin-top: 20px; color: #e53e3e; cursor: pointer; 
+            font-size: 14px; font-weight: 600; 
+        }
     </style>
 </head>
 <body>
@@ -46,50 +66,49 @@
     <!-- टॉप नेविगेशन बार -->
     <header>
         <div class="logo">BerylWalls</div>
-        <!-- थ्री डॉट बटन जिस पर क्लिक करने से लॉगिन आएगा (बाद में) -->
-        <button class="menu-btn" onclick="alert('यहाँ Google Sign-in का पॉपअप आएगा!')">⋮</button>
+        <!-- थ्री डॉट बटन जिस पर क्लिक करने से 'openLogin' फंक्शन चलेगा -->
+        <button class="menu-btn" onclick="openLogin()">⋮</button>
     </header>
 
-    <!-- मेन कंटेंट -->
+    <!-- मेन कंटेंट (सर्च बटन हटा दिया गया है) -->
     <div class="container">
-        <!-- सर्च बार -->
-        <input type="text" class="search-bar" placeholder="Search premium wallpapers...">
-        
         <!-- वॉलपेपर्स -->
         <div class="grid">
-            <div class="card">
-                <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400&auto=format&fit=crop" alt="Wallpaper 1">
-                <div class="card-info">
-                    <div class="card-title">Abstract Waves</div>
-                    <div class="card-desc">Premium User</div>
-                </div>
-            </div>
-            
-            <div class="card">
-                <img src="https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=400&auto=format&fit=crop" alt="Wallpaper 2">
-                <div class="card-info">
-                    <div class="card-title">Nature Scapes</div>
-                    <div class="card-desc">High Quality</div>
-                </div>
-            </div>
-
-            <div class="card">
-                <img src="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=400&auto=format&fit=crop" alt="Wallpaper 3">
-                <div class="card-info">
-                    <div class="card-title">Neon City</div>
-                    <div class="card-desc">Exclusive</div>
-                </div>
-            </div>
-            
-            <div class="card">
-                <img src="https://images.unsplash.com/photo-1550684376-efcbd6e3f031?q=80&w=400&auto=format&fit=crop" alt="Wallpaper 4">
-                <div class="card-info">
-                    <div class="card-title">Geometric Art</div>
-                    <div class="card-desc">Premium</div>
-                </div>
-            </div>
+            <div class="card"><img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400&auto=format&fit=crop" alt="Wallpaper 1"></div>
+            <div class="card"><img src="https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=400&auto=format&fit=crop" alt="Wallpaper 2"></div>
+            <div class="card"><img src="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=400&auto=format&fit=crop" alt="Wallpaper 3"></div>
+            <div class="card"><img src="https://images.unsplash.com/photo-1550684376-efcbd6e3f031?q=80&w=400&auto=format&fit=crop" alt="Wallpaper 4"></div>
+            <div class="card"><img src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=400&auto=format&fit=crop" alt="Wallpaper 5"></div>
+            <div class="card"><img src="https://images.unsplash.com/photo-1604076913837-52ab5629fba9?q=80&w=400&auto=format&fit=crop" alt="Wallpaper 6"></div>
         </div>
     </div>
+
+    <!-- Google Sign-in पॉपअप -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="login-box">
+            <h2>Sign in to BerylWalls</h2>
+            <!-- Google बटन -->
+            <button class="google-btn">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" class="google-icon">
+                Continue with Google
+            </button>
+            <!-- कैंसिल बटन -->
+            <div class="close-btn" onclick="closeLogin()">Cancel</div>
+        </div>
+    </div>
+
+    <!-- JavaScript (पॉपअप को खोलने और बंद करने के लिए) -->
+    <script>
+        function openLogin() {
+            // थ्री डॉट दबाने पर पॉपअप दिखेगा
+            document.getElementById('loginModal').style.display = 'flex';
+        }
+
+        function closeLogin() {
+            // Cancel दबाने पर पॉपअप बंद हो जाएगा
+            document.getElementById('loginModal').style.display = 'none';
+        }
+    </script>
 
 </body>
 </html>
