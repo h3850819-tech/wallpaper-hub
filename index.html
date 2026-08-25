@@ -11,11 +11,11 @@
         /* Top Bar */
         header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
         .logo { font-size: 22px; font-weight: 700; color: #2d3748; }
-        .menu-btn { background: none; border: none; font-size: 26px; cursor: pointer; color: #4a5568; padding: 0 10px; }
+        .menu-btn { background: none; border: none; font-size: 28px; cursor: pointer; color: #4a5568; padding: 0 10px; }
         
         .container { padding: 20px; max-width: 1200px; margin: 0 auto; }
         
-        /* Homepage Grid with 12 Clean Wallpapers */
+        /* Homepage Grid */
         #homePage { display: block; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 10px; }
         .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
@@ -26,7 +26,7 @@
         .login-box { background: white; padding: 30px; border-radius: 16px; text-align: center; width: 90%; max-width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         .login-box h2 { margin-bottom: 25px; font-size: 22px; color: #2d3748; }
         .google-btn { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; padding: 12px; border: 1px solid #cbd5e0; border-radius: 8px; background: white; cursor: pointer; font-size: 16px; font-weight: 600; color: #4a5568; }
-        .close-btn { margin-top: 20px; color: #e53e3e; cursor: pointer; font-size: 14px; font-weight: 600; }
+        .close-btn { margin-top: 20px; color: #e53e3e; cursor: pointer; font-size: 14px; font-weight: 600; display: inline-block; }
 
         /* Secret Page Dashboard */
         #secretPage { display: none; padding-top: 10px; }
@@ -46,10 +46,9 @@
         .member-left img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
         .member-name { font-size: 15px; font-weight: 600; color: #2d3748; }
         
-        .btn-small { padding: 6px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; border: none; transition: 0.3s; }
+        .btn-small { padding: 6px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; border: none; }
         .add-btn { background: #3182ce; color: white; }
         .accept-btn { background: #38a169; color: white; }
-        .chat-btn { background: #d69e2e; color: white; }
         .requested-btn { background: #cbd5e0; color: #4a5568; cursor: not-allowed; }
 
         /* Private Chat Screen */
@@ -74,11 +73,12 @@
 </head>
 <body>
 
-    <!-- 1. Homepage with 12 Wallpapers -->
+    <!-- 1. Homepage -->
     <div id="homePage">
         <header>
             <div class="logo">BerylWalls</div>
-            <button class="menu-btn" id="openLoginBtn">⋮</button>
+            <!-- Direct onclick to ensure it opens instantly -->
+            <button class="menu-btn" onclick="document.getElementById('loginModal').style.display='flex'">⋮</button>
         </header>
         <div class="container">
             <div class="grid">
@@ -106,7 +106,7 @@
                 <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="G" style="width:20px; height:20px;">
                 Continue with Google
             </button>
-            <div class="close-btn" id="closeLoginBtn" style="margin-top: 15px;">Cancel</div>
+            <div class="close-btn" onclick="document.getElementById('loginModal').style.display='none'">Cancel</div>
         </div>
     </div>
 
@@ -174,7 +174,7 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs & Core Logic -->
+    <!-- Firebase & Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
@@ -193,30 +193,21 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        
         let currentUserData = null;
 
-        document.getElementById('openLoginBtn').addEventListener('click', () => document.getElementById('loginModal').style.display = 'flex');
-        document.getElementById('closeLoginBtn').addEventListener('click', () => document.getElementById('loginModal').style.display = 'none');
         document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
         
         document.getElementById('googleSignInBtn').addEventListener('click', () => {
-            signInWithPopup(auth, new GoogleAuthProvider()).then(() => document.getElementById('loginModal').style.display = 'none').catch(e => alert("Login Error: " + e.message));
+            signInWithPopup(auth, new GoogleAuthProvider())
+                .then(() => document.getElementById('loginModal').style.display = 'none')
+                .catch(e => alert("Login Error: " + e.message));
         });
 
-        // Chat Navigation
-        window.openChat = function(name, dp) {
-            document.getElementById('secretPage').style.display = 'none';
-            document.getElementById('chatScreen').style.display = 'flex';
-            document.getElementById('chatHeaderName').innerText = name;
-            document.getElementById('chatHeaderDp').src = dp;
-        };
         window.closeChat = function() {
             document.getElementById('chatScreen').style.display = 'none';
             document.getElementById('secretPage').style.display = 'block';
         };
 
-        // Send Friend Request
         window.sendFriendRequest = async function(btn, receiverId) {
             btn.innerText = 'Requested';
             btn.className = 'btn-small requested-btn';
@@ -231,15 +222,16 @@
             });
         };
 
-        // Accept Friend Request & Open Chat
         window.acceptRequest = async function(reqId, senderName, senderDp) {
             const reqRef = doc(db, "friend_requests", reqId);
             await updateDoc(reqRef, { status: 'accepted' });
             alert('Request Accepted! You can now chat.');
-            openChat(senderName, senderDp);
+            document.getElementById('secretPage').style.display = 'none';
+            document.getElementById('chatScreen').style.display = 'flex';
+            document.getElementById('chatHeaderName').innerText = senderName;
+            document.getElementById('chatHeaderDp').src = senderDp;
         };
 
-        // Load Dashboard Data (Members & Requests)
         async function loadDashboardData(uid) {
             const usersSnap = await getDocs(collection(db, "users"));
             const listContainer = document.getElementById('memberListContainer');
@@ -287,7 +279,6 @@
             });
         }
 
-        // Search Bar
         document.getElementById('searchMemberInput').addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
             const items = document.querySelectorAll('#memberListContainer .member-item');
@@ -332,6 +323,15 @@
             }
         });
 
-        // DP Update from Gallery
         document.getElementById('dpContainer').addEventListener('click', () => document.getElementById('dpInput').click());
-        document.getElementById('dpInput').addEven
+        document.getElementById('dpInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async function(event) {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = async function() {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 250;
+                        const scaleSize = MAX_WIDTH / img.w
