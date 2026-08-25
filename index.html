@@ -22,10 +22,7 @@
         
         /* होमपेज वॉलपेपर ग्रिड */
         #homePage { display: block; }
-        .grid { 
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
-            gap: 15px; margin-top: 10px;
-        }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 10px; }
         .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .card img { width: 100%; height: 220px; object-fit: cover; display: block; }
 
@@ -35,15 +32,13 @@
             background: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center; z-index: 200;
         }
         .login-box {
-            background: white; padding: 30px; border-radius: 16px;
-            text-align: center; width: 90%; max-width: 320px;
+            background: white; padding: 30px; border-radius: 16px; text-align: center; width: 90%; max-width: 320px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         }
         .login-box h2 { margin-bottom: 25px; font-size: 22px; color: #2d3748; }
         .google-btn {
             display: flex; align-items: center; justify-content: center; gap: 12px;
-            width: 100%; padding: 12px; border: 1px solid #cbd5e0;
-            border-radius: 8px; background: white; cursor: pointer;
+            width: 100%; padding: 12px; border: 1px solid #cbd5e0; border-radius: 8px; background: white; cursor: pointer;
             font-size: 16px; font-weight: 600; color: #4a5568;
         }
         .close-btn { margin-top: 20px; color: #e53e3e; cursor: pointer; font-size: 14px; font-weight: 600; }
@@ -51,15 +46,14 @@
         /* सीक्रेट पेज डैशबोर्ड */
         #secretPage { display: none; padding-top: 10px; }
         .profile-card {
-            background: white; padding: 20px; border-radius: 14px;
-            display: flex; align-items: center; gap: 15px;
+            background: white; padding: 20px; border-radius: 14px; display: flex; align-items: center; gap: 15px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px;
         }
         .dp-container { position: relative; width: 70px; height: 70px; cursor: pointer; }
         .dp-container img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid #3182ce; }
         .profile-info h3 { font-size: 18px; color: #2d3748; display: flex; align-items: center; gap: 8px; }
         .profile-info p { font-size: 12px; color: #718096; margin-top: 4px; }
-        .edit-icon { font-size: 14px; cursor: pointer; color: #3182ce; }
+        .edit-icon { font-size: 14px; cursor: pointer; color: #3182ce; padding: 5px; }
 
         .search-member { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #cbd5e0; margin-bottom: 20px; outline: none; font-size: 14px; }
         .section-title { font-size: 16px; font-weight: 700; color: #4a5568; margin-bottom: 12px; }
@@ -109,17 +103,19 @@
             <button class="menu-btn" id="logoutBtn" title="Logout">↩</button>
         </header>
         <div class="container">
+            <!-- प्रोफाइल सेक्शन -->
             <div class="profile-card">
                 <div class="dp-container" id="dpContainer" title="Change DP from Gallery">
                     <img id="userDp" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop" alt="My DP">
                 </div>
                 <div class="profile-info">
-                    <h3 id="userNameDisplay">@username <span class="edit-icon" id="editUsernameBtn">✏️</span></h3>
+                    <h3 id="userNameDisplay">Loading... <span class="edit-icon" id="editUsernameBtn" style="display:none;">✏️</span></h3>
                     <p>DP गैलरी से बदलें | Username 14 दिन में 1 बार</p>
                 </div>
             </div>
             <input type="file" id="dpInput" style="display: none;" accept="image/*">
 
+            <!-- मेंबर्स लिस्ट -->
             <input type="text" class="search-member" placeholder="Search member by username...">
             <div class="section-title">All Members (Demo)</div>
             <div class="member-list">
@@ -134,12 +130,12 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs और लॉजिक -->
+    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-        // आपका अपना Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyCyOPrvdTFdwz5bFTYBf6KJ5webyBJj_1A",
             authDomain: "himanshuchatapp-785b4.firebaseapp.com",
@@ -152,66 +148,95 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
-        // UI Elements
         const loginModal = document.getElementById('loginModal');
         const homePage = document.getElementById('homePage');
         const secretPage = document.getElementById('secretPage');
         const userDp = document.getElementById('userDp');
         const userNameDisplay = document.getElementById('userNameDisplay');
+        const editUsernameBtn = document.getElementById('editUsernameBtn');
 
-        // पॉपअप खोलना और बंद करना
         document.getElementById('openLoginBtn').addEventListener('click', () => loginModal.style.display = 'flex');
         document.getElementById('closeLoginBtn').addEventListener('click', () => loginModal.style.display = 'none');
-
-        // असली Google Login
-        document.getElementById('googleSignInBtn').addEventListener('click', () => {
-            signInWithPopup(auth, provider).then((result) => {
-                loginModal.style.display = 'none';
-                // लॉगिन सफल
-            }).catch((error) => {
-                alert("लॉगिन में दिक्कत आई: " + error.message);
-            });
-        });
-
-        // Logout
         document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
 
-        // Authentication State Listener (चेक करता है कि यूजर लॉगिन है या नहीं)
-        onAuthStateChanged(auth, (user) => {
+        document.getElementById('googleSignInBtn').addEventListener('click', () => {
+            signInWithPopup(auth, provider).then(() => loginModal.style.display = 'none').catch(e => alert(e.message));
+        });
+
+        // ऑथेंटिकेशन और डेटाबेस चेक (परमानेंट सेविंग)
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // यूजर लॉगिन है, सीक्रेट पेज दिखाएँ
                 homePage.style.display = 'none';
                 secretPage.style.display = 'block';
                 
-                // असली Google DP और नाम सेट करें
-                userDp.src = user.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200";
-                const baseName = user.displayName ? user.displayName.replace(/\s+/g, '').toLowerCase() : "user";
-                userNameDisplay.innerHTML = `@${baseName} <span class="edit-icon" id="editUsernameBtn">✏️</span>`;
-                attachUsernameEditEvent();
+                const userRef = doc(db, "users", user.uid);
+                const docSnap = await getDoc(userRef);
+
+                if (docSnap.exists()) {
+                    // अगर पहले से डेटाबेस में डेटा है, तो उसे दिखाओ
+                    const data = docSnap.data();
+                    userDp.src = data.dp || user.photoURL;
+                    userNameDisplay.innerHTML = `@${data.username} <span class="edit-icon" id="editUsernameBtn">✏️</span>`;
+                    attachUsernameEditEvent(user.uid, data.lastUsernameChange);
+                } else {
+                    // पहली बार लॉगिन पर डिफॉल्ट डेटाबेस बनाओ
+                    const baseName = user.displayName ? user.displayName.replace(/\s+/g, '').toLowerCase() : "user";
+                    userDp.src = user.photoURL;
+                    userNameDisplay.innerHTML = `@${baseName} <span class="edit-icon" id="editUsernameBtn">✏️</span>`;
+                    
+                    await setDoc(userRef, {
+                        username: baseName,
+                        dp: user.photoURL,
+                        lastUsernameChange: 0
+                    });
+                    attachUsernameEditEvent(user.uid, 0);
+                }
             } else {
-                // यूजर लॉगआउट है, होमपेज दिखाएँ
                 homePage.style.display = 'block';
                 secretPage.style.display = 'none';
             }
         });
 
-        // गैलरी से DP चेंज लॉजिक (Local Preview)
+        // गैलरी से DP सेट करना और डेटाबेस में सुरक्षित करना
         document.getElementById('dpContainer').addEventListener('click', () => document.getElementById('dpInput').click());
+        
         document.getElementById('dpInput').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = function(event) { userDp.src = event.target.result; }
+                reader.onload = async function(event) {
+                    // इमेज को हल्का कंप्रेस करके सेव करना ताकि डेटाबेस फुल न हो
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = async function() {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 250;
+                        const scaleSize = MAX_WIDTH / img.width;
+                        canvas.width = MAX_WIDTH;
+                        canvas.height = img.height * scaleSize;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        const base64Compressed = canvas.toDataURL('image/jpeg', 0.8);
+
+                        userDp.src = base64Compressed;
+                        
+                        // डेटाबेस में DP सेव करें
+                        if (auth.currentUser) {
+                            const userRef = doc(db, "users", auth.currentUser.uid);
+                            await setDoc(userRef, { dp: base64Compressed }, { merge: true });
+                        }
+                    }
+                }
                 reader.readAsDataURL(file);
             }
         });
 
-        // 14-दिन यूजरनेम लॉजिक
-        function attachUsernameEditEvent() {
-            document.getElementById('editUsernameBtn').addEventListener('click', () => {
-                const lastChange = localStorage.getItem('lastUsernameChange');
+        // 14-दिन यूजरनेम लॉक का परमानेंट लॉजिक
+        function attachUsernameEditEvent(uid, lastChange) {
+            document.getElementById('editUsernameBtn').addEventListener('click', async () => {
                 const now = new Date().getTime();
                 const fourteenDays = 14 * 24 * 60 * 60 * 1000;
 
@@ -220,11 +245,17 @@
                     alert(`आप ${daysLeft} दिन बाद फिर से यूजरनेम बदल सकेंगे।`);
                     return;
                 }
+                
                 const newName = prompt("नया यूजरनेम दर्ज करें:");
                 if (newName) {
                     userNameDisplay.innerHTML = `@${newName} <span class="edit-icon" id="editUsernameBtn">✏️</span>`;
-                    localStorage.setItem('lastUsernameChange', now);
-                    attachUsernameEditEvent();
+                    
+                    // डेटाबेस में नया यूजरनेम सेव करें
+                    const userRef = doc(db, "users", uid);
+                    await setDoc(userRef, { username: newName, lastUsernameChange: now }, { merge: true });
+                    
+                    alert("यूजरनेम सेव हो गया!");
+                    attachUsernameEditEvent(uid, now); // इवेंट को री-अटैच करें
                 }
             });
         }
