@@ -1,546 +1,333 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#11111a">
-<title>Wallpaper Gallery</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Wallpaper Hub & Chat</title>
+    <style>
+        /* --- बेसिक और थीम स्टाइल --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #0f0f15; color: #ffffff; padding-bottom: 20px; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: #161622; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        header h1 { font-size: 20px; color: #ff3366; letter-spacing: 1px; }
+        .menu-container { position: relative; }
+        .three-dot-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 5px 10px; z-index: 1001; }
+        .dropdown-menu { display: none; position: absolute; right: 0; top: 50px; background-color: #1e1e2f; border-radius: 8px; min-width: 150px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); overflow: hidden; z-index: 1000; }
+        .dropdown-menu button { width: 100%; background: none; border: none; color: white; padding: 12px 15px; text-align: left; font-size: 14px; cursor: pointer; }
+        .dropdown-menu button:hover { background-color: #2b2b40; }
+        
+        .category-container { margin: 30px 20px; }
+        .category-title { font-size: 20px; color: #00e6e6; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 8px; }
+        .wallpaper-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+        .wallpaper-card { background-color: #161622; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: transform 0.2s; cursor: pointer; }
+        .wallpaper-card:hover { transform: scale(1.05); }
+        .wallpaper-card img { width: 100%; height: 220px; object-fit: cover; display: block; }
+        
+        /* --- मोडल (लॉगिन/रजिस्टर) स्टाइल --- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
+        .auth-box { background-color: #1e1e2f; padding: 30px 25px; border-radius: 16px; width: 100%; max-width: 360px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #2b2b40; }
+        .auth-box h2 { font-size: 22px; margin-bottom: 10px; color: #ff3366; }
+        .auth-box p { font-size: 14px; color: #aaa; margin-bottom: 20px; }
+        .auth-box input, .auth-box select { width: 100%; padding: 12px; background-color: #11111a; border: 1px solid #3b3b54; border-radius: 8px; color: white; font-size: 16px; margin-bottom: 15px; text-align: left; }
+        .auth-box input:focus, .auth-box select:focus { outline: none; border-color: #ff3366; }
+        .auth-btn { width: 100%; padding: 12px; background: linear-gradient(45deg, #ff3366, #ff6633); border: none; border-radius: 8px; color: white; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .google-btn { background: #4285F4; margin-top: 15px; box-shadow: 0 4px 15px rgba(66, 133, 244, 0.4); }
+        .link-btn { background: none; border: none; color: #00e6e6; cursor: pointer; margin-top: 15px; font-size: 14px; display: block; width: 100%; }
+        .close-btn { background: none; border: none; color: #777; margin-top: 15px; cursor: pointer; font-size: 14px; }
+        
+        /* --- मैसेंजर डैशबोर्ड स्टाइल --- */
+        #chat-dashboard { display: none; max-width: 500px; margin: 0 auto; min-height: 100vh; flex-direction: column; background-color: #0f0f15; border-left: 1px solid #2b2b40; border-right: 1px solid #2b2b40;}
+        .chat-header { background-color: #161622; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2b2b40; position: sticky; top: 0; z-index: 10; }
+        .chat-header h2 { font-size: 18px; color: #00e6e6; display: flex; align-items: center; gap: 10px; }
+        
+        .profile-section { text-align: center; padding: 25px 20px 15px; }
+        .profile-pic { width: 90px; height: 90px; background-color: #1e1e2f; border-radius: 50%; margin: 0 auto 15px; display: block; object-fit: cover; border: 2px solid #ff3366; }
+        .change-dp-btn { background-color: #1e1e2f; color: #00e6e6; border: 1px solid #3b3b54; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .username-display { margin-top: 15px; font-size: 16px; font-weight: bold; color: #fff; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .username-display input { background: transparent; border: none; border-bottom: 1px dashed #777; color: #00e6e6; font-size: 16px; font-weight: bold; text-align: center; width: 130px; outline: none; }
 
-<style>
-*{box-sizing:border-box}
-:root{
-  --bg:#09090d;--panel:#12121a;--panel2:#181823;--text:#f6f4ff;
-  --muted:#9290a5;--border:#292936;--purple:#9b5cff;--green:#37d67a;
-}
-body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
-button,input{font:inherit}
-button{cursor:pointer}
-.hidden{display:none!important}
-#wallpaperHome{min-height:100vh;padding:20px}
-.homeHead{display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:auto;padding:8px 2px 22px}
-.homeHead h1{font-size:21px;margin:0;font-weight:700}
-.homeHead span{font-size:12px;color:#777487}
-.secretDots{border:0;background:transparent;color:#aaa;font-size:27px;line-height:1;padding:0 5px}
-.wallGrid{max-width:1200px;margin:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
-.wall{
-  height:250px;border-radius:18px;position:relative;overflow:hidden;
-  background-size:cover;background-position:center;box-shadow:0 8px 35px #0008;
-}
-.wall:after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 55%,#000b)}
-.wall span{position:absolute;z-index:2;bottom:14px;left:15px;font-size:13px;color:#fff9}
+        .search-container { padding: 0 20px 20px; }
+        .search-bar { width: 100%; padding: 12px 15px; border: 1px solid #3b3b54; border-radius: 12px; background-color: #1e1e2f; color: white; font-size: 15px; outline: none; }
+        .search-bar:focus { border-color: #00e6e6; }
 
-#app{position:fixed;inset:0;background:var(--bg);z-index:20;display:flex}
-.sidebar{width:330px;border-right:1px solid var(--border);background:#0d0d13;display:flex;flex-direction:column}
-.appTop{height:70px;padding:12px 15px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
-.me{display:flex;align-items:center;gap:10px;min-width:0}
-.avatar{width:42px;height:42px;border-radius:50%;object-fit:cover;background:#272734;display:flex;align-items:center;justify-content:center;font-weight:700}
-.meText{min-width:0}.meText b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.meText small{color:var(--muted)}
-.iconBtn{background:transparent;border:0;color:#bbb;font-size:21px;padding:7px}
-.search{margin:12px}
-.search input{width:100%;border:1px solid var(--border);background:#171720;color:white;border-radius:12px;padding:11px 13px;outline:none}
-.sectionTitle{padding:8px 15px;color:#8e8a9e;font-size:11px;text-transform:uppercase;letter-spacing:.1em}
-.memberList{overflow:auto;flex:1;padding-bottom:20px}
-.member{display:flex;align-items:center;gap:10px;padding:10px 15px}
-.member:hover{background:#161620}
-.memberInfo{flex:1;min-width:0}
-.memberInfo b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.memberInfo small{color:var(--muted)}
-.actionBtn{border:0;border-radius:9px;padding:7px 10px;background:#252533;color:white;font-size:12px}
-.accept{background:#6137b5}.danger{color:#ff8e9c}
+        .list-section { padding: 0 20px 20px; }
+        .section-title-chat { font-size: 14px; font-weight: bold; color: #aaa; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #2b2b40; padding-bottom: 5px;}
+        
+        .user-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #1e1e2f; transition: background 0.2s; }
+        .user-item:hover { background-color: #161622; border-radius: 8px; padding: 12px 10px; margin-left: -10px; margin-right: -10px; cursor: pointer; }
+        .user-info { display: flex; align-items: center; }
+        .user-avatar { width: 45px; height: 45px; background-color: #3b3b54; border-radius: 50%; margin-right: 15px; object-fit: cover; }
+        .user-details p { margin: 0; }
+        .user-name { font-weight: bold; font-size: 15px; color: #fff; }
+        .user-status { font-size: 12px; color: #888; margin-top: 3px; }
 
-.chatArea{flex:1;display:flex;flex-direction:column;min-width:0}
-.chatHeader{height:70px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:10px 15px;gap:11px}
-.chatUser{flex:1;min-width:0}.chatUser b{display:block}.chatUser small{color:var(--muted)}
-.chatActions{display:flex;gap:3px}
-.chatActions button{border:0;background:#181821;color:#eee;width:39px;height:39px;border-radius:50%}
-.messages{flex:1;overflow-y:auto;padding:18px 16px;display:flex;flex-direction:column;gap:5px}
-.emptyChat{margin:auto;text-align:center;color:#777487}
-.emptyChat div{font-size:40px;margin-bottom:8px}
-.msgRow{display:flex;max-width:78%}
-.msgRow.mine{margin-left:auto;justify-content:flex-end}
-.bubble{padding:9px 11px;border-radius:15px;background:#1a1a25;position:relative;min-width:55px;box-shadow:0 2px 7px #0005}
-.mine .bubble{background:linear-gradient(135deg,#5832a7,#38205f)}
-.msgText{white-space:pre-wrap;word-break:break-word;font-size:14px}
-.msgMeta{display:flex;justify-content:flex-end;gap:6px;align-items:center;margin-top:4px;color:#8d899c;font-size:9px}
-.receipt{letter-spacing:-2px;color:#aaa}.receipt.seen{color:#45df88}
-.mediaWrap img{display:block;max-width:250px;max-height:300px;border-radius:10px}
-.downloadMedia{border:0;background:#000b;color:white;border-radius:8px;padding:5px 8px;margin-top:6px;font-size:11px}
-.composer{min-height:68px;border-top:1px solid var(--border);display:flex;align-items:center;gap:9px;padding:10px 13px}
-.composer input{flex:1;min-width:0;background:#171720;border:1px solid var(--border);color:#fff;border-radius:22px;padding:11px 15px;outline:none}
-.attach{width:42px;height:42px;border-radius:50%;background:#1b1b26;border:0;color:#ccc}
-.sendBtn{
- width:51px;height:45px;border:0;position:relative;overflow:hidden;
- clip-path:polygon(0 40%,63% 40%,42% 0,100% 50%,42% 100%,63% 60%,0 60%,25% 50%);
- background:linear-gradient(135deg,#9d45ff 0%,#ff863e 50%,#38d678 100%);
- filter:drop-shadow(0 5px 5px #0008);
-}
-.sendBtn:active{transform:translateY(2px)}
+        .btn-add { background-color: #00e6e6; color: #0f0f15; border: none; padding: 7px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; }
+        .btn-add.requested { background-color: #1e1e2f; color: #00e6e6; border: 1px solid #00e6e6; cursor: default; }
+        .btn-accept { background-color: #ff3366; color: #fff; border: none; padding: 7px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; }
 
-.profilePanel{position:absolute;left:0;top:0;bottom:0;width:330px;background:#111119;z-index:5;padding:18px;overflow:auto;border-right:1px solid var(--border)}
-.profilePanel h2{margin-top:10px}
-.profileCenter{text-align:center}
-.bigAvatar{width:92px;height:92px;border-radius:50%;object-fit:cover;background:#272734}
-.profilePanel input{width:100%;background:#191923;border:1px solid var(--border);color:#fff;border-radius:10px;padding:10px;margin:7px 0}
-.profilePanel button{border:0;border-radius:10px;padding:10px 13px;background:#693fc0;color:#fff;margin-top:5px}
-
-#loginModal,#callModal{
- position:fixed;inset:0;background:#000b;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px
-}
-.modal{width:min(410px,100%);background:#14141e;border:1px solid #302f3c;border-radius:20px;padding:24px;text-align:center;box-shadow:0 25px 90px #000}
-.modal h2{margin:0 0 8px}.modal p{color:#9290a5;font-size:13px}
-.googleBtn{width:100%;padding:13px;border:0;border-radius:12px;background:#fff;color:#111;font-weight:700}
-.closeModal{background:transparent;border:0;color:#aaa;margin-top:12px}
-
-.callModalContent{width:min(700px,100%);background:#111119;border:1px solid #292936;border-radius:20px;padding:15px}
-#remoteVideo{width:100%;max-height:55vh;background:#000;border-radius:14px;object-fit:cover}
-#localVideo{position:absolute;width:130px;height:170px;right:30px;bottom:95px;background:#000;border-radius:12px;object-fit:cover;border:2px solid #fff3}
-.callControls{text-align:center;padding-top:12px}
-.callControls button{border:0;border-radius:50%;width:48px;height:48px;margin:5px;background:#292936;color:#fff}
-.callControls .end{background:#d83d55}
-
-@media(max-width:720px){
- .sidebar{width:100%;}.chatArea{display:none}
- #app.chatOpen .sidebar{display:none}#app.chatOpen .chatArea{display:flex}
- .profilePanel{width:100%}.wall{height:220px}
-}
-</style>
+        #private-chat-room { display: none; flex-direction: column; height: 100vh; background-color: #0f0f15; }
+        .chat-room-header { background-color: #161622; padding: 15px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #2b2b40; }
+        .back-btn { background: none; border: none; color: #00e6e6; font-size: 20px; cursor: pointer; }
+        .chat-room-header .user-avatar { width: 35px; height: 35px; margin-right: 0; }
+        
+        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .message { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; word-wrap: break-word; }
+        .message.incoming { background-color: #1e1e2f; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .message.outgoing { background: linear-gradient(45deg, #00e6e6, #00b3b3); color: #000; align-self: flex-end; border-bottom-right-radius: 2px; }
+        
+        .chat-input-area { padding: 15px; background-color: #161622; display: flex; gap: 10px; border-top: 1px solid #2b2b40; }
+        .chat-input-area input { flex: 1; padding: 12px; background-color: #1e1e2f; border: 1px solid #3b3b54; border-radius: 20px; color: white; outline: none; }
+        .send-btn { padding: 0 20px; background-color: #ff3366; border: none; border-radius: 20px; color: white; font-weight: bold; cursor: pointer; }
+    </style>
 </head>
-
 <body>
 
-<div id="wallpaperHome">
-  <div class="homeHead">
-    <div>
-      <h1>Wallpaper Gallery</h1>
-      <span>Curated backgrounds for every screen</span>
+    <div id="main-website">
+        <header>
+            <h1>🌟 Premium Wallpapers</h1>
+            <div class="menu-container">
+                <button class="three-dot-btn" onclick="toggleDropdown(event)">⋮</button>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <button onclick="openModal('loginModal')">🔒 प्राइवेट चैट (लॉगिन)</button>
+                    <button onclick="openModal('registerModal')">📝 नया अकाउंट बनाएं</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="category-container">
+            <div class="category-title">🏎️ गाड़ियां और बाइक्स</div>
+            <div class="wallpaper-grid">
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=400" loading="lazy"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=400" loading="lazy"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1503376269666-41f274a49c95?w=400" loading="lazy"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400" loading="lazy"></div>
+            </div>
+        </div>
+        <div class="category-container">
+            <div class="category-title">🌿 प्राकृतिक और सुंदर दृश्य</div>
+            <div class="wallpaper-grid">
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=400" loading="lazy"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400" loading="lazy"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=400" loading="lazy"></div>
+                <div class="wallpaper-card"><img src="https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=400" loading="lazy"></div>
+            </div>
+        </div>
     </div>
-    <button class="secretDots" id="secretMenu" aria-label="Menu">⋮</button>
-  </div>
-  <div class="wallGrid" id="wallGrid"></div>
-</div>
 
-<div id="app" class="hidden">
-  <aside class="sidebar">
-    <div class="appTop">
-      <div class="me" id="myProfileButton"></div>
-      <button class="iconBtn" id="profileBtn">⚙</button>
+    <div class="modal-overlay" id="loginModal">
+        <div class="auth-box">
+            <h2>लॉगिन करें</h2>
+            <input type="text" id="loginUser" placeholder="यूज़रनेम (Username)">
+            <input type="password" id="loginPass" placeholder="सीक्रेट पासवर्ड">
+            <button class="auth-btn" onclick="processLogin()">लॉगिन करें</button>
+            <button class="auth-btn google-btn" onclick="signInWithGoogle()">🌐 Google से लॉगिन</button>
+            <button class="close-btn" onclick="closeAllModals()">बंद करें</button>
+        </div>
     </div>
-    <div class="search"><input id="memberSearch" placeholder="Search members…"></div>
-    <div id="friendRequestsSection"></div>
-    <div class="sectionTitle">Friends</div>
-    <div class="memberList" id="friendsList"></div>
-    <div class="sectionTitle">All Members</div>
-    <div class="memberList" id="allMembers" style="flex:none;max-height:42%"></div>
-  </aside>
 
-  <main class="chatArea">
-    <div class="chatHeader">
-      <button class="iconBtn" id="backBtn">‹</button>
-      <div id="chatAvatar"></div>
-      <div class="chatUser" id="chatUser"><b>Select a friend</b><small>Start a private conversation</small></div>
-      <div class="chatActions hidden" id="chatActions">
-        <button id="audioCallBtn" title="Audio call">☎</button>
-        <button id="videoCallBtn" title="Video call">▣</button>
-      </div>
+    <div class="modal-overlay" id="registerModal">
+        <div class="auth-box">
+            <h2>नया अकाउंट बनाएं</h2>
+            <button class="auth-btn google-btn" onclick="signInWithGoogle()">🌐 Google से अकाउंट बनाएं</button>
+            <button class="close-btn" onclick="closeAllModals()">बंद करें</button>
+        </div>
     </div>
-    <div class="messages" id="messages">
-      <div class="emptyChat"><div>🔒</div><b>Private Chat</b><br><small>Your conversation appears here.</small></div>
+
+    <div id="chat-dashboard">
+        <div id="messenger-home">
+            <div class="chat-header">
+                <h2>प्राइवेट मैसेंजर</h2>
+                <button class="close-btn" onclick="logout()" style="margin:0; color:white;">लॉगआउट</button>
+            </div>
+            
+            <div class="profile-section">
+                <img src="https://via.placeholder.com/100" class="profile-pic" id="myProfilePic">
+                <button class="change-dp-btn">📷 Change DP</button>
+                <div class="username-display">
+                    Username: <input type="text" placeholder="Enter Username" id="myUsername"> ✏️
+                </div>
+            </div>
+
+            <div class="search-container">
+                <input type="text" class="search-bar" id="searchUserBar" placeholder="🔍 Search user name (जैसे: Vineet)">
+            </div>
+
+            <div class="list-section" id="search-results-section" style="display: none;">
+                <div class="section-title-chat">Search Result</div>
+                <div id="search-results-list"></div>
+            </div>
+
+            <div class="list-section" id="requests-received-section" style="display: none;">
+                <div class="section-title-chat">Requests Received</div>
+                <div id="requests-received-list"></div>
+            </div>
+
+            <div class="list-section">
+                <div class="section-title-chat">Messages</div>
+                <div id="friends-list">
+                    </div>
+            </div>
+        </div>
+
+        <div id="private-chat-room">
+            <div class="chat-room-header">
+                <button class="back-btn" onclick="closePrivateChat()">←</button>
+                <img src="https://via.placeholder.com/45" class="user-avatar" id="chattingWithAvatar">
+                <h3 style="font-size: 16px; color: white;" id="chattingWithName">Friend</h3>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                </div>
+            <div class="chat-input-area">
+                <input type="text" id="messageInput" placeholder="मैसेज टाइप करें...">
+                <button class="send-btn" onclick="sendMessage()">भेजें</button>
+            </div>
+        </div>
     </div>
-    <div class="composer hidden" id="composer">
-      <input type="file" id="mediaInput" accept="image/*" hidden>
-      <button class="attach" id="mediaBtn">＋</button>
-      <input id="messageInput" placeholder="Message…" autocomplete="off">
-      <button class="sendBtn" id="sendBtn" aria-label="Send"></button>
-    </div>
-  </main>
-
-  <section id="profilePanel" class="profilePanel hidden">
-    <button class="iconBtn" id="closeProfile">×</button>
-    <h2>Profile</h2>
-    <div class="profileCenter">
-      <img id="profileAvatar" class="bigAvatar">
-      <br>
-      <input type="file" id="avatarInput" accept="image/*">
-    </div>
-    <label>Username</label>
-    <input id="usernameInput" maxlength="24">
-    <button id="saveUsername">Save Username</button>
-    <p id="usernameCooldown" style="font-size:11px;color:#8e8a9e"></p>
-    <button id="signOutBtn" style="background:#49232c">Sign Out</button>
-  </section>
-</div>
-
-<div id="loginModal" class="hidden">
-  <div class="modal">
-    <h2>Private Area</h2>
-    <p>Sign in to access your private conversations.</p>
-    <button class="googleBtn" id="googleLogin">Continue with Google</button>
-    <button class="closeModal" id="closeLogin">Cancel</button>
-  </div>
-</div>
-
-<div id="callModal" class="hidden">
-  <div class="callModalContent">
-    <div id="callTitle" style="padding:4px 5px 10px;font-weight:700">Calling…</div>
-    <div style="position:relative">
-      <video id="remoteVideo" autoplay playsinline></video>
-      <video id="localVideo" autoplay playsinline muted></video>
-    </div>
-    <div class="callControls">
-      <button id="muteBtn">🎙</button>
-      <button id="cameraBtn">📷</button>
-      <button class="end" id="endCallBtn">✕</button>
-    </div>
-  </div>
-</div>
-
-<script type="module">
-/*
-  ================================================================
-  FIREBASE CONFIGURATION
-  Paste your Firebase Web App configuration here.
-  Enable:
-    Authentication -> Google
-    Firestore
-    Storage
-
-  Recommended Firestore collections:
-    users
-    friendRequests
-    friendships
-    chats/{chatId}/messages
-    calls/{callId}/offerCandidates
-    calls/{callId}/answerCandidates
-
-  IMPORTANT:
-  A browser-only single index.html cannot itself be a background
-  Firebase Cloud Messaging service worker. Foreground notifications
-  are implemented below. True background push requires a separate
-  service-worker file in production.
-  ================================================================
-*/
-
-const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_FIREBASE_PROJECT_ID",
-  storageBucket: "YOUR_FIREBASE_PROJECT_ID.firebasestorage.app",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_FIREBASE_APP_ID"
-};
-
-import {
-  initializeApp
-} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-
-import {
-  getAuth,
-  GoogleAuthProvider,
-  signInWithPopup,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-
-import {
-  getFirestore,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  orderBy,
-  onSnapshot,
-  serverTimestamp,
-  Timestamp
-} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-
-import {
-  getStorage,
-  ref,
-  uploadBytes,
-  getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
-
-/* ---------------- INITIALIZATION ---------------- */
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
-const googleProvider = new GoogleAuthProvider();
-
-const $ = id => document.getElementById(id);
-
-let currentUser = null;
-let currentProfile = null;
-let selectedUser = null;
-let selectedChatId = null;
-let unsubscribeMessages = null;
-let unsubscribeFriends = null;
-let unsubscribeRequests = null;
-let unsubscribeIncomingCalls = null;
-
-let rtc = null;
-let rtcCallId = null;
-let rtcType = null;
-let localStream = null;
-let remoteStream = null;
-let pendingIncomingCall = null;
-
-/* ---------------- FAKE WALLPAPER HOME ---------------- */
-
-const wallpapers = [
-  ["Aurora", "linear-gradient(135deg,#061a35,#0c5b72,#6ef1cf)"],
-  ["Purple Night", "linear-gradient(135deg,#090018,#30106e,#9c4cff)"],
-  ["Ocean", "linear-gradient(135deg,#001d35,#006d91,#52d5dc)"],
-  ["Sunset", "linear-gradient(135deg,#32110c,#c64a29,#ffc65a)"],
-  ["Forest", "linear-gradient(135deg,#031b12,#155c35,#8bdc8d)"],
-  ["Nebula", "linear-gradient(135deg,#17052c,#712f89,#e36bd6)"],
-  ["Ice", "linear-gradient(135deg,#091b2a,#397da8,#d7fbff)"],
-  ["Desert", "linear-gradient(135deg,#35150b,#b65f2e,#ffe09c)"],
-  ["Lavender", "linear-gradient(135deg,#21172d,#775ca7,#d6c2ff)"],
-  ["Midnight", "linear-gradient(135deg,#020204,#151529,#373757)"],
-  ["Rose", "linear-gradient(135deg,#310b1d,#a72b58,#ff9dbf)"],
-  ["Mint", "linear-gradient(135deg,#021f1c,#138c75,#b4ffe3)"],
-  ["Galaxy", "linear-gradient(135deg,#05051b,#1e126b,#ef55d5)"],
-  ["Ember", "linear-gradient(135deg,#200400,#a92c05,#ffd04e)"],
-  ["Rain", "linear-gradient(135deg,#0c1520,#315475,#a6d8ff)"],
-  ["Emerald", "linear-gradient(135deg,#00140b,#00633b,#50e3a4)"],
-  ["Coral", "linear-gradient(135deg,#35120e,#e14c3b,#ffbf94)"],
-  ["Violet", "linear-gradient(135deg,#0f061e,#54218d,#c892ff)"],
-  ["Sky", "linear-gradient(135deg,#06223c,#2e8fd1,#c3f2ff)"],
-  ["Tropical", "linear-gradient(135deg,#003329,#009e78,#e0f766)"],
-  ["Plum", "linear-gradient(135deg,#180817,#6c174e,#e69ac7)"],
-  ["Graphite", "linear-gradient(135deg,#050505,#262626,#666)"],
-  ["Golden", "linear-gradient(135deg,#251602,#9d6410,#ffe08a)"],
-  ["Cosmos", "linear-gradient(135deg,#02020c,#17104b,#7654f4)"]
-];
-
-$("wallGrid").innerHTML = wallpapers.map(([name,bg]) =>
-  `<div class="wall" style="background-image:${bg}"><span>${name}</span></div>`
-).join("");
-
-/* ---------------- QUICK ESCAPE ----------------
-   A browser reload is detected with Navigation Timing.
-   The private UI is never restored after an F5/reload.
--------------------------------------------------- */
-
-const navigation = performance.getEntriesByType("navigation")[0];
-const isReload = navigation && navigation.type === "reload";
-
-if(isReload){
-  sessionStorage.removeItem("privateOpen");
-}
-
-function showHome(){
-  $("wallpaperHome").classList.remove("hidden");
-  $("app").classList.add("hidden");
-}
-
-function showPrivate(){
-  sessionStorage.setItem("privateOpen","1");
-  $("wallpaperHome").classList.add("hidden");
-  $("app").classList.remove("hidden");
-}
-
-if(isReload || sessionStorage.getItem("privateOpen") !== "1"){
-  showHome();
-}
-
-/* ---------------- LOGIN ---------------- */
-
-$("secretMenu").onclick = () => $("loginModal").classList.remove("hidden");
-$("closeLogin").onclick = () => $("loginModal").classList.add("hidden");
-
-$("googleLogin").onclick = async () => {
-  try{
-    await signInWithPopup(auth,googleProvider);
-    $("loginModal").classList.add("hidden");
-    showPrivate();
-  }catch(e){
-    console.error(e);
-    alert("Google sign-in failed.");
-  }
-};
-
-onAuthStateChanged(auth, async user => {
-  currentUser = user;
-
-  if(!user){
-    currentProfile = null;
-    showHome();
-    return;
-  }
-
-  if(isReload){
-    await signOut(auth);
-    showHome();
-    return;
-  }
-
-  await ensureUserProfile(user);
-  showPrivate();
-  renderMyProfile();
-  startMemberListeners();
-  startRequestListener();
-  startIncomingCallListener();
-});
-
-/* ---------------- USER PROFILE ---------------- */
-
-async function ensureUserProfile(user){
-  const refUser = doc(db,"users",user.uid);
-  const snap = await getDoc(refUser);
-
-  if(!snap.exists()){
-    currentProfile = {
-      uid:user.uid,
-      username:(user.displayName || "User").replace(/\s+/g,"").slice(0,24) || "User",
-      displayName:user.displayName || "User",
-      photoURL:user.photoURL || "",
-      email:user.email || "",
-      usernameChangedAt:null,
-      createdAt:serverTimestamp()
-    };
-    await setDoc(refUser,currentProfile);
-  }else{
-    currentProfile = {uid:user.uid,...snap.data()};
-  }
-}
-
-function avatarHTML(profile,cls="avatar"){
-  const letter=(profile?.username || profile?.displayName || "?").charAt(0).toUpperCase();
-  return profile?.photoURL
-    ? `<img class="${cls}" src="${escapeAttr(profile.photoURL)}" alt="">`
-    : `<div class="${cls}">${escapeHTML(letter)}</div>`;
-}
-
-function renderMyProfile(){
-  if(!currentProfile)return;
-
-  $("myProfileButton").innerHTML =
-    avatarHTML(currentProfile) +
-    `<div class="meText"><b>${escapeHTML(currentProfile.username || "User")}</b><small>Private area</small></div>`;
-
-  $("profileAvatar").src=currentProfile.photoURL || "";
-  $("usernameInput").value=currentProfile.username || "";
-
-  updateCooldownText();
-}
-
-function updateCooldownText(){
-  const changed=currentProfile?.usernameChangedAt;
-  if(!changed){
-    $("usernameCooldown").textContent="Username can be changed now.";
-    return;
-  }
-
-  const millis=changed.toMillis ? changed.toMillis() : new Date(changed).getTime();
-  const remaining=(14*24*60*60*1000)-(Date.now()-millis);
-
-  if(remaining<=0){
-    $("usernameCooldown").textContent="Username can be changed now.";
-  }else{
-    const days=Math.floor(remaining/86400000);
-    const hours=Math.floor((remaining%86400000)/3600000);
-    $("usernameCooldown").textContent=`Username change available in ${days}d ${hours}h.`;
-  }
-}
-
-setInterval(updateCooldownText,60000);
-
-$("profileBtn").onclick=()=>{
-  $("profilePanel").classList.remove("hidden");
-  renderMyProfile();
-};
-
-$("closeProfile").onclick=()=>$("profilePanel").classList.add("hidden");
-
-$("signOutBtn").onclick=async()=>{
-  sessionStorage.removeItem("privateOpen");
-  await signOut(auth);
-  showHome();
-};
-
-/* ---------------- AVATAR UPLOAD ---------------- */
-
-$("avatarInput").onchange=async e=>{
-  const file=e.target.files[0];
-  if(!file || !currentUser)return;
-
-  if(!file.type.startsWith("image/")){
-    alert("Please select an image.");
-    return;
-  }
-
-  try{
-    const path=`avatars/${currentUser.uid}/${Date.now()}_${safeFileName(file.name)}`;
-    const storageRef=ref(storage,path);
-    await uploadBytes(storageRef,file,{contentType:file.type});
-    const url=await getDownloadURL(storageRef);
-
-    await updateDoc(doc(db,"users",currentUser.uid),{
-      photoURL:url
-    });
-
-    currentProfile.photoURL=url;
-    renderMyProfile();
-  }catch(e){
-    console.error(e);
-    alert("Profile image upload failed.");
-  }
-};
-
-/* ---------------- USERNAME COOLDOWN ---------------- */
-
-$("saveUsername").onclick=async()=>{
-  if(!currentUser || !currentProfile)return;
-
-  const username=$("usernameInput").value.trim();
-
-  if(!/^[a-zA-Z0-9_.-]{3,24}$/.test(username)){
-    alert("Username must be 3–24 characters and contain only letters, numbers, _, . or -.");
-    return;
-  }
-
-  const changed=currentProfile.usernameChangedAt;
-
-  if(changed){
-    const millis=changed.toMillis ? changed.toMillis() : new Date(changed).getTime();
-    if(Date.now()-millis < 14*86400000){
-      alert("You can change your username once every 14 days.");
-      return;
-    }
-  }
-
-  const usernameQuery=query(
-    collection(db,"users"),
-    where("username","==",username)
-  );
-
-  const result=await getDocs(usernameQuery);
-
-  if(result.docs.some(d=>d.id!==currentUser.uid)){
-    alert("That username is already taken.");
-    return;
-  }
-
-  await updateDoc(doc(db,"users",currentUser.uid),{
-    username,
-    usernameChangedAt:serverTimestamp()
-  });
-
-  currentProfile.username=username;
-  currentProfile.usernameChangedAt=Timestamp.now();
-
-  renderMyProfile();
-  alert("Username updated.");
-};
-
-/* ---------------- MEMBER / FRIEND SY
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, query, where, getDocs, addDoc, onSnapshot, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCyOPrvdTFdwz5bFTYBf6KJ5webyBJj_1A",
+            authDomain: "himanshuchatapp-785b4.firebaseapp.com",
+            projectId: "himanshuchatapp-785b4",
+            storageBucket: "himanshuchatapp-785b4.firebasestorage.app",
+            messagingSenderId: "817427879739",
+            appId: "1:817427879739:web:d39dbf1c89b54400f3c91e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
+
+        let currentUserUID = null; 
+        let currentChatId = null; 
+        let chatListenerUnsubscribe = null; 
+
+        // --- UI Modals (Three-dot Fix included) ---
+        window.toggleDropdown = (event) => { 
+            if(event) event.stopPropagation(); 
+            const menu = document.getElementById('dropdownMenu'); 
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; 
+        };
+
+        document.addEventListener('click', (event) => {
+            const menu = document.getElementById('dropdownMenu');
+            const btn = document.querySelector('.three-dot-btn');
+            if (menu && menu.style.display === 'block' && !menu.contains(event.target) && !btn.contains(event.target)) {
+                menu.style.display = 'none';
+            }
+        });
+
+        window.closeAllModals = () => { 
+            document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none');
+            document.getElementById('dropdownMenu').style.display = 'none';
+        };
+        
+        window.openModal = (modalId) => {
+            closeAllModals();
+            document.getElementById(modalId).style.display = 'flex';
+        };
+        
+        function showDashboard() {
+            closeAllModals();
+            document.getElementById('main-website').style.display = 'none';
+            document.getElementById('chat-dashboard').style.display = 'flex';
+            document.getElementById('messenger-home').style.display = 'block';
+            document.getElementById('private-chat-room').style.display = 'none';
+        }
+
+        // --- AUTH & PROFILE LOGIC ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUserUID = user.uid;
+                const userRef = doc(db, "users", user.uid);
+                const userSnap = await getDoc(userRef);
+
+                if (!userSnap.exists()) {
+                    await setDoc(userRef, {
+                        uid: user.uid,
+                        name: user.displayName || "New User",
+                        username: "",
+                        usernameLower: "", // नया फील्ड छोटे अक्षरों में सर्च के लिए
+                        photoURL: user.photoURL || "https://via.placeholder.com/100"
+                    });
+                } else {
+                    const userData = userSnap.data();
+                    if(userData.username) document.getElementById('myUsername').value = userData.username;
+                    if(userData.photoURL) document.getElementById('myProfilePic').src = userData.photoURL;
+                }
+                
+                listenForRequests();
+                listenForFriends();
+            }
+        });
+
+        // --- NEW: USERNAME SAVE LOGIC (14-Day Limit & Unique Check) ---
+        document.getElementById('myUsername').addEventListener('change', async (e) => {
+            if(!currentUserUID) return;
+            const newUsername = e.target.value.trim();
+            
+            if(newUsername.length < 3) {
+                alert("यूज़रनेम कम से कम 3 अक्षरों का होना चाहिए!");
+                return;
+            }
+
+            const userRef = doc(db, "users", currentUserUID);
+            const userSnap = await getDoc(userRef);
+            const userData = userSnap.data();
+
+            // 1. 14-दिन का चेक
+            if (userData.lastUsernameChange) {
+                const lastChange = userData.lastUsernameChange.toDate();
+                const now = new Date();
+                const diffTime = Math.abs(now - lastChange);
+                const diffDays = diffTime / (1000 * 60 * 60 * 24);
+                
+                if (diffDays < 14) {
+                    const daysLeft = Math.ceil(14 - diffDays);
+                    alert(`आप 14 दिन में केवल एक बार यूज़रनेम बदल सकते हैं। कृपया ${daysLeft} दिन और प्रतीक्षा करें।`);
+                    document.getElementById('myUsername').value = userData.username; // पुराना नाम वापस
+                    return;
+                }
+            }
+
+            // 2. यूज़रनेम यूनिक (Unique) होने का चेक
+            const usernameLower = newUsername.toLowerCase();
+            const q = query(collection(db, "users"), where("usernameLower", "==", usernameLower));
+            const querySnapshot = await getDocs(q);
+            
+            let isUnique = true;
+            querySnapshot.forEach((docSnap) => {
+                if (docSnap.id !== currentUserUID) {
+                    isUnique = false;
+                }
+            });
+
+            if (!isUnique) {
+                alert("यह यूज़रनेम पहले से किसी ने ले लिया है। कृपया कोई दूसरा नाम चुनें (जैसे: " + newUsername + "123)");
+                document.getElementById('myUsername').value = userData.username || "";
+                return;
+            }
+
+            // 3. सेव करना
+            await updateDoc(userRef, { 
+                username: newUsername,
+                usernameLower: usernameLower,
+                lastUsernameChange: serverTimestamp() 
+            });
+            
+            alert("शानदार! आपका यूज़रनेम सेव हो गया: " + newUsername);
+        });
+
+        window.signInWithGoogle = () => { signInWithPopup(auth, googleProvider).then(() => { showDashboard(); }).catch(e => alert(e.message)); };
+        window.processLogin = () => { showDashboard(); };
+        window.logout = () => {
+            auth.signOut().then(() => {
+                currentUserUID = null;
+                document.getElementById('chat-dashboard').style.display = 'none';
+ 
