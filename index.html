@@ -173,10 +173,10 @@
         </div>
     </div>
 
-    <!-- Firebase & Logic (Using Redirect for Seamless Gmail Selection) -->
+    <!-- Firebase & Logic (Restored signInWithPopup with full mobile support) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-        import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, collection, getDocs, onSnapshot, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -197,13 +197,15 @@
 
         document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
         
-        // Seamless Redirect to Google Account Selector
+        // Fast & Reliable Popup Login with Google
         document.getElementById('googleSignInBtn').addEventListener('click', () => {
-            signInWithRedirect(auth, provider);
-        });
-
-        getRedirectResult(auth).catch((error) => {
-            console.error("Login Error:", error);
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    document.getElementById('loginModal').style.display = 'none';
+                })
+                .catch((error) => {
+                    alert("Login Error: " + error.message);
+                });
         });
 
         window.closeChat = function() {
@@ -334,6 +336,4 @@
                 const reader = new FileReader();
                 reader.onload = async function(event) {
                     const img = new Image();
-                    img.src = event.target.result;
-                    img.onload = async function() {
-                        cons
+                 
