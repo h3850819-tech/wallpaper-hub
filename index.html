@@ -5,11 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BerylWalls - Premium</title>
     <style>
-        /* बेसिक रिसेट और फॉन्ट */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f0f4f8; color: #1a202c; }
         
-        /* टॉप बार डिजाइन */
+        /* टॉप बार */
         header { 
             display: flex; justify-content: space-between; align-items: center; 
             padding: 15px 20px; background: white; 
@@ -19,26 +18,21 @@
         .logo { font-size: 22px; font-weight: 700; color: #2d3748; }
         .menu-btn { background: none; border: none; font-size: 26px; cursor: pointer; color: #4a5568; padding: 0 10px; }
         
-        /* वॉलपेपर ग्रिड (बिना सर्च बार के) */
         .container { padding: 20px; max-width: 1200px; margin: 0 auto; }
-        .grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
-            gap: 15px; 
-            margin-top: 10px;
-        }
-        .card { 
-            background: white; border-radius: 12px; 
-            overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-        }
-        .card img { width: 100%; height: 220px; object-fit: cover; display: block; }
         
-        /* नया Google Sign-in पॉपअप डिजाइन */
+        /* होमपेज वॉलपेपर ग्रिड */
+        #homePage { display: block; }
+        .grid { 
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
+            gap: 15px; margin-top: 10px;
+        }
+        .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .card img { width: 100%; height: 220px; object-fit: cover; display: block; }
+
+        /* Google Sign-in पॉपअप */
         .modal-overlay {
-            display: none; /* शुरुआत में छिपा रहेगा */
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.5); /* बैकग्राउंड को धुंधला करेगा */
-            justify-content: center; align-items: center; z-index: 200;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center; z-index: 200;
         }
         .login-box {
             background: white; padding: 30px; border-radius: 16px;
@@ -51,64 +45,225 @@
             width: 100%; padding: 12px; border: 1px solid #cbd5e0;
             border-radius: 8px; background: white; cursor: pointer;
             font-size: 16px; font-weight: 600; color: #4a5568;
-            transition: 0.3s;
         }
-        .google-btn:hover { background: #f7fafc; border-color: #a0aec0; }
-        .google-icon { width: 24px; height: 24px; }
-        .close-btn { 
-            margin-top: 20px; color: #e53e3e; cursor: pointer; 
-            font-size: 14px; font-weight: 600; 
+        .close-btn { margin-top: 20px; color: #e53e3e; cursor: pointer; font-size: 14px; font-weight: 600; }
+
+        /* जीमेल अकाउंट सेलेक्टर सिमुलेशन (असली जैसा दिखने के लिए) */
+        .gmail-selector {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); justify-content: center; align-items: center; z-index: 300;
         }
+        .gmail-box {
+            background: white; width: 90%; max-width: 380px; border-radius: 12px; padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .gmail-box h3 { font-size: 18px; color: #202124; margin-bottom: 5px; }
+        .gmail-box p { font-size: 13px; color: #5f6368; margin-bottom: 20px; }
+        .gmail-account {
+            display: flex; align-items: center; gap: 12px; padding: 12px 10px;
+            border-bottom: 1px solid #f1f3f4; cursor: pointer; border-radius: 8px; transition: 0.2s;
+        }
+        .gmail-account:hover { background: #f8f9fa; }
+        .gmail-avatar { width: 36px; height: 36px; border-radius: 50%; background: #1a73e8; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .gmail-info .name { font-size: 14px; font-weight: 600; color: #202124; }
+        .gmail-info .email { font-size: 12px; color: #5f6368; }
+
+        /* सीक्रेट पेज डैशबोर्ड */
+        #secretPage { display: none; padding-top: 10px; }
+        .profile-card {
+            background: white; padding: 20px; border-radius: 14px;
+            display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px;
+        }
+        .dp-container { position: relative; width: 70px; height: 70px; cursor: pointer; }
+        .dp-container img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid #3182ce; }
+        .profile-info h3 { font-size: 18px; color: #2d3748; display: flex; align-items: center; gap: 8px; }
+        .profile-info p { font-size: 12px; color: #718096; margin-top: 4px; }
+        .edit-icon { font-size: 14px; cursor: pointer; color: #3182ce; }
+
+        .search-member {
+            width: 100%; padding: 12px; border-radius: 10px;
+            border: 1px solid #cbd5e0; margin-bottom: 20px; outline: none; font-size: 14px;
+        }
+        .section-title { font-size: 16px; font-weight: 700; color: #4a5568; margin-bottom: 12px; }
+        
+        .member-list { display: flex; flex-direction: column; gap: 10px; }
+        .member-item {
+            background: white; padding: 12px 15px; border-radius: 10px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        }
+        .member-left { display: flex; align-items: center; gap: 12px; }
+        .member-left img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
+        .member-name { font-size: 15px; font-weight: 600; color: #2d3748; }
+        
+        .add-btn {
+            background: #3182ce; color: white; border: none;
+            padding: 6px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;
+        }
+        .add-btn.requested { background: #cbd5e0; color: #4a5568; }
     </style>
 </head>
 <body>
 
-    <!-- टॉप नेविगेशन बार -->
-    <header>
-        <div class="logo">BerylWalls</div>
-        <!-- थ्री डॉट बटन जिस पर क्लिक करने से 'openLogin' फंक्शन चलेगा -->
-        <button class="menu-btn" onclick="openLogin()">⋮</button>
-    </header>
-
-    <!-- मेन कंटेंट (सर्च बटन हटा दिया गया है) -->
-    <div class="container">
-        <!-- वॉलपेपर्स -->
-        <div class="grid">
-            <div class="card"><img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400&auto=format&fit=crop" alt="Wallpaper 1"></div>
-            <div class="card"><img src="https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=400&auto=format&fit=crop" alt="Wallpaper 2"></div>
-            <div class="card"><img src="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=400&auto=format&fit=crop" alt="Wallpaper 3"></div>
-            <div class="card"><img src="https://images.unsplash.com/photo-1550684376-efcbd6e3f031?q=80&w=400&auto=format&fit=crop" alt="Wallpaper 4"></div>
-            <div class="card"><img src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=400&auto=format&fit=crop" alt="Wallpaper 5"></div>
-            <div class="card"><img src="https://images.unsplash.com/photo-1604076913837-52ab5629fba9?q=80&w=400&auto=format&fit=crop" alt="Wallpaper 6"></div>
+    <!-- 1. होमपेज -->
+    <div id="homePage">
+        <header>
+            <div class="logo">BerylWalls</div>
+            <button class="menu-btn" onclick="openLogin()">⋮</button>
+        </header>
+        <div class="container">
+            <div class="grid">
+                <div class="card"><img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400&auto=format&fit=crop" alt="1"></div>
+                <div class="card"><img src="https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=400&auto=format&fit=crop" alt="2"></div>
+                <div class="card"><img src="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=400&auto=format&fit=crop" alt="3"></div>
+                <div class="card"><img src="https://images.unsplash.com/photo-1550684376-efcbd6e3f031?q=80&w=400&auto=format&fit=crop" alt="4"></div>
+            </div>
         </div>
     </div>
 
-    <!-- Google Sign-in पॉपअप -->
+    <!-- 2. Google Sign-in पॉपअप -->
     <div class="modal-overlay" id="loginModal">
         <div class="login-box">
             <h2>Sign in to BerylWalls</h2>
-            <!-- Google बटन -->
-            <button class="google-btn">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" class="google-icon">
+            <button class="google-btn" onclick="showGmailSelector()">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="G" style="width:20px; height:20px;">
                 Continue with Google
             </button>
-            <!-- कैंसिल बटन -->
             <div class="close-btn" onclick="closeLogin()">Cancel</div>
         </div>
     </div>
 
-    <!-- JavaScript (पॉपअप को खोलने और बंद करने के लिए) -->
+    <!-- 3. जीमेल अकाउंट सेलेक्टर (Gmail Account Selection Screen) -->
+    <div class="gmail-selector" id="gmailSelector">
+        <div class="gmail-box">
+            <h3>Choose an account</h3>
+            <p>to continue to BerylWalls</p>
+            <div class="gmail-account" onclick="selectGmail('H3850819 Tech', 'h3850819@gmail.com')">
+                <div class="gmail-avatar">H</div>
+                <div class="gmail-info">
+                    <div class="name">H3850819 Tech</div>
+                    <div class="email">h3850819@gmail.com</div>
+                </div>
+            </div>
+            <div class="gmail-account" onclick="selectGmail('Beryl User', 'beryl.user@gmail.com')">
+                <div class="gmail-avatar" style="background:#34a853;">B</div>
+                <div class="gmail-info">
+                    <div class="name">Beryl User</div>
+                    <div class="email">beryl.user@gmail.com</div>
+                </div>
+            </div>
+            <div style="text-align: right; margin-top: 15px;">
+                <span style="color: #ea4335; font-size: 13px; font-weight: 600; cursor: pointer;" onclick="closeGmailSelector()">Cancel</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. सीक्रेट पेज (डैशबोर्ड) -->
+    <div id="secretPage">
+        <header>
+            <div class="logo">BerylWalls - Dashboard</div>
+            <button class="menu-btn" onclick="logout()" title="Logout">↩</button>
+        </header>
+        <div class="container">
+            <!-- प्रोफाइल कार्ड: DP और 14-दिन वाला Username नियम -->
+            <div class="profile-card">
+                <div class="dp-container" onclick="triggerDpChange()" title="Change DP from Gallery">
+                    <img id="userDp" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop" alt="My DP">
+                </div>
+                <div class="profile-info">
+                    <h3 id="userNameDisplay">@h3850819 <span class="edit-icon" onclick="editUsername()">✏️</span></h3>
+                    <p id="usernameInfoText">DP गैलरी से कभी भी बदलें | Username 14 दिन में 1 बार बदलेगा</p>
+                </div>
+            </div>
+            <input type="file" id="dpInput" style="display: none;" accept="image/*" onchange="updateDp(event)">
+
+            <!-- मेंबर्स लिस्ट -->
+            <input type="text" class="search-member" placeholder="Search member by username...">
+            <div class="section-title">All Members</div>
+            <div class="member-list">
+                <div class="member-item">
+                    <div class="member-left">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop" alt="User">
+                        <div class="member-name">Kama Sharma</div>
+                    </div>
+                    <button class="add-btn" onclick="sendRequest(this)">Add</button>
+                </div>
+                <div class="member-item">
+                    <div class="member-left">
+                        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop" alt="User">
+                        <div class="member-name">Priya Sharma</div>
+                    </div>
+                    <button class="add-btn" onclick="sendRequest(this)">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        function openLogin() {
-            // थ्री डॉट दबाने पर पॉपअप दिखेगा
-            document.getElementById('loginModal').style.display = 'flex';
+        function openLogin() { document.getElementById('loginModal').style.display = 'flex'; }
+        function closeLogin() { document.getElementById('loginModal').style.display = 'none'; }
+
+        function showGmailSelector() {
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('gmailSelector').style.display = 'flex';
+        }
+        function closeGmailSelector() {
+            document.getElementById('gmailSelector').style.display = 'none';
         }
 
-        function closeLogin() {
-            // Cancel दबाने पर पॉपअप बंद हो जाएगा
-            document.getElementById('loginModal').style.display = 'none';
+        // जीमेल सेलेक्ट करते ही सीक्रेट पेज खुल जाएगा
+        function selectGmail(name, email) {
+            document.getElementById('gmailSelector').style.display = 'none';
+            document.getElementById('homePage').style.display = 'none';
+            document.getElementById('secretPage').style.display = 'block';
+        }
+
+        function logout() {
+            document.getElementById('secretPage').style.display = 'none';
+            document.getElementById('homePage').style.display = 'block';
+        }
+
+        // गैलरी से DP बदलने का फंक्शन
+        function triggerDpChange() {
+            document.getElementById('dpInput').click();
+        }
+
+        function updateDp(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('userDp').src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // 14-दिन यूजरनेम लॉक का लॉजिक
+        function editUsername() {
+            const lastChangeDate = localStorage.getItem('lastUsernameChange');
+            const now = new Date().getTime();
+            const fourteenDays = 14 * 24 * 60 * 60 * 1000; // 14 दिन मिलीसेकंड में
+
+            if (lastChangeDate && (now - lastChangeDate < fourteenDays)) {
+                const remainingDays = Math.ceil((fourteenDays - (now - lastChangeDate)) / (1000 * 60 * 60 * 24));
+                alert(`आप अभी यूजरनेम नहीं बदल सकते! आपने हाल ही में बदला था। आप ${remainingDays} दिन बाद फिर से बदल सकेंगे।`);
+                return;
+            }
+
+            const newName = prompt("नया यूजरनेम दर्ज करें (जैसे @myname):");
+            if (newName) {
+                document.getElementById('userNameDisplay').innerHTML = newName + ' <span class="edit-icon" onclick="editUsername()">✏️</span>';
+                localStorage.setItem('lastUsernameChange', now);
+                alert("यूजरनेम सफलतापूर्वक बदल गया है! अब यह अगले 14 दिनों के लिए लॉक हो गया है।");
+            }
+        }
+
+        function sendRequest(btn) {
+            btn.innerText = "Requested";
+            btn.classList.add("requested");
         }
     </script>
-
 </body>
 </html>
