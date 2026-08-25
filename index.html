@@ -11,11 +11,11 @@
         /* Top Bar */
         header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
         .logo { font-size: 22px; font-weight: 700; color: #2d3748; }
-        .menu-btn { background: none; border: none; font-size: 28px; cursor: pointer; color: #4a5568; padding: 0 10px; }
+        .menu-btn { background: none; border: none; font-size: 26px; cursor: pointer; color: #4a5568; padding: 0 10px; }
         
         .container { padding: 20px; max-width: 1200px; margin: 0 auto; }
         
-        /* Homepage Grid (12 Wallpapers) */
+        /* Homepage */
         #homePage { display: block; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 10px; }
         .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
@@ -26,9 +26,9 @@
         .login-box { background: white; padding: 30px; border-radius: 16px; text-align: center; width: 90%; max-width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         .login-box h2 { margin-bottom: 25px; font-size: 22px; color: #2d3748; }
         .google-btn { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; padding: 12px; border: 1px solid #cbd5e0; border-radius: 8px; background: white; cursor: pointer; font-size: 16px; font-weight: 600; color: #4a5568; }
-        .close-btn { margin-top: 20px; color: #e53e3e; cursor: pointer; font-size: 14px; font-weight: 600; display: inline-block; }
+        .close-btn { margin-top: 20px; color: #e53e3e; cursor: pointer; font-size: 14px; font-weight: 600; }
 
-        /* Secret Page Dashboard */
+        /* Dashboard */
         #secretPage { display: none; padding-top: 10px; }
         .profile-card { background: white; padding: 20px; border-radius: 14px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .dp-container { position: relative; width: 70px; height: 70px; cursor: pointer; }
@@ -46,7 +46,7 @@
         .member-left img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
         .member-name { font-size: 15px; font-weight: 600; color: #2d3748; }
         
-        .btn-small { padding: 6px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; border: none; }
+        .btn-small { padding: 6px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; border: none; transition: 0.3s; }
         .add-btn { background: #3182ce; color: white; }
         .accept-btn { background: #38a169; color: white; }
         .requested-btn { background: #cbd5e0; color: #4a5568; cursor: not-allowed; }
@@ -77,7 +77,7 @@
     <div id="homePage">
         <header>
             <div class="logo">BerylWalls</div>
-            <button class="menu-btn" onclick="document.getElementById('loginModal').style.display='flex'">⋮</button>
+            <button class="menu-btn" id="openLoginBtn">⋮</button>
         </header>
         <div class="container">
             <div class="grid">
@@ -105,7 +105,7 @@
                 <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="G" style="width:20px; height:20px;">
                 Continue with Google
             </button>
-            <div class="close-btn" onclick="document.getElementById('loginModal').style.display='none'">Cancel</div>
+            <div class="close-btn" id="closeLoginBtn">Cancel</div>
         </div>
     </div>
 
@@ -173,7 +173,7 @@
         </div>
     </div>
 
-    <!-- Firebase & Logic (Restored signInWithPopup with full mobile support) -->
+    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
@@ -193,21 +193,25 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
+        
         let currentUserData = null;
 
+        document.getElementById('openLoginBtn').addEventListener('click', () => document.getElementById('loginModal').style.display = 'flex');
+        document.getElementById('closeLoginBtn').addEventListener('click', () => document.getElementById('loginModal').style.display = 'none');
         document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
         
-        // Fast & Reliable Popup Login with Google
         document.getElementById('googleSignInBtn').addEventListener('click', () => {
-            signInWithPopup(auth, provider)
-                .then((result) => {
-                    document.getElementById('loginModal').style.display = 'none';
-                })
-                .catch((error) => {
-                    alert("Login Error: " + error.message);
-                });
+            signInWithPopup(auth, provider).then(() => {
+                document.getElementById('loginModal').style.display = 'none';
+            }).catch(e => alert("Login Error: " + e.message));
         });
 
+        window.openChat = function(name, dp) {
+            document.getElementById('secretPage').style.display = 'none';
+            document.getElementById('chatScreen').style.display = 'flex';
+            document.getElementById('chatHeaderName').innerText = name;
+            document.getElementById('chatHeaderDp').src = dp;
+        };
         window.closeChat = function() {
             document.getElementById('chatScreen').style.display = 'none';
             document.getElementById('secretPage').style.display = 'block';
@@ -231,10 +235,7 @@
             const reqRef = doc(db, "friend_requests", reqId);
             await updateDoc(reqRef, { status: 'accepted' });
             alert('Request Accepted! You can now chat.');
-            document.getElementById('secretPage').style.display = 'none';
-            document.getElementById('chatScreen').style.display = 'flex';
-            document.getElementById('chatHeaderName').innerText = senderName;
-            document.getElementById('chatHeaderDp').src = senderDp;
+            openChat(senderName, senderDp);
         };
 
         async function loadDashboardData(uid) {
@@ -301,7 +302,6 @@
             if (user) {
                 document.getElementById('homePage').style.display = 'none';
                 document.getElementById('secretPage').style.display = 'block';
-                document.getElementById('loginModal').style.display = 'none';
                 
                 const userRef = doc(db, "users", user.uid);
                 const docSnap = await getDoc(userRef);
@@ -336,4 +336,5 @@
                 const reader = new FileReader();
                 reader.onload = async function(event) {
                     const img = new Image();
-                 
+                    img.src = event.target.result;
+  
