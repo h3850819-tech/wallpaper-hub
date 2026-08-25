@@ -11,21 +11,27 @@
         /* Top Bar */
         header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
         .logo { font-size: 22px; font-weight: 700; color: #2d3748; }
-        .menu-btn { background: none; border: none; font-size: 26px; cursor: pointer; color: #4a5568; padding: 0 10px; }
+        .menu-btn { background: none; border: none; font-size: 26px; cursor: pointer; color: #4a5568; padding: 0 10px; outline: none; }
         
         .container { padding: 20px; max-width: 1200px; margin: 0 auto; }
         
-        /* Homepage Wallpaper Grid (Fast 12 Wallpapers) */
+        /* Homepage Wallpaper Grid */
         #homePage { display: block; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 10px; }
-        .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .card img { width: 100%; height: 220px; object-fit: cover; display: block; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 10px; }
+        .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); cursor: pointer; }
+        .card img { width: 100%; height: 220px; object-fit: cover; display: block; transition: 0.3s; }
+        .card img:active { opacity: 0.7; }
+
+        /* Full Screen Wallpaper Modal (NEW) */
+        .wallpaper-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; z-index: 500; flex-direction: column; }
+        .close-wall-btn { position: absolute; top: 20px; right: 25px; font-size: 35px; color: white; cursor: pointer; font-weight: bold; }
+        .full-img { max-width: 90%; max-height: 80vh; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); object-fit: contain; }
 
         /* Login Popup */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center; z-index: 200; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); justify-content: center; align-items: center; z-index: 200; }
         .login-box { background: white; padding: 30px; border-radius: 16px; text-align: center; width: 90%; max-width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         .login-box h2 { margin-bottom: 25px; font-size: 22px; color: #2d3748; }
-        .google-btn { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; padding: 12px; border: 1px solid #cbd5e0; border-radius: 8px; background: white; cursor: pointer; font-size: 16px; font-weight: 600; color: #4a5568; }
+        .google-btn { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; padding: 12px; border: 1px solid #cbd5e0; border-radius: 8px; background: white; cursor: pointer; font-size: 16px; font-weight: 600; color: #4a5568; outline: none; }
         .close-btn { margin-top: 20px; color: #e53e3e; cursor: pointer; font-size: 14px; font-weight: 600; }
 
         /* Secret Page Dashboard */
@@ -48,7 +54,6 @@
         .btn-small { padding: 6px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; border: none; transition: 0.3s; }
         .add-btn { background: #3182ce; color: white; }
         .accept-btn { background: #38a169; color: white; }
-        .chat-btn { background: #d69e2e; color: white; }
         .requested-btn { background: #cbd5e0; color: #4a5568; cursor: not-allowed; }
 
         /* Private Chat Screen */
@@ -68,36 +73,44 @@
         .chat-input-area { display: flex; align-items: center; padding: 10px; background: white; gap: 10px; }
         .chat-input { flex: 1; padding: 12px; border: none; background: #f0f4f8; border-radius: 20px; outline: none; }
         .action-icon { font-size: 22px; color: #718096; cursor: pointer; }
-        
-        /* Colorful Send Arrow */
         .send-btn-colorful { width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-weight: bold; cursor: pointer; border: none; }
     </style>
 </head>
 <body>
 
+    <!-- 1. Homepage -->
     <div id="homePage">
         <header>
             <div class="logo">BerylWalls</div>
-            <button class="menu-btn" id="openLoginBtn">⋮</button>
+            <!-- Three Dot Button directly triggers modal now (Super Fast & Reliable) -->
+            <button class="menu-btn" onclick="document.getElementById('loginModal').style.display='flex'">⋮</button>
         </header>
         <div class="container">
+            <!-- 12 Fast Loading Premium Wallpapers -->
             <div class="grid">
-                <div class="card"><img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400&auto=format&fit=crop" alt="1" loading="lazy"></div>
-                <div class="card"><img src="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=400&auto=format&fit=crop" alt="2" loading="lazy"></div>
-                <div class="card"><img src="https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=400&auto=format&fit=crop" alt="3" loading="lazy"></div>
-                <div class="card"><img src="https://images.unsplash.com/photo-1550684376-efcbd6e3f031?q=80&w=400&auto=format&fit=crop" alt="4" loading="lazy"></div>
-                <div class="card"><img src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=400&auto=format&fit=crop" alt="5" loading="lazy"></div>
-                <div class="card"><img src="https://images.unsplash.com/photo-1604076913837-52ab5629fba9?q=80&w=400&auto=format&fit=crop" alt="6" loading="lazy"></div>
-                <div class="card"><img src="https://images.unsplash.com/photo-1511300634355-161b0c95dfc6?q=80&w=400&auto=format&fit=crop" alt="7" loading="lazy"></div>
-                <div class="card"><img src="https://images.unsplash.com/photo-1518837695005-208309c85b5e?q=80&w=400&auto=format&fit=crop" alt="8" loading="lazy"></div>
-                <div class="card"><img src="https://images.unsplash.com/photo-1470071131384-001b85755b36?q=80&w=400&auto=format&fit=crop" alt="9" loading="lazy"></div>
-                <div class="card"><img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=400&auto=format&fit=crop" alt="10" loading="lazy"></div>
-                <div class="card"><img src="https://images.unsplash.com/photo-1493246507139-91e8fad9978e?q=80&w=400&auto=format&fit=crop" alt="11" loading="lazy"></div>
-                <div class="card"><img src="https://images.unsplash.com/photo-1507608616785-5e0fd09dbfb2?q=80&w=400&auto=format&fit=crop" alt="12" loading="lazy"></div>
+                <div class="card"><img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&q=80" alt="1" onclick="openFullscreen(this.src)"></div>
+                <div class="card"><img src="https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=600&q=80" alt="2" onclick="openFullscreen(this.src)"></div>
+                <div class="card"><img src="https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=600&q=80" alt="3" onclick="openFullscreen(this.src)"></div>
+                <div class="card"><img src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=600&q=80" alt="4" onclick="openFullscreen(this.src)"></div>
+                <div class="card"><img src="https://images.unsplash.com/photo-1604076913837-52ab5629fba9?w=600&q=80" alt="5" onclick="openFullscreen(this.src)"></div>
+                <div class="card"><img src="https://images.unsplash.com/photo-1511300634355-161b0c95dfc6?w=600&q=80" alt="6" onclick="openFullscreen(this.src)"></div>
+                <div class="card"><img src="https://images.unsplash.com/photo-1518837695005-208309c85b5e?w=600&q=80" alt="7" onclick="openFullscreen(this.src)"></div>
+                <div class="card"><img src="https://images.unsplash.com/photo-1470071131384-001b85755b36?w=600&q=80" alt="8" onclick="openFullscreen(this.src)"></div>
+                <div class="card"><img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&q=80" alt="9" onclick="openFullscreen(this.src)"></div>
+                <div class="card"><img src="https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=600&q=80" alt="10" onclick="openFullscreen(this.src)"></div>
+                <div class="card"><img src="https://images.unsplash.com/photo-1507608616785-5e0fd09dbfb2?w=600&q=80" alt="11" onclick="openFullscreen(this.src)"></div>
+                <div class="card"><img src="https://images.unsplash.com/photo-1444464205421-4d14d7a7dc92?w=600&q=80" alt="12" onclick="openFullscreen(this.src)"></div>
             </div>
         </div>
     </div>
 
+    <!-- Full Screen Wallpaper Popup -->
+    <div class="wallpaper-modal" id="wallModal">
+        <span class="close-wall-btn" onclick="document.getElementById('wallModal').style.display='none'">&times;</span>
+        <img id="fullSizeImg" class="full-img" src="">
+    </div>
+
+    <!-- 2. Google Sign-in Popup -->
     <div class="modal-overlay" id="loginModal">
         <div class="login-box">
             <h2>Sign in to BerylWalls</h2>
@@ -105,10 +118,11 @@
                 <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="G" style="width:20px; height:20px;">
                 Continue with Google
             </button>
-            <div class="close-btn" id="closeLoginBtn" style="margin-top: 15px;">Cancel</div>
+            <div class="close-btn" onclick="document.getElementById('loginModal').style.display='none'">Cancel</div>
         </div>
     </div>
 
+    <!-- 3. Secret Page (Dashboard) -->
     <div id="secretPage">
         <header>
             <div class="logo">Dashboard</div>
@@ -139,6 +153,7 @@
         </div>
     </div>
 
+    <!-- 4. Private Chat Screen -->
     <div id="chatScreen">
         <div class="chat-header">
             <div class="chat-header-left">
@@ -171,6 +186,19 @@
         </div>
     </div>
 
+    <!-- Basic UI Scripts (Works perfectly even if Database loads slowly) -->
+    <script>
+        function openFullscreen(imgSrc) {
+            document.getElementById('fullSizeImg').src = imgSrc;
+            document.getElementById('wallModal').style.display = 'flex';
+        }
+        function closeChat() {
+            document.getElementById('chatScreen').style.display = 'none';
+            document.getElementById('secretPage').style.display = 'block';
+        }
+    </script>
+
+    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
@@ -189,27 +217,15 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        
         let currentUserData = null;
 
-        document.getElementById('openLoginBtn').addEventListener('click', () => document.getElementById('loginModal').style.display = 'flex');
-        document.getElementById('closeLoginBtn').addEventListener('click', () => document.getElementById('loginModal').style.display = 'none');
         document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
+        
         document.getElementById('googleSignInBtn').addEventListener('click', () => {
-            signInWithPopup(auth, new GoogleAuthProvider()).then(() => document.getElementById('loginModal').style.display = 'none').catch(e => alert("Login Error: " + e.message));
+            signInWithPopup(auth, new GoogleAuthProvider())
+                .then(() => document.getElementById('loginModal').style.display = 'none')
+                .catch(e => alert("Login Error: " + e.message));
         });
-
-        // Chat Screen Logic
-        window.openChat = function(name, dp) {
-            document.getElementById('secretPage').style.display = 'none';
-            document.getElementById('chatScreen').style.display = 'flex';
-            document.getElementById('chatHeaderName').innerText = name;
-            document.getElementById('chatHeaderDp').src = dp;
-        };
-        window.closeChat = function() {
-            document.getElementById('chatScreen').style.display = 'none';
-            document.getElementById('secretPage').style.display = 'block';
-        };
 
         // Send Friend Request Logic
         window.sendFriendRequest = async function(btn, receiverId) {
@@ -226,17 +242,19 @@
             });
         };
 
-        // Accept Friend Request Logic
+        // Accept Request & Open Chat
         window.acceptRequest = async function(reqId, senderId, senderName, senderDp) {
             const reqRef = doc(db, "friend_requests", reqId);
             await updateDoc(reqRef, { status: 'accepted' });
             alert('Request Accepted! You can now chat.');
-            openChat(senderName, senderDp);
+            document.getElementById('secretPage').style.display = 'none';
+            document.getElementById('chatScreen').style.display = 'flex';
+            document.getElementById('chatHeaderName').innerText = senderName;
+            document.getElementById('chatHeaderDp').src = senderDp;
         };
 
         // Load All Users & Pending Requests
         async function loadDashboardData(uid) {
-            // 1. Load All Members
             const usersSnap = await getDocs(collection(db, "users"));
             const listContainer = document.getElementById('memberListContainer');
             listContainer.innerHTML = '';
@@ -256,7 +274,6 @@
                 }
             });
 
-            // 2. Listen for Incoming Friend Requests
             const q = query(collection(db, "friend_requests"), where("receiverId", "==", uid), where("status", "==", "pending"));
             onSnapshot(q, async (snapshot) => {
                 const reqContainer = document.getElementById('requestsContainer');
@@ -313,21 +330,4 @@
                     currentUserData = docSnap.data();
                 } else {
                     currentUserData = { username: uName, dp: dpUrl, lastUsernameChange: 0 };
-                    await setDoc(userRef, currentUserData);
-                }
-                
-                document.getElementById('userDp').src = currentUserData.dp || dpUrl;
-                let cleanName = currentUserData.username.startsWith('@') ? currentUserData.username.substring(1) : currentUserData.username;
-                document.getElementById('userNameDisplay').innerHTML = `@${cleanName} <span class="edit-icon" id="editUsernameBtn">✏️</span>`;
-                
-                attachUsernameEditEvent(user.uid, currentUserData.lastUsernameChange);
-                loadDashboardData(user.uid);
-            } else {
-                document.getElementById('homePage').style.display = 'block';
-                document.getElementById('secretPage').style.display = 'none';
-                document.getElementById('chatScreen').style.display = 'none';
-            }
-        });
-
-        // Update DP Logic
-        document.getElementById('dpContainer').addEventListener('click', () => document.getElementById('dpInput').
+                    awa
