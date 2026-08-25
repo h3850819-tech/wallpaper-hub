@@ -29,11 +29,8 @@
         .auth-box { background-color: #1e1e2f; padding: 30px 25px; border-radius: 16px; width: 100%; max-width: 360px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #2b2b40; }
         .auth-box h2 { font-size: 22px; margin-bottom: 10px; color: #ff3366; }
         .auth-box p { font-size: 14px; color: #aaa; margin-bottom: 20px; }
-        .auth-box input, .auth-box select { width: 100%; padding: 12px; background-color: #11111a; border: 1px solid #3b3b54; border-radius: 8px; color: white; font-size: 16px; margin-bottom: 15px; text-align: left; }
-        .auth-box input:focus, .auth-box select:focus { outline: none; border-color: #ff3366; }
         .auth-btn { width: 100%; padding: 12px; background: linear-gradient(45deg, #ff3366, #ff6633); border: none; border-radius: 8px; color: white; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .google-btn { background: #4285F4; margin-top: 15px; box-shadow: 0 4px 15px rgba(66, 133, 244, 0.4); }
-        .link-btn { background: none; border: none; color: #00e6e6; cursor: pointer; margin-top: 15px; font-size: 14px; display: block; width: 100%; }
         .close-btn { background: none; border: none; color: #777; margin-top: 15px; cursor: pointer; font-size: 14px; }
         
         /* --- मैसेंजर डैशबोर्ड स्टाइल --- */
@@ -44,15 +41,19 @@
         .profile-section { text-align: center; padding: 25px 20px 15px; }
         .profile-pic { width: 90px; height: 90px; background-color: #1e1e2f; border-radius: 50%; margin: 0 auto 15px; display: block; object-fit: cover; border: 2px solid #ff3366; }
         .change-dp-btn { background-color: #1e1e2f; color: #00e6e6; border: 1px solid #3b3b54; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; }
+        
+        /* सेव बटन और यूजरनेम डिस्प्ले */
         .username-display { margin-top: 15px; font-size: 16px; font-weight: bold; color: #fff; display: flex; justify-content: center; align-items: center; gap: 8px; }
-        .username-display input { background: transparent; border: none; border-bottom: 1px dashed #777; color: #00e6e6; font-size: 16px; font-weight: bold; text-align: center; width: 130px; outline: none; }
+        .username-display input { background: #11111a; border: 1px solid #3b3b54; border-radius: 6px; padding: 8px 10px; color: #00e6e6; font-size: 15px; font-weight: bold; text-align: center; width: 150px; outline: none; }
+        #saveUserBtn { background: #00e6e6; color: #0f0f15; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        #saveUserBtn:hover { background: #00b3b3; }
 
         .search-container { padding: 0 20px 20px; }
         .search-bar { width: 100%; padding: 12px 15px; border: 1px solid #3b3b54; border-radius: 12px; background-color: #1e1e2f; color: white; font-size: 15px; outline: none; }
         .search-bar:focus { border-color: #00e6e6; }
 
         .list-section { padding: 0 20px 20px; }
-        .section-title-chat { font-size: 14px; font-weight: bold; color: #aaa; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #2b2b40; padding-bottom: 5px;}
+        .section-title-chat { font-size: 14px; font-weight: bold; color: #aaa; margin-bottom: 10px; text-transform: uppercase; border-bottom: 1px solid #2b2b40; padding-bottom: 5px;}
         
         .user-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #1e1e2f; transition: background 0.2s; }
         .user-item:hover { background-color: #161622; border-radius: 8px; padding: 12px 10px; margin-left: -10px; margin-right: -10px; cursor: pointer; }
@@ -69,7 +70,6 @@
         #private-chat-room { display: none; flex-direction: column; height: 100vh; background-color: #0f0f15; }
         .chat-room-header { background-color: #161622; padding: 15px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #2b2b40; }
         .back-btn { background: none; border: none; color: #00e6e6; font-size: 20px; cursor: pointer; }
-        .chat-room-header .user-avatar { width: 35px; height: 35px; margin-right: 0; }
         
         .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
         .message { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4; word-wrap: break-word; }
@@ -87,7 +87,7 @@
         <header>
             <h1>🌟 Premium Wallpapers</h1>
             <div class="menu-container">
-                <button class="three-dot-btn" onclick="toggleDropdown(event)">⋮</button>
+                <button class="three-dot-btn" id="menuBtn">⋮</button>
                 <div class="dropdown-menu" id="dropdownMenu">
                     <button onclick="openModal('loginModal')">🔒 प्राइवेट चैट (लॉगिन)</button>
                     <button onclick="openModal('registerModal')">📝 नया अकाउंट बनाएं</button>
@@ -118,10 +118,7 @@
     <div class="modal-overlay" id="loginModal">
         <div class="auth-box">
             <h2>लॉगिन करें</h2>
-            <input type="text" id="loginUser" placeholder="यूज़रनेम (Username)">
-            <input type="password" id="loginPass" placeholder="सीक्रेट पासवर्ड">
-            <button class="auth-btn" onclick="processLogin()">लॉगिन करें</button>
-            <button class="auth-btn google-btn" onclick="signInWithGoogle()">🌐 Google से लॉगिन</button>
+            <button class="auth-btn google-btn" id="googleLoginBtn1">🌐 Google से लॉगिन</button>
             <button class="close-btn" onclick="closeAllModals()">बंद करें</button>
         </div>
     </div>
@@ -129,7 +126,7 @@
     <div class="modal-overlay" id="registerModal">
         <div class="auth-box">
             <h2>नया अकाउंट बनाएं</h2>
-            <button class="auth-btn google-btn" onclick="signInWithGoogle()">🌐 Google से अकाउंट बनाएं</button>
+            <button class="auth-btn google-btn" id="googleLoginBtn2">🌐 Google से अकाउंट बनाएं</button>
             <button class="close-btn" onclick="closeAllModals()">बंद करें</button>
         </div>
     </div>
@@ -138,14 +135,16 @@
         <div id="messenger-home">
             <div class="chat-header">
                 <h2>प्राइवेट मैसेंजर</h2>
-                <button class="close-btn" onclick="logout()" style="margin:0; color:white;">लॉगआउट</button>
+                <button class="close-btn" id="logoutBtn" style="margin:0; color:white;">लॉगआउट</button>
             </div>
             
             <div class="profile-section">
                 <img src="https://via.placeholder.com/100" class="profile-pic" id="myProfilePic">
                 <button class="change-dp-btn">📷 Change DP</button>
                 <div class="username-display">
-                    Username: <input type="text" placeholder="Enter Username" id="myUsername"> ✏️
+                    Username: 
+                    <input type="text" placeholder="Enter Name" id="myUsername"> 
+                    <button id="saveUserBtn">Save</button>
                 </div>
             </div>
 
@@ -165,19 +164,16 @@
 
             <div class="list-section">
                 <div class="section-title-chat">Messages</div>
-                <div id="friends-list">
-                    </div>
+                <div id="friends-list"></div>
             </div>
         </div>
 
         <div id="private-chat-room">
             <div class="chat-room-header">
                 <button class="back-btn" onclick="closePrivateChat()">←</button>
-                <img src="https://via.placeholder.com/45" class="user-avatar" id="chattingWithAvatar">
                 <h3 style="font-size: 16px; color: white;" id="chattingWithName">Friend</h3>
             </div>
-            <div class="chat-messages" id="chatMessages">
-                </div>
+            <div class="chat-messages" id="chatMessages"></div>
             <div class="chat-input-area">
                 <input type="text" id="messageInput" placeholder="मैसेज टाइप करें...">
                 <button class="send-btn" onclick="sendMessage()">भेजें</button>
@@ -185,11 +181,53 @@
         </div>
     </div>
 
+    <script>
+        // थ्री-डॉट मेनू का कोड 
+        document.getElementById('menuBtn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('dropdownMenu');
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        });
+
+        document.addEventListener('click', function() {
+            document.getElementById('dropdownMenu').style.display = 'none';
+        });
+
+        // मोडल खोलने और बंद करने का फंक्शन
+        window.openModal = function(id) {
+            document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none');
+            document.getElementById('dropdownMenu').style.display = 'none';
+            document.getElementById(id).style.display = 'flex';
+        };
+
+        window.closeAllModals = function() {
+            document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none');
+        };
+
+        window.showDashboard = function() {
+            closeAllModals();
+            document.getElementById('main-website').style.display = 'none';
+            document.getElementById('chat-dashboard').style.display = 'flex';
+            document.getElementById('messenger-home').style.display = 'block';
+            document.getElementById('private-chat-room').style.display = 'none';
+        };
+
+        window.closePrivateChat = function() {
+            document.getElementById('private-chat-room').style.display = 'none';
+            document.getElementById('messenger-home').style.display = 'block';
+            if (window.chatListenerUnsubscribe) {
+                window.chatListenerUnsubscribe(); // चैट रूम से बाहर आते ही पुराना लिसनर बंद
+            }
+            window.currentChatId = null;
+        };
+    </script>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, query, where, getDocs, addDoc, onSnapshot, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+        // आपकी फायरबेस सेटिंग
         const firebaseConfig = {
             apiKey: "AIzaSyCyOPrvdTFdwz5bFTYBf6KJ5webyBJj_1A",
             authDomain: "himanshuchatapp-785b4.firebaseapp.com",
@@ -205,43 +243,31 @@
         const googleProvider = new GoogleAuthProvider();
 
         let currentUserUID = null; 
-        let currentChatId = null; 
-        let chatListenerUnsubscribe = null; 
+        window.currentChatId = null; 
+        window.chatListenerUnsubscribe = null;
 
-        // --- UI Modals (Three-dot Fix included) ---
-        window.toggleDropdown = (event) => { 
-            if(event) event.stopPropagation(); 
-            const menu = document.getElementById('dropdownMenu'); 
-            menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; 
-        };
-
-        document.addEventListener('click', (event) => {
-            const menu = document.getElementById('dropdownMenu');
-            const btn = document.querySelector('.three-dot-btn');
-            if (menu && menu.style.display === 'block' && !menu.contains(event.target) && !btn.contains(event.target)) {
-                menu.style.display = 'none';
+        // गूगल लॉगिन सिस्टम
+        const handleGoogleLogin = async () => {
+            try {
+                await signInWithPopup(auth, googleProvider);
+                window.showDashboard();
+            } catch (error) {
+                alert("लॉगिन में दिक्कत: " + error.message);
             }
+        };
+        document.getElementById('googleLoginBtn1').addEventListener('click', handleGoogleLogin);
+        document.getElementById('googleLoginBtn2').addEventListener('click', handleGoogleLogin);
+
+        // लॉगआउट सिस्टम
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            signOut(auth).then(() => {
+                currentUserUID = null;
+                document.getElementById('chat-dashboard').style.display = 'none';
+                document.getElementById('main-website').style.display = 'block';
+            });
         });
 
-        window.closeAllModals = () => { 
-            document.querySelectorAll('.modal-overlay').forEach(el => el.style.display = 'none');
-            document.getElementById('dropdownMenu').style.display = 'none';
-        };
-        
-        window.openModal = (modalId) => {
-            closeAllModals();
-            document.getElementById(modalId).style.display = 'flex';
-        };
-        
-        function showDashboard() {
-            closeAllModals();
-            document.getElementById('main-website').style.display = 'none';
-            document.getElementById('chat-dashboard').style.display = 'flex';
-            document.getElementById('messenger-home').style.display = 'block';
-            document.getElementById('private-chat-room').style.display = 'none';
-        }
-
-        // --- AUTH & PROFILE LOGIC ---
+        // अकाउंट चेक और डाटा लाना
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUserUID = user.uid;
@@ -253,7 +279,7 @@
                         uid: user.uid,
                         name: user.displayName || "New User",
                         username: "",
-                        usernameLower: "", // नया फील्ड छोटे अक्षरों में सर्च के लिए
+                        usernameLower: "", 
                         photoURL: user.photoURL || "https://via.placeholder.com/100"
                     });
                 } else {
@@ -261,73 +287,56 @@
                     if(userData.username) document.getElementById('myUsername').value = userData.username;
                     if(userData.photoURL) document.getElementById('myProfilePic').src = userData.photoURL;
                 }
-                
                 listenForRequests();
                 listenForFriends();
             }
         });
 
-        // --- NEW: USERNAME SAVE LOGIC (14-Day Limit & Unique Check) ---
-        document.getElementById('myUsername').addEventListener('change', async (e) => {
-            if(!currentUserUID) return;
-            const newUsername = e.target.value.trim();
+        // 14-दिन का लॉक और सेव बटन (पक्का फिक्स - एरर फ्री)
+        document.getElementById('saveUserBtn').addEventListener('click', async () => {
+            if(!currentUserUID) { alert("लॉगिन ज़रूरी है!"); return; }
+            
+            const btn = document.getElementById('saveUserBtn');
+            const newUsername = document.getElementById('myUsername').value.trim();
             
             if(newUsername.length < 3) {
-                alert("यूज़रनेम कम से कम 3 अक्षरों का होना चाहिए!");
+                alert("नाम कम से कम 3 अक्षरों का होना चाहिए!");
                 return;
             }
 
-            const userRef = doc(db, "users", currentUserUID);
-            const userSnap = await getDoc(userRef);
-            const userData = userSnap.data();
+            btn.innerText = "Saving...";
+            btn.disabled = true;
 
-            // 1. 14-दिन का चेक
-            if (userData.lastUsernameChange) {
-                const lastChange = userData.lastUsernameChange.toDate();
-                const now = new Date();
-                const diffTime = Math.abs(now - lastChange);
-                const diffDays = diffTime / (1000 * 60 * 60 * 24);
+            try {
+                const userRef = doc(db, "users", currentUserUID);
+                const userSnap = await getDoc(userRef);
                 
-                if (diffDays < 14) {
-                    const daysLeft = Math.ceil(14 - diffDays);
-                    alert(`आप 14 दिन में केवल एक बार यूज़रनेम बदल सकते हैं। कृपया ${daysLeft} दिन और प्रतीक्षा करें।`);
-                    document.getElementById('myUsername').value = userData.username; // पुराना नाम वापस
-                    return;
+                // एरर को रोकने का पक्का तरीका
+                const userData = userSnap.exists() ? userSnap.data() : null;
+
+                // 14-दिन चेक
+                if (userData && userData.lastUsernameChange) {
+                    const lastChange = userData.lastUsernameChange.toDate();
+                    const diffDays = (new Date() - lastChange) / (1000 * 60 * 60 * 24);
+                    if (diffDays < 14) {
+                        const daysLeft = Math.ceil(14 - diffDays);
+                        alert(`आप 14 दिन में केवल एक बार नाम बदल सकते हैं। ${daysLeft} दिन और इंतज़ार करें!`);
+                        document.getElementById('myUsername').value = userData.username || ""; 
+                        btn.innerText = "Save";
+                        btn.disabled = false;
+                        return;
+                    }
                 }
-            }
 
-            // 2. यूज़रनेम यूनिक (Unique) होने का चेक
-            const usernameLower = newUsername.toLowerCase();
-            const q = query(collection(db, "users"), where("usernameLower", "==", usernameLower));
-            const querySnapshot = await getDocs(q);
-            
-            let isUnique = true;
-            querySnapshot.forEach((docSnap) => {
-                if (docSnap.id !== currentUserUID) {
-                    isUnique = false;
-                }
-            });
+                // क्या यह नाम किसी और के पास है?
+                const usernameLower = newUsername.toLowerCase();
+                const q = query(collection(db, "users"), where("usernameLower", "==", usernameLower));
+                const querySnapshot = await getDocs(q);
+                
+                let isUnique = true;
+                querySnapshot.forEach((docSnap) => {
+                    if (docSnap.id !== currentUserUID) isUnique = false;
+                });
 
-            if (!isUnique) {
-                alert("यह यूज़रनेम पहले से किसी ने ले लिया है। कृपया कोई दूसरा नाम चुनें (जैसे: " + newUsername + "123)");
-                document.getElementById('myUsername').value = userData.username || "";
-                return;
-            }
-
-            // 3. सेव करना
-            await updateDoc(userRef, { 
-                username: newUsername,
-                usernameLower: usernameLower,
-                lastUsernameChange: serverTimestamp() 
-            });
-            
-            alert("शानदार! आपका यूज़रनेम सेव हो गया: " + newUsername);
-        });
-
-        window.signInWithGoogle = () => { signInWithPopup(auth, googleProvider).then(() => { showDashboard(); }).catch(e => alert(e.message)); };
-        window.processLogin = () => { showDashboard(); };
-        window.logout = () => {
-            auth.signOut().then(() => {
-                currentUserUID = null;
-                document.getElementById('chat-dashboard').style.display = 'none';
- 
+                if (!isUnique) {
+                    alert("यह नाम पहले से किसी ने ले लिया है। कोई दूसरा नाम सोचें!");
