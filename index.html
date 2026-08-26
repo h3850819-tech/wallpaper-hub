@@ -3,32 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BerylWalls - Premium Dashboard</title>
+    <title>BerylWalls - Premium</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f0f4f8; color: #1a202c; height: 100vh; overflow-x: hidden; }
         
-        /* Top Bar */
+        /* टॉप बार */
         header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
         .logo { font-size: 22px; font-weight: 700; color: #2d3748; }
         .menu-btn { background: none; border: none; font-size: 26px; cursor: pointer; color: #4a5568; padding: 0 10px; }
         
         .container { padding: 20px; max-width: 1200px; margin: 0 auto; }
         
-        /* Homepage */
+        /* वॉलपेपर ग्रिड */
         #homePage { display: block; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 10px; }
         .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .card img { width: 100%; height: 220px; object-fit: cover; display: block; }
 
-        /* Login Popup */
+        /* लॉगिन पॉपअप */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center; z-index: 200; }
         .login-box { background: white; padding: 30px; border-radius: 16px; text-align: center; width: 90%; max-width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         .login-box h2 { margin-bottom: 25px; font-size: 22px; color: #2d3748; }
         .google-btn { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; padding: 12px; border: 1px solid #cbd5e0; border-radius: 8px; background: white; cursor: pointer; font-size: 16px; font-weight: 600; color: #4a5568; }
-        .close-btn { margin-top: 20px; color: #e53e3e; cursor: pointer; font-size: 14px; font-weight: 600; }
+        .close-btn { margin-top: 20px; color: #e53e3e; cursor: pointer; font-size: 14px; font-weight: 600; display: inline-block; }
 
-        /* Dashboard */
+        /* डैशबोर्ड */
         #secretPage { display: none; padding-top: 10px; }
         .profile-card { background: white; padding: 20px; border-radius: 14px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .dp-container { position: relative; width: 70px; height: 70px; cursor: pointer; }
@@ -49,10 +49,9 @@
         .btn-small { padding: 6px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; border: none; transition: 0.3s; }
         .add-btn { background: #3182ce; color: white; }
         .accept-btn { background: #38a169; color: white; }
-        .chat-btn { background: #d69e2e; color: white; }
         .requested-btn { background: #cbd5e0; color: #4a5568; cursor: not-allowed; }
 
-        /* Private Chat Screen */
+        /* सीक्रेट चैट स्क्रीन */
         #chatScreen { display: none; height: 100vh; flex-direction: column; background: #e5ddd5; }
         .chat-header { display: flex; align-items: center; justify-content: space-between; background: #075e54; color: white; padding: 10px 15px; }
         .chat-header-left { display: flex; align-items: center; gap: 10px; }
@@ -61,15 +60,13 @@
         
         .chat-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
         .msg { max-width: 75%; padding: 8px 12px; border-radius: 10px; font-size: 14px; position: relative; }
-        .msg.sent { background: #dcf8c6; align-self: flex-end; border-bottom-right-radius: 0; padding-right: 25px; } /* Space for delete icon */
+        .msg.sent { background: #dcf8c6; align-self: flex-end; border-bottom-right-radius: 0; padding-right: 25px; }
         .msg.received { background: white; align-self: flex-start; border-bottom-left-radius: 0; }
         .msg-time { font-size: 10px; color: #718096; text-align: right; margin-top: 4px; display: block; }
         .smart-tick { color: #38a169; font-size: 12px; margin-left: 4px; }
-        
-        /* NEW: Delete Message Icon Style */
         .delete-msg { display: none; font-size: 12px; color: #e53e3e; cursor: pointer; position: absolute; top: 5px; right: 8px; }
         .msg.sent:hover .delete-msg { display: block; }
-
+        
         .chat-input-area { display: flex; align-items: center; padding: 10px; background: white; gap: 10px; }
         .chat-input { flex: 1; padding: 12px; border: none; background: #f0f4f8; border-radius: 20px; outline: none; }
         .action-icon { font-size: 22px; color: #718096; cursor: pointer; }
@@ -78,7 +75,7 @@
 </head>
 <body>
 
-    <!-- 1. Homepage -->
+    <!-- 1. होमपेज (12 वॉलपेपर) -->
     <div id="homePage">
         <header>
             <div class="logo">BerylWalls</div>
@@ -102,27 +99,20 @@
         </div>
     </div>
 
-    <!-- 2. Google Sign-in Popup -->
+    <!-- 2. गूगल लॉगिन पॉपअप -->
     <div class="modal-overlay" id="loginModal">
         <div class="login-box">
             <h2>Sign in to BerylWalls</h2>
-            <button class="google-btn" id="googleSignInBtn">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="G" style="width:20px; height:20px;">
-                Continue with Google
-            </button>
+            <button class="google-btn" id="googleSignInBtn">Continue with Google</button>
             <div class="close-btn" id="closeLoginBtn">Cancel</div>
         </div>
     </div>
 
-    <!-- 3. Secret Page (Dashboard) -->
+    <!-- 3. डैशबोर्ड -->
     <div id="secretPage">
         <header>
             <div class="logo">Dashboard</div>
-            <div style="display:flex; align-items:center;">
-                <!-- NEW: Secret Notification Badge -->
-                <span id="secretNotif" style="display:none; margin-right: 15px; font-size: 18px; cursor: pointer;" title="New Request Pending!">🔔<span style="color:red; font-size: 12px; vertical-align: top;">🔴</span></span>
-                <button class="menu-btn" id="logoutBtn" title="Logout">↩</button>
-            </div>
+            <button class="menu-btn" id="logoutBtn" title="Logout">↩</button>
         </header>
         <div class="container">
             <div class="profile-card">
@@ -149,11 +139,11 @@
         </div>
     </div>
 
-    <!-- 4. Private Chat Screen -->
+    <!-- 4. प्राइवेट चैट स्क्रीन -->
     <div id="chatScreen">
         <div class="chat-header">
             <div class="chat-header-left">
-                <span style="cursor:pointer; font-size: 20px;" onclick="closeChat()">←</span>
+                <span style="cursor:pointer; font-size: 20px;" id="closeChatBtn">←</span>
                 <img id="chatHeaderDp" src="" alt="DP">
                 <div style="font-weight: 600;" id="chatHeaderName">User</div>
             </div>
@@ -163,19 +153,7 @@
                 <span>⋮</span>
             </div>
         </div>
-        <div class="chat-body" id="chatBody">
-            <div style="text-align:center; font-size:12px; color:#718096; margin-bottom: 10px;">Today</div>
-            <div class="msg received">
-                Hello! This is a secure chat.
-                <span class="msg-time">10:15 AM</span>
-            </div>
-            <div class="msg sent">
-                Hey, testing the new smart ticks!
-                <!-- NEW: Delete Button in Chat -->
-                <span class="delete-msg" onclick="this.parentElement.style.display='none'">🗑️</span>
-                <span class="msg-time">10:17 AM <span class="smart-tick">✔✔</span></span>
-            </div>
-        </div>
+        <div class="chat-body" id="chatBody"></div>
         <div class="chat-input-area">
             <span class="action-icon">📸</span>
             <span class="action-icon">📎</span>
@@ -184,12 +162,16 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
+    <!-- Script टैग पार्ट 2 में आएगा -->
+</body>
+</html>
+    <!-- यहाँ से पार्ट 2 शुरू (Script) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, collection, getDocs, onSnapshot, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
+        // तेरा असली Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyCyOPrvdTFdwz5bFTYBf6KJ5webyBJj_1A",
             authDomain: "himanshuchatapp-785b4.firebaseapp.com",
@@ -207,6 +189,7 @@
         
         let currentUserData = null;
 
+        // लॉगिन और लॉगआउट बटन
         document.getElementById('openLoginBtn').addEventListener('click', () => document.getElementById('loginModal').style.display = 'flex');
         document.getElementById('closeLoginBtn').addEventListener('click', () => document.getElementById('loginModal').style.display = 'none');
         document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
@@ -217,17 +200,20 @@
             }).catch(e => alert("Login Error: " + e.message));
         });
 
+        // चैट स्क्रीन खोलना और बंद करना
         window.openChat = function(name, dp) {
             document.getElementById('secretPage').style.display = 'none';
             document.getElementById('chatScreen').style.display = 'flex';
             document.getElementById('chatHeaderName').innerText = name;
             document.getElementById('chatHeaderDp').src = dp;
         };
-        window.closeChat = function() {
+        
+        document.getElementById('closeChatBtn').addEventListener('click', () => {
             document.getElementById('chatScreen').style.display = 'none';
             document.getElementById('secretPage').style.display = 'block';
-        };
+        });
 
+        // फ्रेंड रिक्वेस्ट भेजना
         window.sendFriendRequest = async function(btn, receiverId) {
             btn.innerText = 'Requested';
             btn.className = 'btn-small requested-btn';
@@ -242,6 +228,7 @@
             });
         };
 
+        // फ्रेंड रिक्वेस्ट एक्सेप्ट करना
         window.acceptRequest = async function(reqId, senderName, senderDp) {
             const reqRef = doc(db, "friend_requests", reqId);
             await updateDoc(reqRef, { status: 'accepted' });
@@ -249,7 +236,7 @@
             openChat(senderName, senderDp);
         };
 
-        // NEW: Message Send & Delete Logic
+        // मैसेज भेजना और डिलीट बटन (नया फीचर)
         document.getElementById('sendMsgBtn').addEventListener('click', () => {
             const input = document.getElementById('msgInput');
             if(input.value.trim() !== '') {
@@ -263,6 +250,7 @@
             }
         });
 
+        // डैशबोर्ड का डेटा लोड करना और इन-ऐप सीक्रेट लाल डॉट (नया फीचर)
         async function loadDashboardData(uid) {
             const usersSnap = await getDocs(collection(db, "users"));
             const listContainer = document.getElementById('memberListContainer');
@@ -287,14 +275,13 @@
             onSnapshot(q, async (snapshot) => {
                 const reqContainer = document.getElementById('requestsContainer');
                 
-                // NEW: Secret Notification logic
                 if (snapshot.empty) {
                     reqContainer.innerHTML = '<p style="font-size: 13px; color: #718096; text-align: center;">No new requests</p>';
-                    document.getElementById('secretNotif').style.display = 'none';
+                    document.getElementById('secretNotif').style.display = 'none'; // लाल डॉट छुपाओ
                     return;
                 }
                 
-                document.getElementById('secretNotif').style.display = 'inline-block'; // Show secret dot
+                document.getElementById('secretNotif').style.display = 'inline-block'; // लाल डॉट दिखाओ
                 reqContainer.innerHTML = '';
                 
                 snapshot.forEach(async (reqDoc) => {
@@ -316,6 +303,7 @@
             });
         }
 
+        // सर्च बार 
         document.getElementById('searchMemberInput').addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
             const items = document.querySelectorAll('#memberListContainer .member-item');
@@ -329,6 +317,89 @@
             });
         });
 
+        // यूजर चेक और सेव 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-          
+                document.getElementById('homePage').style.display = 'none';
+                document.getElementById('secretPage').style.display = 'block';
+                
+                const userRef = doc(db, "users", user.uid);
+                const docSnap = await getDoc(userRef);
+
+                let uName = user.displayName ? user.displayName.replace(/\s+/g, '').toLowerCase() : "user";
+                let dpUrl = user.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200";
+
+                if (docSnap.exists()) {
+                    currentUserData = docSnap.data();
+                } else {
+                    currentUserData = { username: uName, dp: dpUrl, lastUsernameChange: 0 };
+                    await setDoc(userRef, currentUserData);
+                }
+                
+                document.getElementById('userDp').src = currentUserData.dp || dpUrl;
+                let cleanName = currentUserData.username.startsWith('@') ? currentUserData.username.substring(1) : currentUserData.username;
+                document.getElementById('userNameDisplay').innerHTML = `@${cleanName} <span class="edit-icon" id="editUsernameBtn">✏️</span>`;
+                
+                attachUsernameEditEvent(user.uid, currentUserData.lastUsernameChange);
+                loadDashboardData(user.uid);
+            } else {
+                document.getElementById('homePage').style.display = 'block';
+                document.getElementById('secretPage').style.display = 'none';
+                document.getElementById('chatScreen').style.display = 'none';
+            }
+        });
+
+        // गैलरी से DP बदलना
+        document.getElementById('dpContainer').addEventListener('click', () => document.getElementById('dpInput').click());
+        document.getElementById('dpInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async function(event) {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = async function() {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 250;
+                        const scaleSize = MAX_WIDTH / img.width;
+                        canvas.width = MAX_WIDTH;
+                        canvas.height = img.height * scaleSize;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        const base64Compressed = canvas.toDataURL('image/jpeg', 0.8);
+
+                        document.getElementById('userDp').src = base64Compressed;
+                        if (auth.currentUser) {
+                            await setDoc(doc(db, "users", auth.currentUser.uid), { dp: base64Compressed }, { merge: true });
+                        }
+                    }
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 14 दिन वाला यूजरनेम
+        function attachUsernameEditEvent(uid, lastChange) {
+            document.getElementById('editUsernameBtn').addEventListener('click', async () => {
+                const now = new Date().getTime();
+                const fourteenDays = 14 * 24 * 60 * 60 * 1000;
+
+                if (lastChange && (now - lastChange < fourteenDays)) {
+                    const daysLeft = Math.ceil((fourteenDays - (now - lastChange)) / (1000 * 60 * 60 * 24));
+                    alert(`You can change your username after ${daysLeft} days.`);
+                    return;
+                }
+                
+                let newName = prompt("Enter new username (without @):");
+                if (newName) {
+                    newName = newName.replace(/@/g, '').trim(); 
+                    document.getElementById('userNameDisplay').innerHTML = `@${newName} <span class="edit-icon" id="editUsernameBtn">✏️</span>`;
+                    await setDoc(doc(db, "users", uid), { username: newName, lastUsernameChange: now }, { merge: true });
+                    alert("Username saved successfully!");
+                    attachUsernameEditEvent(uid, now); 
+                }
+            });
+        }
+    </script>
+</body>
+</html>
