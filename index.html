@@ -310,30 +310,4 @@
 
                 let uName = user.displayName ? user.displayName.replace(/\s+/g, '').toLowerCase() : "user";
                 let dpUrl = user.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200";
-
-                if (docSnap.exists()) {
-                    currentUserData = docSnap.data();
-                } else {
-                    currentUserData = { username: uName, dp: dpUrl, lastUsernameChange: 0 };
-                    await setDoc(userRef, currentUserData);
-                }
-                
-                document.getElementById('userDp').src = currentUserData.dp || dpUrl;
-                let cleanName = currentUserData.username.startsWith('@') ? currentUserData.username.substring(1) : currentUserData.username;
-                document.getElementById('userNameDisplay').innerHTML = `@${cleanName} <span class="edit-icon" id="editUsernameBtn">✏️</span>`;
-                
-                attachUsernameEditEvent(user.uid, currentUserData.lastUsernameChange);
-                loadDashboardData(user.uid);
-            } else {
-                document.getElementById('homePage').style.display = 'block';
-                document.getElementById('secretPage').style.display = 'none';
-                document.getElementById('chatScreen').style.display = 'none';
-            }
-        });
-
-        document.getElementById('dpContainer').addEventListener('click', () => document.getElementById('dpInput').click());
-        document.getElementById('dpInput').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-             
+        
