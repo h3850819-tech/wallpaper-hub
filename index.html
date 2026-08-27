@@ -403,3 +403,469 @@
     </script>
 </body>
 </html>
+    <!-- यहाँ से पार्ट 3 शुरू (नया कोड जो पार्ट 2 के नीचे जाएगा) -->
+    <script type="module">
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+        // पार्ट 2 से Firebase का पहले से चालू सेटअप इस्तेमाल करेंगे (डबल एरर नहीं आएगा)
+        const auth = getAuth();
+        const db = getFirestore();
+
+        let currentChatId = null;
+        let chatUnsubscribe = null;
+
+        // चैट ID बनाने का लॉजिक
+        function getChatId(uid1, uid2) {
+            return uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
+        }
+
+        // 1. पुराने ओपन चैट फंक्शन को अपग्रेड कर रहे हैं (बिना पार्ट 2 छेड़े)
+        window.openChat = function(name, dp, receiverId) {
+            document.getElementById('secretPage').style.display = 'none';
+            document.getElementById('chatScreen').style.display = 'flex';
+            document.getElementById('chatHeaderName').innerText = name;
+            document.getElementById('chatHeaderDp').src = dp;
+
+            if (receiverId) {
+                currentChatId = getChatId(auth.currentUser.uid, receiverId);
+                loadRealtimeMessages();
+            }
+        };
+
+        // 2. पुराने एक्सेप्ट रिक्वेस्ट को अपग्रेड करना (ताकि चैट Firebase से जुड़े)
+        window.acceptRequest = async function(reqId, senderName, senderDp) {
+            const reqRef = doc(db, "friend_requests", reqId);
+            await updateDoc(reqRef, { status: 'accepted' });
+            
+            // reqId से सामने वाले की ID निकालना (बिना पार्ट 2 का HTML बदले)
+            const senderId = reqId.split('_')[0]; 
+            
+            alert('Request Accepted! You can now chat.');
+            window.openChat(senderName, senderDp, senderId);
+        };
+
+        // 3. रियल-टाइम मैसेज और स्मार्ट डॉट्स लोड करना
+        function loadRealtimeMessages() {
+            const chatBody = document.getElementById('chatBody');
+            chatBody.innerHTML = '';
+            const q = query(collection(db, "chats", currentChatId, "messages"), orderBy("timestamp", "asc"));
+
+            if(chatUnsubscribe) chatUnsubscribe(); // पुराने चैट लिसनर बंद करें
+
+            chatUnsubscribe = onSnapshot(q, (snapshot) => {
+                chatBody.innerHTML = '';
+                snapshot.forEach(async (docSnap) => {
+                    const msgData = docSnap.data();
+                    const isMe = msgData.senderId === auth.currentUser.uid;
+                    const time = msgData.timestamp ? new Date(msgData.timestamp.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '...';
+
+                    // सिंगल डॉट, डबल डॉट, और ग्रीन डॉट्स लॉजिक
+                    let tick = `<span class="smart-tick" style="color:gray;">✓</span>`;
+                    if (msgData.status === 'delivered') tick = `<span class="smart-tick" style="color:gray;">✓✓</span>`;
+                    if (msgData.status === 'seen') tick = `<span class="smart-tick" style="color:#38a169;">✓✓</span>`;
+
+                    // इमेज प्राइवेसी (डाउनलोड बटन)
+                    let msgContent = msgData.type === 'image' 
+                        ? `<div style="text-align:center;"><img src="${msgData.text}" style="max-width:100%; border-radius:8px; filter:blur(3px);"><br><button onclick="downloadImage('${msgData.text}')" style="margin-top:5px; padding:4px 10px; background:#075e54; color:white; border:none; border-radius:5px; font-size:12px; cursor:pointer;">Download to View</button></div>`
+                        : msgData.text;
+
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = `msg ${isMe ? 'sent' : 'received'}`;
+                    msgDiv.innerHTML = `${msgContent} <span class="msg-time">${time} ${isMe ? tick : ''}</span>`;
+                    
+                    // होल्ड करके डिलीट करने का ऑप्शन (800ms)
+                    let pressTimer;
+                    const startPress = () => { pressTimer = setTimeout(() => deleteMessage(docSnap.id), 800); };
+                    const cancelPress = () => clearTimeout(pressTimer);
+                    
+                    msgDiv.addEventListener('touchstart', startPress);
+                    msgDiv.addEventListener('touchend', cancelPress);
+                    msgDiv.addEventListener('mousedown', startPress);
+                    msgDiv.addEventListener('mouseup', cancelPress);
+
+                    chatBody.appendChild(msgDiv);
+
+                    // सीन (Seen) स्टेटस अपडेट करना
+                    if (!isMe && msgData.status !== 'seen') {
+                        await updateDoc(doc(db, "chats", currentChatId, "messages", docSnap.id), { status: 'seen' });
+                    }
+                });
+                chatBody.scrollTop = chatBody.scrollHeight;
+            });
+        }
+
+        window.deleteMessage = async function(msgId) {
+            if(confirm("Delete this message?")) {
+                await deleteDoc(doc(db, "chats", currentChatId, "messages", msgId));
+            }
+        }
+
+        window.downloadImage = function(url) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'SecretImage.jpg';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // 4. पुराने सेंड बटन के पुराने लॉजिक को नए Firebase लॉजिक से रिप्लेस करना
+        const oldSendBtn = document.getElementById('sendMsgBtn');
+        const newSendBtn = oldSendBtn.cloneNode(true);
+        oldSendBtn.parentNode.replaceChild(newSendBtn, oldSendBtn); // बिना HTML काटे बटन का एक्शन बदल दिया
+
+        newSendBtn.addEventListener('click', async () => {
+            const input = document.getElementById('msgInput');
+            if(input.value.trim() !== '' && currentChatId) {
+                const text = input.value;
+                input.value = '';
+                await addDoc(collection(db, "chats", currentChatId, "messages"), {
+                    senderId: auth.currentUser.uid,
+                    text: text,
+                    type: 'text',
+                    timestamp: serverTimestamp(),
+                    status: 'sent'
+                });
+            }
+        });
+
+        // 5. इमेज भेजने का फीचर (गैलरी आइकॉन पर)
+        document.querySelector('.action-icon:nth-child(1)').addEventListener('click', async () => {
+            let imgUrl = prompt("Enter Image URL (Temporary gallery bypass):", "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=300");
+            if(imgUrl && currentChatId) {
+                await addDoc(collection(db, "chats", currentChatId, "messages"), {
+                    senderId: auth.currentUser.uid,
+                    text: imgUrl,
+                    type: 'image',
+                    timestamp: serverTimestamp(),
+                    status: 'sent'
+                });
+            }
+        });
+
+        // 6. सीक्रेट नोटिफिकेशन्स (New Wallpaper)
+        if (Notification.permission !== "granted") Notification.requestPermission();
+
+        function triggerSecretNotification(type) {
+            let title = "New Wallpaper";
+            if(type === 'audio') title = "New Wallpaper Audio";
+            if(type === 'video') title = "New Wallpaper Video";
+            
+            if (Notification.permission === "granted") {
+                new Notification(title, { icon: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100" });
+            }
+        }
+
+        document.querySelector('.chat-header-icons span:nth-child(1)').addEventListener('click', () => triggerSecretNotification('video'));
+        document.querySelector('.chat-header-icons span:nth-child(2)').addEventListener('click', () => triggerSecretNotification('audio'));
+
+    </script>
+    <!-- पार्ट 3 यहाँ खत्म -->
+        <!-- यहाँ से पार्ट 4 शुरू (वॉइस रिकॉर्डिंग और कॉलिंग स्क्रीन) -->
+    <script type="module">
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+        // पार्ट 3 वाले Firebase कनेक्शन का ही इस्तेमाल करेंगे
+        const auth = getAuth();
+        const db = getFirestore();
+        let activeChatId = null;
+
+        // 1. पार्ट 3 के ओपन चैट को इंटरसेप्ट करना ताकि हमें Chat ID मिल सके
+        const originalOpenChat = window.openChat;
+        window.openChat = function(name, dp, receiverId) {
+            originalOpenChat(name, dp, receiverId);
+            if(receiverId) {
+                const uid1 = auth.currentUser.uid;
+                const uid2 = receiverId;
+                activeChatId = uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
+            }
+        };
+
+        // 2. चैट बॉक्स में माइक (Mic) आइकॉन जोड़ना
+        const inputArea = document.querySelector('.chat-input-area');
+        const micBtn = document.createElement('span');
+        micBtn.className = 'action-icon';
+        micBtn.innerHTML = '🎤';
+        micBtn.style.color = '#e53e3e';
+        micBtn.style.cursor = 'pointer';
+        micBtn.title = "Hold to Record Audio";
+        inputArea.insertBefore(micBtn, document.getElementById('msgInput'));
+
+        // 3. वॉइस रिकॉर्डिंग लॉजिक (Hold to Record)
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+
+        const startRecording = async (e) => {
+            e.preventDefault();
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.start();
+                isRecording = true;
+                micBtn.innerHTML = '🔴'; // रिकॉर्डिंग चालू होने का सिग्नल
+                micBtn.style.transform = 'scale(1.2)';
+                audioChunks = [];
+
+                mediaRecorder.addEventListener("dataavailable", event => {
+                    audioChunks.push(event.data);
+                });
+
+                mediaRecorder.addEventListener("stop", async () => {
+                    micBtn.innerHTML = '🎤';
+                    micBtn.style.transform = 'scale(1)';
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const reader = new FileReader();
+                    reader.readAsDataURL(audioBlob);
+                    reader.onloadend = async () => {
+                        const base64Audio = reader.result;
+                        if (activeChatId) {
+                            // ऑडियो को Firebase में भेजना
+                            await addDoc(collection(db, "chats", activeChatId, "messages"), {
+                                senderId: auth.currentUser.uid,
+                                text: `[AUDIO]${base64Audio}[/AUDIO]`,
+                                type: 'audio',
+                                timestamp: serverTimestamp(),
+                                status: 'sent'
+                            });
+                        }
+                    };
+                });
+            } catch (err) {
+                alert("Microphone access denied! Please allow mic permission.");
+            }
+        };
+
+        const stopRecording = (e) => {
+            e.preventDefault();
+            if (isRecording && mediaRecorder) {
+                mediaRecorder.stop();
+                isRecording = false;
+            }
+        };
+
+        // माउस और टच (मोबाइल) दोनों के लिए होल्ड इवेंट्स
+        micBtn.addEventListener('mousedown', startRecording);
+        micBtn.addEventListener('mouseup', stopRecording);
+        micBtn.addEventListener('mouseleave', stopRecording);
+        micBtn.addEventListener('touchstart', startRecording);
+        micBtn.addEventListener('touchend', stopRecording);
+
+        // 4. ऑडियो प्लेयर को रेंडर करना (बिना पार्ट 3 को छेड़े)
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.classList && node.classList.contains('msg')) {
+                        if (node.innerHTML.includes('[AUDIO]')) {
+                            const audioDataMatch = node.innerHTML.match(/\[AUDIO\](.*?)\[\/AUDIO\]/);
+                            if (audioDataMatch && audioDataMatch[1]) {
+                                const timeSpan = node.innerHTML.substring(node.innerHTML.indexOf('<span class="msg-time"'));
+                                node.innerHTML = `<audio controls src="${audioDataMatch[1]}" style="height:35px; max-width:200px; outline:none; border-radius:20px;"></audio> <br> ${timeSpan}`;
+                            }
+                        }
+                    }
+                });
+            });
+        });
+        observer.observe(document.getElementById('chatBody'), { childList: true, subtree: true });
+
+        // 5. ऑडियो और वीडियो कॉलिंग स्क्रीन का UI बनाना
+        const callScreen = document.createElement('div');
+        callScreen.id = "callScreenOverlay";
+        callScreen.style.cssText = "display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:linear-gradient(135deg, #1a202c, #2d3748); z-index:999; flex-direction:column; align-items:center; justify-content:center; color:white;";
+        callScreen.innerHTML = `
+            <style>
+                @keyframes pulseCall { 0% { box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7); } 70% { box-shadow: 0 0 0 30px rgba(72, 187, 120, 0); } 100% { box-shadow: 0 0 0 0 rgba(72, 187, 120, 0); } }
+            </style>
+            <img id="callDp" src="" style="width:130px; height:130px; border-radius:50%; margin-bottom:20px; border: 4px solid #38a169; animation: pulseCall 1.5s infinite;">
+            <h2 id="callName" style="margin-bottom:10px; font-size:28px;">User</h2>
+            <p id="callStatus" style="color:#a0aec0; margin-bottom:60px; font-size:16px;">Ringing...</p>
+            <button id="endCallBtn" style="background:#e53e3e; color:white; border:none; width:65px; height:65px; border-radius:50%; font-size:26px; cursor:pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center;">📞</button>
+        `;
+        document.body.appendChild(callScreen);
+
+        const startCall = (type) => {
+            const name = document.getElementById('chatHeaderName').innerText;
+            const dp = document.getElementById('chatHeaderDp').src;
+            document.getElementById('callName').innerText = name;
+            document.getElementById('callDp').src = dp;
+            document.getElementById('callStatus').innerText = type === 'video' ? 'Video Calling...' : 'Audio Calling...';
+            callScreen.style.display = 'flex';
+            
+            // कॉल के साथ सीक्रेट नोटिफिकेशन भेजना
+            if (Notification.permission === "granted") {
+                new Notification(`New Wallpaper ${type === 'video' ? 'Video' : 'Audio'}`, { icon: dp });
+            }
+        };
+
+        document.getElementById('endCallBtn').addEventListener('click', () => {
+            callScreen.style.display = 'none'; // कॉल कट करने का बटन
+        });
+
+        // 6. पार्ट 3 के पुराने कॉल बटन्स को नए UI से कनेक्ट करना
+        setTimeout(() => {
+            const headerIcons = document.querySelector('.chat-header-icons').children;
+            const vidBtn = headerIcons[0].cloneNode(true);
+            const audBtn = headerIcons[1].cloneNode(true);
+            headerIcons[0].replaceWith(vidBtn);
+            headerIcons[1].replaceWith(audBtn);
+
+            vidBtn.addEventListener('click', () => startCall('video'));
+            audBtn.addEventListener('click', () => startCall('audio'));
+        }, 1000); // UI रेंडर होने का इंतज़ार
+
+    </script>
+    <!-- पार्ट 4 यहाँ खत्म -->
+        <!-- यहाँ से पार्ट 5 शुरू (असली वीडियो और ऑडियो कॉल WebRTC/PeerJS के साथ) -->
+    <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+    
+    <script type="module">
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+        
+        const auth = getAuth();
+        let peer = null;
+        let localStream = null;
+        let currentCall = null;
+
+        // 1. पार्ट 4 वाले फेक कॉल स्क्रीन को असली वीडियो स्क्रीन में बदलना
+        const callScreen = document.getElementById('callScreenOverlay');
+        callScreen.innerHTML = `
+            <div id="videoContainer" style="position:relative; width:100%; height:100%; display:none; background:black;">
+                <video id="remoteVideo" autoplay playsinline style="width:100%; height:100%; object-fit:cover;"></video>
+                <video id="localVideo" autoplay playsinline muted style="position:absolute; bottom:80px; right:20px; width:110px; height:150px; border-radius:10px; border:2px solid white; object-fit:cover; z-index:1000; box-shadow: 0 4px 10px rgba(0,0,0,0.5);"></video>
+            </div>
+            <div id="callUI" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; width:100%; position:absolute; top:0; left:0; z-index:999;">
+                <img id="callDp" src="" style="width:130px; height:130px; border-radius:50%; margin-bottom:20px; border: 4px solid #38a169;">
+                <h2 id="callName" style="margin-bottom:10px; font-size:28px;">User</h2>
+                <p id="callStatus" style="color:#a0aec0; margin-bottom:60px; font-size:16px;">Connecting...</p>
+                <div style="display:flex; gap:30px;">
+                    <button id="answerCallBtn" style="display:none; background:#38a169; color:white; border:none; width:65px; height:65px; border-radius:50%; font-size:26px; cursor:pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">📞</button>
+                    <button id="realEndCallBtn" style="background:#e53e3e; color:white; border:none; width:65px; height:65px; border-radius:50%; font-size:26px; cursor:pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">🛑</button>
+                </div>
+            </div>
+        `;
+
+        // 2. Firebase लॉगिन होने पर PeerJS को चालू करना
+        setTimeout(() => {
+            if(auth.currentUser) {
+                // आपकी Firebase UID ही आपकी Calling ID (Peer ID) बन जाएगी
+                peer = new Peer(auth.currentUser.uid);
+                
+                // 3. इनकमिंग कॉल रिसीव करना
+                peer.on('call', (call) => {
+                    callScreen.style.display = 'flex';
+                    document.getElementById('videoContainer').style.display = 'none';
+                    document.getElementById('callUI').style.background = 'linear-gradient(135deg, #1a202c, #2d3748)';
+                    document.getElementById('callStatus').innerText = 'Incoming Call...';
+                    document.getElementById('answerCallBtn').style.display = 'block'; 
+
+                    document.getElementById('answerCallBtn').onclick = async () => {
+                        document.getElementById('answerCallBtn').style.display = 'none';
+                        document.getElementById('callStatus').innerText = 'Connecting...';
+                        
+                        try {
+                            // अपना कैमरा/माइक चालू करना
+                            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                            document.getElementById('localVideo').srcObject = localStream;
+                            
+                            call.answer(localStream); 
+                            currentCall = call;
+
+                            call.on('stream', (remoteStream) => {
+                                document.getElementById('callUI').style.background = 'transparent';
+                                document.getElementById('videoContainer').style.display = 'block';
+                                document.getElementById('remoteVideo').srcObject = remoteStream;
+                            });
+                        } catch (err) {
+                            alert("Please allow Camera/Microphone permissions to answer!");
+                            endRealCall();
+                        }
+                    };
+                });
+            }
+        }, 3000);
+
+        // 4. किसी को कॉल लगाना (Outgoing Call)
+        window.startRealCall = async (type, receiverId) => {
+            const name = document.getElementById('chatHeaderName').innerText;
+            const dp = document.getElementById('chatHeaderDp').src;
+            
+            document.getElementById('callName').innerText = name;
+            document.getElementById('callDp').src = dp;
+            document.getElementById('callStatus').innerText = type === 'video' ? 'Video Calling...' : 'Audio Calling...';
+            document.getElementById('answerCallBtn').style.display = 'none';
+            callScreen.style.display = 'flex';
+            document.getElementById('videoContainer').style.display = 'none';
+            document.getElementById('callUI').style.background = 'linear-gradient(135deg, #1a202c, #2d3748)';
+
+            try {
+                const constraints = type === 'video' ? { video: true, audio: true } : { video: false, audio: true };
+                localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                if(type === 'video') {
+                    document.getElementById('localVideo').srcObject = localStream;
+                }
+
+                // सामने वाले (receiverId) को कॉल लगाना
+                currentCall = peer.call(receiverId, localStream);
+
+                currentCall.on('stream', (remoteStream) => {
+                    if(type === 'video') {
+                        document.getElementById('videoContainer').style.display = 'block';
+                        document.getElementById('callUI').style.background = 'transparent';
+                        document.getElementById('remoteVideo').srcObject = remoteStream;
+                    } else {
+                        document.getElementById('callStatus').innerText = 'Audio Call Connected';
+                        document.getElementById('remoteVideo').srcObject = remoteStream; 
+                    }
+                });
+
+                currentCall.on('close', endRealCall);
+
+            } catch (err) {
+                alert("Camera/Microphone permission denied!");
+                endRealCall();
+            }
+        };
+
+        // 5. कॉल काटना और कैमरा बंद करना
+        const endRealCall = () => {
+            if(currentCall) currentCall.close();
+            if(localStream) {
+                localStream.getTracks().forEach(track => track.stop()); // कैमरा की लाइट बंद करना
+            }
+            callScreen.style.display = 'none';
+            document.getElementById('videoContainer').style.display = 'none';
+        };
+
+        document.getElementById('realEndCallBtn').addEventListener('click', endRealCall);
+
+        // 6. चैट हेडर के बटनों पर असली कॉलिंग सेट करना
+        setTimeout(() => {
+            const headerIcons = document.querySelector('.chat-header-icons').children;
+            const vidBtn = headerIcons[0];
+            const audBtn = headerIcons[1];
+
+            // पुराने फेक इवेंट्स हटाकर असली वाले लगा रहे हैं
+            const newVidBtn = vidBtn.cloneNode(true);
+            const newAudBtn = audBtn.cloneNode(true);
+            vidBtn.replaceWith(newVidBtn);
+            audBtn.replaceWith(newAudBtn);
+
+            newVidBtn.addEventListener('click', () => {
+                // activeChatUserId पार्ट 3 में सेव हो रहा है
+                if(window.activeChatUserId) startRealCall('video', window.activeChatUserId);
+                else alert("Cannot place call. User ID missing.");
+            });
+            
+            newAudBtn.addEventListener('click', () => {
+                if(window.activeChatUserId) startRealCall('audio', window.activeChatUserId);
+                else alert("Cannot place call. User ID missing.");
+            });
+        }, 3000);
+
+    </script>
+    <!-- पार्ट 5 यहाँ खत्म -->
+    
