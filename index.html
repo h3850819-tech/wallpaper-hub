@@ -869,3 +869,22 @@
     </script>
     <!-- पार्ट 5 यहाँ खत्म -->
     
+    <!-- यहाँ से नया मॉडिफाइड पार्ट 6 शुरू (रिफ्रेश पर फुल सिक्योरिटी / ऑटो-लॉगआउट) -->
+    <script type="module">
+        import { getAuth, signOut, setPersistence, inMemoryPersistence } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+        
+        const auth = getAuth();
+
+        // 1. सिक्योरिटी: पेज रिफ्रेश या लोड होते ही तुरंत पहले से सेव लॉगिन को डिलीट कर देना (लॉगआउट)
+        signOut(auth).then(() => {
+            // 2. फायरबेस को बताना कि अब से लॉगिन डेटा ब्राउज़र में सेव नहीं करना है (सिर्फ मेमोरी में रहेगा और रिफ्रेश करते ही उड़ जाएगा)
+            return setPersistence(auth, inMemoryPersistence);
+        }).catch((error) => console.log("Security Reset Error: ", error));
+        
+        // 3. अगर कोई कॉल स्क्रीन या पॉपअप गलती से खुला रह गया हो, तो रिफ्रेश पर उसे पक्का बंद कर देना
+        const callScreen = document.getElementById('callScreenOverlay');
+        if(callScreen) callScreen.style.display = 'none';
+
+    </script>
+    <!-- पार्ट 6 यहाँ खत्म -->
+    
