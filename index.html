@@ -969,4 +969,171 @@
         }
     </script>
     <!-- पार्ट 7 यहाँ खत्म -->
-    
+        <!-- यहाँ से पार्ट 8 शुरू (Mutual Chat, English UI, Real Gallery, Fixed Calls) -->
+    <script type="module">
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+        import { getFirestore, collection, query, where, onSnapshot, doc, getDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
+
+        const auth = getAuth();
+        const db = getFirestore();
+        const storage = getStorage(); // असली गैलरी मीडिया के लिए
+
+        // 1. डैशबोर्ड में "My Chats" (Mutual Friends) का सेक्शन जोड़ना
+        setTimeout(() => {
+            const secretPageContainer = document.querySelector('#secretPage .container');
+            if (secretPageContainer && !document.getElementById('myChatsContainer')) {
+                const myChatsHtml = `
+                    <div class="section-title">My Chats</div>
+                    <div class="member-list" id="myChatsContainer">
+                        <p style="font-size: 13px; color: #718096; text-align: center;">No chats yet</p>
+                    </div>
+                `;
+                // इसे Search Bar के ठीक ऊपर डालना
+                const searchInput = document.getElementById('searchMemberInput');
+                if (searchInput) searchInput.insertAdjacentHTML('beforebegin', myChatsHtml);
+            }
+        }, 1000);
+
+        // 2. दोनों तरफ चैट लिस्ट शो करना (Proper English UI के साथ)
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const reqQuery = query(collection(db, "friend_requests"), where("status", "==", "accepted"));
+                onSnapshot(reqQuery, (snapshot) => {
+                    const myChatsContainer = document.getElementById('myChatsContainer');
+                    if (!myChatsContainer) return;
+                    
+                    let friendIds = [];
+                    snapshot.forEach(docSnap => {
+                        const req = docSnap.data();
+                        // अगर मैंने भेजी या मुझे आई और एक्सेप्ट हो गई, तो वह मेरा दोस्त है
+                        if (req.senderId === user.uid) friendIds.push(req.receiverId);
+                        if (req.receiverId === user.uid) friendIds.push(req.senderId);
+                    });
+
+                    if (friendIds.length === 0) {
+                        myChatsContainer.innerHTML = '<p style="font-size: 13px; color: #718096; text-align: center;">No chats yet</p>';
+                        return;
+                    }
+
+                    myChatsContainer.innerHTML = '';
+                    friendIds.forEach(async (friendId) => {
+                        const friendSnap = await getDoc(doc(db, "users", friendId));
+                        if (friendSnap.exists()) {
+                            const friend = friendSnap.data();
+                            // प्रॉपर इंग्लिश में नाम और "Message" बटन
+                            myChatsContainer.innerHTML += `
+                                <div class="member-item" style="cursor:pointer; border-left: 4px solid #3182ce;" onclick="openChat('${friend.username}', '${friend.dp}', '${friendId}')">
+                                    <div class="member-left">
+                                        <img src="${friend.dp}" alt="User">
+                                        <div class="member-name" style="text-transform: capitalize;">${friend.username}</div>
+                                    </div>
+                                    <button class="btn-small accept-btn" style="background:#3182ce;">Message</button>
+                                </div>
+                            `;
+                        }
+                    });
+                });
+            }
+        });
+
+        // 3. गैलरी से असली फोटो/वीडियो भेजने का सिस्टम (Real Gallery Picker)
+        const galleryInput = document.createElement('input');
+        galleryInput.type = 'file';
+        galleryInput.accept = 'image/*,video/*'; // फोटो और वीडियो दोनों अलाव
+        galleryInput.style.display = 'none';
+        document.body.appendChild(galleryInput);
+
+        setTimeout(() => {
+            const galleryBtn = document.querySelector('.action-icon:nth-child(1)'); // 📸 आइकॉन
+            if (galleryBtn) {
+                const newGalleryBtn = galleryBtn.cloneNode(true);
+                galleryBtn.replaceWith(newGalleryBtn); // पुराना फेक प्रॉम्प्ट हटाना
+                
+                newGalleryBtn.addEventListener('click', () => {
+                    if (window.activeChatUserId) {
+                        galleryInput.click();
+                    } else {
+                        alert("Error: Chat ID missing. Please reopen the chat.");
+                    }
+                });
+            }
+        }, 1500);
+
+        galleryInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file || !window.activeChatUserId) return;
+            
+            const uid1 = auth.currentUser.uid;
+            const uid2 = window.activeChatUserId;
+            const chatId = uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
+            
+            // Uploading इंडिकेटर
+            const tempMsg = document.createElement('div');
+            tempMsg.className = 'msg sent';
+            tempMsg.innerText = 'Uploading media...';
+            document.getElementById('chatBody').appendChild(tempMsg);
+
+            // फाइल को Firebase Storage में भेजना
+            const storageRef = ref(storage, 'chat_media/' + Date.now() + '_' + file.name);
+            const uploadTask = uploadBytesResumable(storageRef, file);
+            
+            uploadTask.on('state_changed', 
+                null, 
+                (error) => { alert("Upload failed: " + error.message); tempMsg.remove(); },
+                async () => {
+                    // अपलोड होने के बाद URL निकालना
+                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                    const isVideo = file.type.startsWith('video/');
+                    
+                    // डेटाबेस में मैसेज सेव करना
+                    await addDoc(collection(db, "chats", chatId, "messages"), {
+                        senderId: auth.currentUser.uid,
+                        text: downloadURL,
+                        type: isVideo ? 'video' : 'image',
+                        timestamp: serverTimestamp(),
+                        status: 'sent'
+                    });
+                    tempMsg.remove();
+                }
+            );
+            galleryInput.value = ''; // इनपुट रीसेट करना
+        });
+
+        // 4. वीडियो और इमेज मैसेज को चैट में सही से रेंडर करना
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.classList && node.classList.contains('msg')) {
+                        // अगर मैसेज में Firebase Storage का वीडियो लिंक है
+                        if (node.innerHTML.includes('.mp4') || node.innerHTML.includes('video%2F') || (node.innerHTML.includes('firebasestorage') && !node.innerHTML.includes('<img'))) {
+                            const urlMatch = node.innerHTML.match(/(https:\/\/firebasestorage[^"'\s]+)/);
+                            if (urlMatch && urlMatch[0]) {
+                                const timeSpan = node.innerHTML.substring(node.innerHTML.indexOf('<span class="msg-time"'));
+                                node.innerHTML = `
+                                    <div style="text-align:center;">
+                                        <video controls style="max-width:100%; border-radius:8px; outline:none;">
+                                            <source src="${urlMatch[0]}" type="video/mp4">
+                                        </video>
+                                        <br><a href="${urlMatch[0]}" download="SecretVideo.mp4" style="display:inline-block; margin-top:5px; padding:4px 10px; background:#075e54; color:white; text-decoration:none; border-radius:5px; font-size:12px;">Download Video</a>
+                                    </div> ${timeSpan}
+                                `;
+                            }
+                        }
+                    }
+                });
+            });
+        });
+        observer.observe(document.getElementById('chatBody'), { childList: true, subtree: true });
+
+        // 5. ऑडियो/वीडियो कॉल बटन्स को फिक्स करना (ताकि वो Active Chat ID पकड़ लें)
+        const originalOpenChat = window.openChat;
+        window.openChat = function(name, dp, receiverId) {
+            window.activeChatUserId = receiverId; // यह लाइन कॉल और गैलरी बटन्स को जिंदा करेगी
+            originalOpenChat(name, dp, receiverId);
+        };
+
+    </script>
+    <!-- पार्ट 8 यहाँ खत्म -->
+
+
