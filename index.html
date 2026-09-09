@@ -1843,8 +1843,9 @@ fileInput.addEventListener("change", async function(event) {
     }, 4000);
 </script>
 
+
 <!-- ========================================== -->
-<!-- PART 12: MULTI-UPLOAD CLOUDINARY FIX (PRO UI) -->
+<!-- PART 12: MULTI-UPLOAD CLOUDINARY (FINAL API FIX) -->
 <!-- ========================================== -->
 <script type="module">
     import { getAuth } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
@@ -1853,9 +1854,12 @@ fileInput.addEventListener("change", async function(event) {
     const auth = getAuth();
     const db = getFirestore();
 
+    // आपका बिल्कुल सही Cloud Name और Preset यहाँ सेट कर दिया गया है
+    const MY_CLOUD_NAME = "ekxzg8me"; 
+    const MY_UPLOAD_PRESET = "himanshu_preset"; 
+
     let cloudinaryMediaQueue = [];
 
-    // 1. नया फाइल इनपुट बनाना
     const freshGalleryInput = document.createElement('input');
     freshGalleryInput.type = 'file';
     freshGalleryInput.accept = 'image/*,video/*';
@@ -1868,7 +1872,6 @@ fileInput.addEventListener("change", async function(event) {
     previewText.style.cssText = "font-size: 11px; color: #075e54; position: absolute; top: -20px; left: 10px; font-weight: bold; background: white; padding: 2px 10px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); display: none;";
     inputArea.appendChild(previewText);
 
-    // 2. गैलरी आइकॉन को सेट करना
     setTimeout(() => {
         const galleryIcons = document.querySelectorAll('.chat-input-area .action-icon');
         galleryIcons.forEach(icon => {
@@ -1891,7 +1894,6 @@ fileInput.addEventListener("change", async function(event) {
         }
     });
 
-    // 3. सेंड बटन को स्मार्ट बनाना
     setTimeout(() => {
         const oldSendBtn = document.getElementById('sendMsgBtn');
         if(oldSendBtn) {
@@ -1908,7 +1910,6 @@ fileInput.addEventListener("change", async function(event) {
                 const uid2 = receiverId;
                 const chatId = uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
 
-                // टेक्स्ट भेजना
                 if (text !== '') {
                     input.value = '';
                     await addDoc(collection(db, "chats", chatId, "messages"), {
@@ -1916,7 +1917,6 @@ fileInput.addEventListener("change", async function(event) {
                     });
                 }
 
-                // मीडिया फाइल भेजना (Cloudinary)
                 if (cloudinaryMediaQueue.length > 0) {
                     const filesToUpload = [...cloudinaryMediaQueue];
                     cloudinaryMediaQueue = []; 
@@ -1926,8 +1926,6 @@ fileInput.addEventListener("change", async function(event) {
                     for(let file of filesToUpload) {
                         const tempMsg = document.createElement('div');
                         tempMsg.className = 'msg sent';
-                        
-                        // नया स्मार्ट लोडिंग मैसेज 
                         tempMsg.innerHTML = `Uploading ${file.name}...<br><span style="font-size:10px; color:#555;">Please wait (10-15s) ⏳</span>`;
                         tempMsg.style.background = '#e2f7cb';
                         document.getElementById('chatBody').appendChild(tempMsg);
@@ -1935,16 +1933,15 @@ fileInput.addEventListener("change", async function(event) {
 
                         const formData = new FormData();
                         formData.append("file", file);
-                        formData.append("upload_preset", "himanshu_preset");
+                        formData.append("upload_preset", MY_UPLOAD_PRESET); 
 
                         try {
-                            const response = await fetch(`https://api.cloudinary.com/v1_1/dkkzq8nve/auto/upload`, {
+                            const response = await fetch(`https://api.cloudinary.com/v1_1/${MY_CLOUD_NAME}/auto/upload`, {
                                 method: "POST",
                                 body: formData
                             });
                             const data = await response.json();
                             
-                            // अगर Cloudinary ने कोई एरर दिया (जैसे फाइल बहुत बड़ी है)
                             if (data.error) {
                                 throw new Error(data.error.message); 
                             }
@@ -1957,11 +1954,10 @@ fileInput.addEventListener("change", async function(event) {
                             }
                             tempMsg.remove();
                         } catch(err) {
-                            // अगर अपलोड फेल हुआ तो लाल रंग में एरर दिखेगा
                             tempMsg.innerHTML = `❌ Failed: ${err.message}`;
                             tempMsg.style.background = '#ffebee';
                             tempMsg.style.color = '#c62828';
-                            setTimeout(() => tempMsg.remove(), 6000);
+                            setTimeout(() => tempMsg.remove(), 7000);
                         }
                     }
                 }
@@ -1981,3 +1977,5 @@ fileInput.addEventListener("change", async function(event) {
         }
     }, 4000);
 </script>
+
+                    
