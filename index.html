@@ -2100,3 +2100,196 @@ fileInput.addEventListener("change", async function(event) {
     }
 </script>
 
+<!-- ========================================== -->
+<!-- PART 14: SMART PRESENCE & INSTAGRAM-STYLE DATE DIVIDERS -->
+<!-- ========================================== -->
+<script type="module">
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+    import { getFirestore, doc, updateDoc, onSnapshot, serverTimestamp, collection, query, orderBy } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+    const auth = getAuth();
+    const db = getFirestore();
+
+    // 1. खुद का Online/Offline स्टेटस फायरबेस में अपडेट करना
+    auth.onAuthStateChanged((user) => {
+        if(user) {
+            const userRef = doc(db, "users", user.uid);
+            updateDoc(userRef, { isOnline: true, lastSeen: serverTimestamp() });
+            
+            // जब यूज़र ऐप मिनिमाइज़ करे या दूसरे टैब में जाए
+            document.addEventListener('visibilitychange', () => {
+                updateDoc(userRef, {
+                    isOnline: document.visibilityState === 'visible',
+                    lastSeen: serverTimestamp()
+                });
+            });
+            // जब यूज़र ऐप बंद कर दे
+            window.addEventListener('beforeunload', () => {
+                updateDoc(userRef, { isOnline: false, lastSeen: serverTimestamp() });
+            });
+        }
+    });
+
+    // 2. चैट हेडर में 'Online / Last Seen' दिखाने के लिए UI सेट करना
+    setTimeout(() => {
+        const nameElem = document.getElementById('chatHeaderName');
+        if(nameElem && !document.getElementById('chatHeaderStatus')) {
+            const statusEl = document.createElement('div');
+            statusEl.id = 'chatHeaderStatus';
+            statusEl.style.cssText = "font-size: 11.5px; color: #dcf8c6; font-weight: 500; margin-top: 1px;";
+            
+            const nameContainer = document.createElement('div');
+            nameContainer.style.display = 'flex';
+            nameContainer.style.flexDirection = 'column';
+            
+            nameElem.parentNode.insertBefore(nameContainer, nameElem);
+            nameContainer.appendChild(nameElem);
+            nameContainer.appendChild(statusEl);
+        }
+    }, 1500);
+
+    // 3. चैट ओपन होने पर पुराने मैसेज लोडर को नए (डेट वाले) लोडर से बदलना
+    const originalOpenChat14 = window.openChat;
+    window.openChat = function(name, dp, receiverId) {
+        originalOpenChat14(name, dp, receiverId); // UI ओपन करना
+        
+        if(receiverId) {
+            window.activeChatUserId = receiverId;
+            const uid1 = auth.currentUser.uid;
+            const uid2 = receiverId;
+            const chatId = uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
+            
+            // पुराने चैट डिब्बे को मारकर नया डिब्बा लगाना (ताकि मेसेज डबल न हों)
+            const oldBody = document.getElementById('chatBody');
+            if (oldBody) {
+                const newBody = oldBody.cloneNode(false);
+                oldBody.parentNode.replaceChild(newBody, oldBody);
+            }
+
+            // A. सामने वाले का स्टेटस ट्रैक करना
+            if(window.part14StatusUnsub) window.part14StatusUnsub();
+            window.part14StatusUnsub = onSnapshot(doc(db, "users", receiverId), (docSnap) => {
+                if(docSnap.exists()) {
+                    const data = docSnap.data();
+                    const statusEl = document.getElementById('chatHeaderStatus');
+                    if(!statusEl) return;
+                    
+                    if(data.isOnline) {
+                        statusEl.innerText = "Online";
+                    } else if(data.lastSeen) {
+                        const date = data.lastSeen.toDate();
+                        const timeStr = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        
+                        const today = new Date();
+                        const yesterday = new Date();
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        
+                        let dateStr = "";
+                        if(date.toDateString() === today.toDateString()) dateStr = "today";
+                        else if(date.toDateString() === yesterday.toDateString()) dateStr = "yesterday";
+                        else dateStr = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+                        statusEl.innerText = `last seen ${dateStr} at ${timeStr}`;
+                    } else {
+                        statusEl.innerText = "Offline";
+                    }
+                }
+            });
+
+            // B. नए तरीके से मैसेज लोड करना (डेट डिवाइडर्स के साथ)
+            const q = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"));
+            if(window.part14MsgUnsub) window.part14MsgUnsub();
+
+            window.part14MsgUnsub = onSnapshot(q, (snapshot) => {
+                const chatBody = document.getElementById('chatBody');
+                chatBody.innerHTML = '';
+                let lastMessageDate = null;
+
+                snapshot.forEach(async (docSnap) => {
+                    const msgData = docSnap.data();
+                    const isMe = msgData.senderId === auth.currentUser.uid;
+                    
+                    const dateObj = msgData.timestamp ? msgData.timestamp.toDate() : new Date();
+                    const time = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const dateString = dateObj.toDateString();
+
+                    // इंस्टाग्राम की तरह Date Divider लगाना
+                    if (lastMessageDate !== dateString) {
+                        const today = new Date();
+                        const yesterday = new Date();
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        
+                        let displayDate = dateString;
+                        if (dateString === today.toDateString()) displayDate = "Today";
+                        else if (dateString === yesterday.toDateString()) displayDate = "Yesterday";
+                        else displayDate = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+                        const divider = document.createElement('div');
+                        divider.style.cssText = "text-align: center; margin: 15px 0;";
+                        divider.innerHTML = `<span style="background: #e1e8ed; color: #4a5568; padding: 5px 12px; border-radius: 12px; font-size: 11px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">${displayDate}</span>`;
+                        chatBody.appendChild(divider);
+                        lastMessageDate = dateString;
+                    }
+
+                    // Ticks
+                    let tick = `<span class="smart-tick" style="color:gray;">✓</span>`;
+                    if (msgData.status === 'delivered') tick = `<span class="smart-tick" style="color:gray;">✓✓</span>`;
+                    if (msgData.status === 'seen') tick = `<span class="smart-tick" style="color:#38a169;">✓✓</span>`;
+
+                    // Content
+                    let msgContent = "";
+                    if (msgData.isDeleted) {
+                        msgContent = `<span style="font-style: italic; color: #718096;">🚫 This message was deleted</span>`;
+                        tick = "";
+                    } else if (msgData.type === 'image') {
+                        msgContent = `<div style="text-align:center;"><img src="${msgData.text}" style="max-width:100%; border-radius:8px;"><br><a href="${msgData.text}" download style="margin-top:5px; padding:4px 10px; background:#075e54; color:white; border-radius:5px; font-size:12px; text-decoration:none; display:inline-block;">Download to View</a></div>`;
+                    } else if (msgData.type === 'video') {
+                        msgContent = `<div style="text-align:center;"><video controls style="max-width:100%; border-radius:8px;"><source src="${msgData.text}" type="video/mp4"></video><br><a href="${msgData.text}" download style="display:inline-block; margin-top:5px; padding:4px 10px; background:#075e54; color:white; border-radius:5px; font-size:12px; text-decoration:none;">Download Video</a></div>`;
+                    } else if (msgData.type === 'audio') {
+                        const audioMatch = msgData.text.match(/\[AUDIO\](.*?)\[\/AUDIO\]/);
+                        if(audioMatch && audioMatch[1]) {
+                            msgContent = `<audio controls src="${audioMatch[1]}" style="height:35px; max-width:200px; outline:none; border-radius:20px;"></audio>`;
+                        } else {
+                            msgContent = msgData.text;
+                        }
+                    } else {
+                        msgContent = msgData.text;
+                    }
+
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = `msg ${isMe ? 'sent' : 'received'}`;
+                    msgDiv.innerHTML = `${msgContent} <span class="msg-time">${time} ${isMe ? tick : ''}</span>`;
+
+                    // मैसेज होल्ड करके डिलीट करने वाला फीचर
+                    if (!msgData.isDeleted) {
+                        let pressTimer;
+                        const startPress = () => { pressTimer = setTimeout(() => window.deleteMessage(docSnap.id), 800); };
+                        const cancelPress = () => clearTimeout(pressTimer);
+                        msgDiv.addEventListener('touchstart', startPress);
+                        msgDiv.addEventListener('touchend', cancelPress);
+                        msgDiv.addEventListener('mousedown', startPress);
+                        msgDiv.addEventListener('mouseup', cancelPress);
+                    }
+
+                    chatBody.appendChild(msgDiv);
+
+                    // सीन स्टेटस अपडेट
+                    if (!isMe && msgData.status !== 'seen' && !msgData.isDeleted) {
+                        await updateDoc(doc(db, "chats", chatId, "messages", docSnap.id), { status: 'seen' });
+                    }
+                });
+                chatBody.scrollTop = chatBody.scrollHeight;
+            });
+        }
+    };
+
+    // डिलीट मैसेज फंक्शन को ग्लोबल बनाना
+    window.deleteMessage = async function(msgId) {
+        if(confirm("Delete this message?")) {
+            const uid1 = auth.currentUser.uid;
+            const uid2 = window.activeChatUserId;
+            const chatId = uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
+            await updateDoc(doc(db, "chats", chatId, "messages", msgId), { isDeleted: true });
+        }
+    };
+</script>
