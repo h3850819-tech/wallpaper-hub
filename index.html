@@ -1138,4 +1138,186 @@
     </script>
     <!-- पार्ट 8 यहाँ खत्म -->
 
+    <script type="module">
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
+
+        const auth = getAuth();
+        const db = getFirestore();
+        const storage = getStorage();
+
+        // ==========================================
+        // 1. SMART PERMISSION AUTO-PROMPT FOR CALLS
+        // ==========================================
+        async function requestCallPermissions(type) {
+            try {
+                // यह लाइन ब्राउज़र को फोर्स करेगी कि वह स्क्रीन पर "Allow" का पॉप-अप दे
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: type === 'video',
+                    audio: true
+                });
+                // परमिशन मिलते ही बैकग्राउंड कैमरा तुरंत बंद कर दो
+                stream.getTracks().forEach(track => track.stop());
+                return true; 
+            } catch (err) {
+                console.error("Permission error:", err);
+                alert("Permission Blocked! ब्राउज़र ने कैमरा/माइक ब्लॉक कर दिया है। कृपया ऊपर Lock (🔒) आइकॉन पर क्लिक करें और 'Allow' करें।");
+                return false;
+            }
+        }
+
+        setTimeout(() => {
+            const headerIcons = document.querySelector('.chat-header-icons').children;
+            if(headerIcons.length >= 2) {
+                const vidBtn = headerIcons[0];
+                const audBtn = headerIcons[1];
+
+                const newVidBtn = vidBtn.cloneNode(true);
+                const newAudBtn = audBtn.cloneNode(true);
+                vidBtn.replaceWith(newVidBtn);
+                audBtn.replaceWith(newAudBtn);
+
+                // वीडियो कॉल बटन
+                newVidBtn.addEventListener('click', async () => {
+                    if(window.activeChatUserId && window.startRealCall) {
+                        const hasPermission = await requestCallPermissions('video');
+                        if(hasPermission) window.startRealCall('video', window.activeChatUserId);
+                    } else {
+                        alert("Please reopen the chat to start video call.");
+                    }
+                });
+                
+                // ऑडियो कॉल बटन
+                newAudBtn.addEventListener('click', async () => {
+                    if(window.activeChatUserId && window.startRealCall) {
+                        const hasPermission = await requestCallPermissions('audio');
+                        if(hasPermission) window.startRealCall('audio', window.activeChatUserId);
+                    } else {
+                        alert("Please reopen the chat to start audio call.");
+                    }
+                });
+            }
+        }, 2500);
+
+        // ==========================================
+        // 2. MULTIPLE MEDIA GALLERY & QUEUE SYSTEM
+        // ==========================================
+        const newGalleryInput = document.createElement('input');
+        newGalleryInput.type = 'file';
+        newGalleryInput.accept = 'image/*,video/*';
+        newGalleryInput.multiple = true; // एक साथ कई फोटो/वीडियो सेलेक्ट करें
+        newGalleryInput.style.display = 'none';
+        document.body.appendChild(newGalleryInput);
+
+        let pendingMediaFiles = []; 
+
+        const inputArea = document.querySelector('.chat-input-area');
+        inputArea.style.position = "relative";
+        
+        // फाइल सेलेक्ट होने पर दिखने वाला टेक्स्ट
+        const previewText = document.createElement('div');
+        previewText.style.cssText = "font-size: 11px; color: #075e54; position: absolute; top: -20px; left: 10px; font-weight: bold; background: white; padding: 2px 10px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); display: none;";
+        inputArea.appendChild(previewText);
+
+        setTimeout(() => {
+            const oldGalleryBtn = document.querySelector('.action-icon:nth-child(1)');
+            if(oldGalleryBtn) {
+                const freshGalleryBtn = oldGalleryBtn.cloneNode(true);
+                oldGalleryBtn.replaceWith(freshGalleryBtn);
+
+                freshGalleryBtn.addEventListener('click', () => {
+                    if (window.activeChatUserId) newGalleryInput.click();
+                    else alert("Please open the chat correctly to send media.");
+                });
+            }
+        }, 2000);
+
+        newGalleryInput.addEventListener('change', (e) => {
+            if(e.target.files.length > 0) {
+                pendingMediaFiles = Array.from(e.target.files);
+                // फाइल्स सेलेक्ट होने के बाद स्क्रीन पर मैसेज दिखेगा
+                previewText.innerText = `${pendingMediaFiles.length} file(s) ready to send. (Press Send ➤)`;
+                previewText.style.display = 'block';
+            }
+        });
+
+        // ==========================================
+        // 3. ENTER BUTTON FIX & FINAL SEND LOGIC
+        // ==========================================
+        setTimeout(() => {
+            const oldSendBtn = document.getElementById('sendMsgBtn');
+            if(oldSendBtn) {
+                const finalSendBtn = oldSendBtn.cloneNode(true);
+                oldSendBtn.replaceWith(finalSendBtn);
+
+                const sendAllData = async () => {
+                    const input = document.getElementById('msgInput');
+                    const text = input.value.trim();
+                    const receiverId = window.activeChatUserId;
+                    
+                    if (!receiverId) return;
+                    const uid1 = auth.currentUser.uid;
+                    const uid2 = receiverId;
+                    const chatId = uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
+
+                    // 1. टेक्स्ट भेजना
+                    if (text !== '') {
+                        input.value = '';
+                        await addDoc(collection(db, "chats", chatId, "messages"), {
+                            senderId: auth.currentUser.uid, text: text, type: 'text', timestamp: serverTimestamp(), status: 'sent'
+                        });
+                    }
+
+                    // 2. सेलेक्ट की गई मीडिया फाइल्स भेजना
+                    if (pendingMediaFiles.length > 0) {
+                        const filesToUpload = [...pendingMediaFiles];
+                        pendingMediaFiles = []; 
+                        previewText.style.display = 'none'; 
+                        newGalleryInput.value = '';
+
+                        for(let file of filesToUpload) {
+                            const tempMsg = document.createElement('div');
+                            tempMsg.className = 'msg sent';
+                            tempMsg.innerText = `Uploading ${file.name}...`;
+                            document.getElementById('chatBody').appendChild(tempMsg);
+                            document.getElementById('chatBody').scrollTop = document.getElementById('chatBody').scrollHeight;
+
+                            const storageRef = ref(storage, 'chat_media/' + Date.now() + '_' + file.name);
+                            const uploadTask = uploadBytesResumable(storageRef, file);
+
+                            uploadTask.on('state_changed', null, 
+                                (error) => { alert("Upload failed: " + error.message); tempMsg.remove(); },
+                                async () => {
+                                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                                    const isVideo = file.type.startsWith('video/');
+                                    await addDoc(collection(db, "chats", chatId, "messages"), {
+                                        senderId: auth.currentUser.uid, text: downloadURL, type: isVideo ? 'video' : 'image', timestamp: serverTimestamp(), status: 'sent'
+                                    });
+                                    tempMsg.remove();
+                                }
+                            );
+                        }
+                    }
+                };
+
+                // क्लिक करने पर सेंड
+                finalSendBtn.addEventListener('click', sendAllData);
+                
+                // कीबोर्ड के Enter बटन पर सेंड
+                const msgInput = document.getElementById('msgInput');
+                const freshInput = msgInput.cloneNode(true);
+                msgInput.replaceWith(freshInput);
+                freshInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') { 
+                        e.preventDefault(); 
+                        sendAllData(); 
+                    }
+                });
+            }
+        }, 3000);
+    </script>
+    ```
+
+बस इसे पेस्ट करके गिटहब पर कमिट कर दीजिए। इससे आपका 'Enter' बटन भी काम करेगा, एक साथ कई फोटो भी जाएँगी, और कॉल का परमिशन पॉप-अप भी ऑटोमैटिक आ जाएगा!
 
