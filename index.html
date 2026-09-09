@@ -888,3 +888,85 @@
     </script>
     <!-- पार्ट 6 यहाँ खत्म -->
     
+    <!-- यहाँ से पार्ट 7 शुरू (लाइव फ्रेंड रिक्वेस्ट रिसीवर सिस्टम फिक्स) -->
+    <script type="module">
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+        import { getFirestore, collection, query, where, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+        const auth = getAuth();
+        const db = getFirestore();
+        let requestListener = null;
+
+        // 1. जैसे ही कोई यूजर लॉगिन होता है, उसका लाइव रिक्वेस्ट लिसनर चालू करना
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                startListeningForRequests(user.uid);
+            } else {
+                if (requestListener) requestListener(); // लॉगआउट पर लिसनर बंद
+            }
+        });
+
+        // 2. लाइव फ्रेंड रिक्वेस्ट पकड़ने का नया और बिना एरर वाला सिस्टम
+        function startListeningForRequests(uid) {
+            // हमने यहाँ से "status == pending" हटा दिया है ताकि Firebase Index Error ना आए
+            const reqQuery = query(collection(db, "friend_requests"), where("receiverId", "==", uid));
+
+            if (requestListener) requestListener(); // पुराना लिसनर क्लीयर करें
+
+            requestListener = onSnapshot(reqQuery, (snapshot) => {
+                const reqContainer = document.getElementById('requestsContainer');
+                const redDot = document.getElementById('secretNotif');
+                
+                // पेंडिंग रिक्वेस्ट्स को जावास्क्रिप्ट में फ़िल्टर करना
+                let pendingRequests = [];
+                snapshot.forEach(docSnap => {
+                    if (docSnap.data().status === 'pending') {
+                        pendingRequests.push({ id: docSnap.id, data: docSnap.data() });
+                    }
+                });
+
+                // अगर कोई नई रिक्वेस्ट नहीं है
+                if (pendingRequests.length === 0) {
+                    if (reqContainer) reqContainer.innerHTML = '<p style="font-size: 13px; color: #718096; text-align: center;">No new requests</p>';
+                    if (redDot) redDot.style.display = 'none';
+                    return;
+                }
+
+                // अगर नई रिक्वेस्ट है, तो रेड डॉट दिखाएं
+                if (redDot) redDot.style.display = 'inline-block';
+                if (reqContainer) reqContainer.innerHTML = '';
+
+                // नई रिक्वेस्ट आने पर बैकग्राउंड नोटिफिकेशन (सीक्रेट अलर्ट)
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "added" && change.doc.data().status === 'pending') {
+                        if (Notification.permission === "granted") {
+                            new Notification("New Wallpaper Added", { icon: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=100" });
+                        }
+                    }
+                });
+
+                // रिक्वेस्ट भेजने वाले की प्रोफाइल लोड करके UI में दिखाना
+                pendingRequests.forEach(async (req) => {
+                    const senderSnap = await getDoc(doc(db, "users", req.data.senderId));
+                    if (senderSnap.exists()) {
+                        const sender = senderSnap.data();
+                        
+                        // HTML में रिक्वेस्ट बॉक्स ऐड करना
+                        const requestBox = document.createElement('div');
+                        requestBox.className = 'member-item';
+                        requestBox.style.borderLeft = '4px solid #38a169';
+                        requestBox.innerHTML = `
+                            <div class="member-left">
+                                <img src="${sender.dp}" alt="User">
+                                <div class="member-name">@${sender.username}</div>
+                            </div>
+                            <button class="btn-small accept-btn" onclick="acceptRequest('${req.id}', '@${sender.username}', '${sender.dp}')">Accept</button>
+                        `;
+                        reqContainer.appendChild(requestBox);
+                    }
+                });
+            });
+        }
+    </script>
+    <!-- पार्ट 7 यहाँ खत्म -->
+    
