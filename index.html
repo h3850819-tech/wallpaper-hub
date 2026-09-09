@@ -1978,4 +1978,125 @@ fileInput.addEventListener("change", async function(event) {
     }, 4000);
 </script>
 
-                    
+        <!-- ========================================== -->
+<!-- PART 13: SMART MEDIA VIEWER & VIDEO RENDER FIX -->
+<!-- ========================================== -->
+<script type="module">
+    // 1. फुल स्क्रीन मीडिया व्यूअर (इन-ऐप बैक बटन के साथ) बनाना
+    const viewerHTML = `
+        <div id="mediaModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:99999; flex-direction:column;">
+            <!-- ऊपर का हेडर और बैक बटन -->
+            <div style="padding:15px; display:flex; align-items:center; background:linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);">
+                <span id="closeMediaBtn" style="color:white; font-size:22px; cursor:pointer; font-weight:bold; padding:5px 15px; border-radius:20px; background:rgba(255,255,255,0.2);">← Back</span>
+            </div>
+            <!-- जहाँ फोटो/वीडियो दिखेगी -->
+            <div id="mediaModalContent" style="flex:1; display:flex; align-items:center; justify-content:center; padding:10px; overflow:hidden;">
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', viewerHTML);
+
+    const mediaModal = document.getElementById('mediaModal');
+    const mediaModalContent = document.getElementById('mediaModalContent');
+    const closeMediaBtn = document.getElementById('closeMediaBtn');
+
+    // फोटो/वीडियो खोलने का स्मार्ट फंक्शन 
+    function openMediaModal(url, isVideo) {
+        mediaModalContent.innerHTML = isVideo 
+            ? `<video controls autoplay style="max-width:100%; max-height:100%; border-radius:10px; outline:none;"><source src="${url}"></video>`
+            : `<img src="${url}" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:10px;">`;
+        
+        mediaModal.style.display = 'flex';
+        // मोबाइल का असली बैक बटन चैट से बाहर न निकाले, उसके लिए हिस्ट्री सेट करना
+        history.pushState({ isMediaModal: true }, "Media Viewer");
+    }
+
+    // व्यूअर बंद करने का फंक्शन
+    function closeMediaModal() {
+        mediaModal.style.display = 'none';
+        mediaModalContent.innerHTML = ''; // बंद करते ही वीडियो प्ले होना रुक जाएगा
+    }
+
+    // स्क्रीन वाले '← Back' बटन पर क्लिक
+    closeMediaBtn.addEventListener('click', () => {
+        history.back(); // इससे नीचे वाला popstate ट्रिगर होगा
+    });
+
+    // मोबाइल का हार्डवेयर 'Back' बटन दबाने पर 
+    window.addEventListener('popstate', (e) => {
+        closeMediaModal(); 
+    });
+
+    // 2. वीडियो लिंक को असली वीडियो प्लेयर में बदलना और बटन फिक्स करना
+    const chatBody = document.getElementById('chatBody');
+    if (chatBody) {
+        const fixMediaObserver = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.classList && node.classList.contains('msg')) {
+                        
+                        // A. वीडियो लिंक को फिक्स करना (अगर Cloudinary का वीडियो लिंक सीधा टेक्स्ट बन गया हो)
+                        let html = node.innerHTML;
+                        if (html.includes('res.cloudinary.com/') && html.includes('/video/upload/') && !html.includes('<video')) {
+                            const urlMatch = html.match(/(https:\/\/res\.cloudinary\.com[^"'\s<]+)/);
+                            if (urlMatch && urlMatch[0]) {
+                                const url = urlMatch[0];
+                                const timeSpan = html.substring(html.indexOf('<span class="msg-time"'));
+                                
+                                node.innerHTML = `
+                                    <div style="text-align:center;">
+                                        <video controls style="max-width:100%; border-radius:8px; max-height:220px; background:black;">
+                                            <source src="${url}">
+                                        </video>
+                                        <br>
+                                        <button class="view-btn" data-url="${url}" data-type="video" style="margin-top:8px; padding:6px 14px; background:#3182ce; color:white; border:none; border-radius:15px; font-size:12px; cursor:pointer; font-weight:bold;">
+                                            🔍 Open Video
+                                        </button>
+                                    </div> ${timeSpan}
+                                `;
+                            }
+                        }
+
+                        // B. पुराने 'Download to View' वाले लिंक्स को हटाकर अपना स्मार्ट बटन लगाना
+                        const viewLinks = node.querySelectorAll('a');
+                        viewLinks.forEach(link => {
+                            if (link.innerText.includes('Download') || link.innerText.includes('View')) {
+                                const url = link.href;
+                                const isVid = url.includes('/video/');
+                                
+                                const btn = document.createElement('button');
+                                btn.innerText = isVid ? "🔍 Open Video" : "🔍 Open Image";
+                                btn.style.cssText = "margin-top:8px; padding:6px 14px; background:#3182ce; color:white; border:none; border-radius:15px; font-size:12px; cursor:pointer; font-weight:bold;";
+                                
+                                btn.onclick = (e) => {
+                                    e.preventDefault();
+                                    openMediaModal(url, isVid);
+                                };
+                                
+                                link.replaceWith(btn);
+                            }
+                        });
+
+                        // C. चैट की फोटो पर क्लिक करते ही फुल-स्क्रीन में खोलना
+                        const chatImages = node.querySelectorAll('img');
+                        chatImages.forEach(img => {
+                            if (img.style.maxWidth === '100%') { 
+                                img.style.cursor = 'pointer';
+                                img.onclick = () => openMediaModal(img.src, false);
+                            }
+                        });
+                        
+                        // D. नए बनाए गए बटनों पर क्लिक चालू करना
+                        const viewBtns = node.querySelectorAll('.view-btn');
+                        viewBtns.forEach(btn => {
+                            btn.onclick = () => openMediaModal(btn.getAttribute('data-url'), btn.getAttribute('data-type') === 'video');
+                        });
+                    }
+                });
+            });
+        });
+
+        fixMediaObserver.observe(chatBody, { childList: true, subtree: true });
+    }
+</script>
+
