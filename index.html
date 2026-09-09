@@ -1318,6 +1318,213 @@
         }, 3000);
     </script>
     ```
+    <script type="module">
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+        import { getFirestore, collection, doc, updateDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-बस इसे पेस्ट करके गिटहब पर कमिट कर दीजिए। इससे आपका 'Enter' बटन भी काम करेगा, एक साथ कई फोटो भी जाएँगी, और कॉल का परमिशन पॉप-अप भी ऑटोमैटिक आ जाएगा!
+        const auth = getAuth();
+        const db = getFirestore();
 
+        let currentChatId = null;
+        let chatUnsubscribe = null;
+        let userStatusUnsubscribe = null;
+
+        // ==========================================
+        // 1. Khud ka Online/Offline Status Update karna
+        // ==========================================
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                const userRef = doc(db, "users", user.uid);
+                // Jab app open ho
+                updateDoc(userRef, { isOnline: true, lastSeen: serverTimestamp() });
+
+                // Jab app band ho ya background mein jaye
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') {
+                        updateDoc(userRef, { isOnline: true, lastSeen: serverTimestamp() });
+                    } else {
+                        updateDoc(userRef, { isOnline: false, lastSeen: serverTimestamp() });
+                    }
+                });
+                window.addEventListener('beforeunload', () => {
+                    updateDoc(userRef, { isOnline: false, lastSeen: serverTimestamp() });
+                });
+            }
+        });
+
+        // Chat Header mein Status text add karna
+        const chatHeaderLeft = document.querySelector('.chat-header-left');
+        const statusDiv = document.createElement('div');
+        statusDiv.id = "userStatusDisplay";
+        statusDiv.style.cssText = "font-size: 11px; color: #dcf8c6; margin-top: -2px; font-weight: normal;";
+        
+        // Naam ke niche status lagana
+        const nameDiv = document.getElementById('chatHeaderName');
+        const nameContainer = document.createElement('div');
+        nameContainer.style.display = 'flex';
+        nameContainer.style.flexDirection = 'column';
+        nameDiv.parentNode.insertBefore(nameContainer, nameDiv);
+        nameContainer.appendChild(nameDiv);
+        nameContainer.appendChild(statusDiv);
+
+        // ==========================================
+        // 2. Chat open hone par naya Advanced System (Date, Delete, Status)
+        // ==========================================
+        const originalOpenChat = window.openChat;
+        window.openChat = function(name, dp, receiverId) {
+            originalOpenChat(name, dp, receiverId); // Purane features trigger karna
+            window.activeChatUserId = receiverId;
+            
+            const uid1 = auth.currentUser.uid;
+            const uid2 = receiverId;
+            currentChatId = uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
+
+            // Samne wale ka Online Status dekhna
+            if (userStatusUnsubscribe) userStatusUnsubscribe();
+            userStatusUnsubscribe = onSnapshot(doc(db, "users", receiverId), (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.isOnline) {
+                        statusDiv.innerText = "Online";
+                    } else if (data.lastSeen) {
+                        const date = data.lastSeen.toDate();
+                        const timeString = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        
+                        // Check if today or yesterday
+                        const today = new Date();
+                        const yesterday = new Date();
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        
+                        let dateString = "";
+                        if (date.toDateString() === today.toDateString()) dateString = "today";
+                        else if (date.toDateString() === yesterday.toDateString()) dateString = "yesterday";
+                        else dateString = date.toLocaleDateString();
+
+                        statusDiv.innerText = `Last seen ${dateString} at ${timeString}`;
+                    } else {
+                        statusDiv.innerText = "Offline";
+                    }
+                }
+            });
+
+            loadAdvancedMessages();
+        };
+
+        // ==========================================
+        // 3. Date Dividers aur Deleted Messages ka Logic
+        // ==========================================
+        function loadAdvancedMessages() {
+            const chatBody = document.getElementById('chatBody');
+            const q = query(collection(db, "chats", currentChatId, "messages"), orderBy("timestamp", "asc"));
+
+            if (chatUnsubscribe) chatUnsubscribe();
+
+            chatUnsubscribe = onSnapshot(q, (snapshot) => {
+                chatBody.innerHTML = '';
+                let lastMessageDate = null;
+
+                snapshot.forEach(async (docSnap) => {
+                    const msgData = docSnap.data();
+                    const isMe = msgData.senderId === auth.currentUser.uid;
+                    const dateObj = msgData.timestamp ? msgData.timestamp.toDate() : new Date();
+                    const time = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const dateString = dateObj.toDateString();
+
+                    // Date Divider Logic (Today / Yesterday / Date)
+                    if (lastMessageDate !== dateString) {
+                        const today = new Date().toDateString();
+                        const yesterday = new Date();
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        
+                        let displayDate = dateString;
+                        if (dateString === today) displayDate = "Today";
+                        else if (dateString === yesterday.toDateString()) displayDate = "Yesterday";
+                        else displayDate = dateObj.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+
+                        const dateDivider = document.createElement('div');
+                        dateDivider.style.cssText = "text-align: center; margin: 15px 0;";
+                        dateDivider.innerHTML = `<span style="background: #e1e8ed; color: #4a5568; padding: 4px 12px; border-radius: 10px; font-size: 11px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">${displayDate}</span>`;
+                        chatBody.appendChild(dateDivider);
+                        lastMessageDate = dateString;
+                    }
+
+                    // Ticks Logic
+                    let tick = `<span class="smart-tick" style="color:gray;">✓</span>`;
+                    if (msgData.status === 'delivered') tick = `<span class="smart-tick" style="color:gray;">✓✓</span>`;
+                    if (msgData.status === 'seen') tick = `<span class="smart-tick" style="color:#38a169;">✓✓</span>`;
+
+                    // Message Content Logic (Deleted check)
+                    let msgContent = "";
+                    if (msgData.isDeleted) {
+                        msgContent = `<span style="font-style: italic; color: #718096;">🚫 ${isMe ? 'You deleted this message' : 'This message was deleted'}</span>`;
+                        tick = ""; // Deleted message par tick hide karna
+                    } else {
+                        if (msgData.type === 'image') {
+                            msgContent = `<div style="text-align:center;"><img src="${msgData.text}" style="max-width:100%; border-radius:8px;"><br><a href="${msgData.text}" download style="margin-top:5px; display:inline-block; padding:4px 10px; background:#075e54; color:white; border-radius:5px; font-size:12px; text-decoration:none;">Download</a></div>`;
+                        } else if (msgData.type === 'video') {
+                            msgContent = `<div style="text-align:center;"><video controls style="max-width:100%; border-radius:8px;"><source src="${msgData.text}" type="video/mp4"></video><br><a href="${msgData.text}" download style="display:inline-block; margin-top:5px; padding:4px 10px; background:#075e54; color:white; border-radius:5px; font-size:12px; text-decoration:none;">Download Video</a></div>`;
+                        } else if (msgData.type === 'audio') {
+                            // Agar audio text base64 mein hai
+                            const audioMatch = msgData.text.match(/\[AUDIO\](.*?)\[\/AUDIO\]/);
+                            if(audioMatch && audioMatch[1]) {
+                                msgContent = `<audio controls src="${audioMatch[1]}" style="height:35px; max-width:200px; outline:none; border-radius:20px;"></audio>`;
+                            } else {
+                                msgContent = msgData.text;
+                            }
+                        } else {
+                            msgContent = msgData.text;
+                        }
+                    }
+
+                    // Message Div Create Karna
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = `msg ${isMe ? 'sent' : 'received'}`;
+                    // Agar delete ho gaya hai toh background halka transparent kar do
+                    if (msgData.isDeleted) {
+                        msgDiv.style.background = isMe ? '#e8f5e9' : '#f0f4f8';
+                        msgDiv.style.border = '1px solid #cbd5e0';
+                    }
+                    msgDiv.innerHTML = `${msgContent} <span class="msg-time">${time} ${isMe ? tick : ''}</span>`;
+                    
+                    // Hold to Delete Event (Sirf agar message delete nahi hua hai tabhi delete ka option aaye)
+                    if (!msgData.isDeleted) {
+                        let pressTimer;
+                        const startPress = () => { pressTimer = setTimeout(() => window.deleteMessage(docSnap.id), 800); };
+                        const cancelPress = () => clearTimeout(pressTimer);
+                        
+                        msgDiv.addEventListener('touchstart', startPress);
+                        msgDiv.addEventListener('touchend', cancelPress);
+                        msgDiv.addEventListener('mousedown', startPress);
+                        msgDiv.addEventListener('mouseup', cancelPress);
+                    }
+
+                    chatBody.appendChild(msgDiv);
+
+                    // Seen Status Update (Agar message delete nahi hua hai)
+                    if (!isMe && msgData.status !== 'seen' && !msgData.isDeleted) {
+                        await updateDoc(doc(db, "chats", currentChatId, "messages", docSnap.id), { status: 'seen' });
+                    }
+                });
+                chatBody.scrollTop = chatBody.scrollHeight;
+            });
+        }
+
+        // ==========================================
+        // 4. Update Delete Function (Permanent remove ki jagah status update)
+        // ==========================================
+        window.deleteMessage = async function(msgId) {
+            if(confirm("Delete this message?")) {
+                const msgRef = doc(db, "chats", currentChatId, "messages", msgId);
+                // Ab message permanently delete nahi hoga, balki usme 'isDeleted: true' set ho jayega
+                await updateDoc(msgRef, {
+                    isDeleted: true
+                });
+            }
+        }
+
+    </script>
+    ```
+
+Isko copy karke github pe push kar lijiye. Ab chat mein dates bhi aayengi, delete karne par message "This message was deleted" bhi show karega, aur naam ke niche Last Seen/Online status bhi ekdum badiya kaam karega!
+
+    
