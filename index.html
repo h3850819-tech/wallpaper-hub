@@ -2665,3 +2665,175 @@ fileInput.addEventListener("change", async function(event) {
     }, 3500);
 
 </script>
+
+<!-- ========================================== -->
+<!-- PART 15: LIVE AUDIO & VIDEO CALLING (PEER CONNECTION FIX) -->
+<!-- ========================================== -->
+<script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+
+<script type="module">
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+    
+    const auth = getAuth();
+    let peer = null;
+    let currentCall = null;
+    let localStream = null;
+
+    // 1. लाइव कॉलिंग के लिए फुल-स्क्रीन UI
+    const callOverlay = document.createElement('div');
+    callOverlay.id = "liveCallOverlay";
+    callOverlay.style.cssText = "display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#111; z-index:999999; flex-direction:column; color:white; font-family:sans-serif;";
+    
+    callOverlay.innerHTML = `
+        <video id="remoteVideo" autoplay playsinline style="width:100%; height:100%; object-fit:cover; display:none; position:absolute; top:0; left:0;"></video>
+        <video id="localVideo" autoplay playsinline muted style="width:100px; height:140px; object-fit:cover; position:absolute; bottom:90px; right:20px; border-radius:12px; border:2px solid white; display:none; box-shadow:0 4px 10px rgba(0,0,0,0.5); z-index:2;"></video>
+        
+        <div id="callUIBox" style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:3; background:linear-gradient(to bottom, rgba(0,0,0,0.8), transparent, rgba(0,0,0,0.8));">
+            <h2 id="liveCallName" style="margin-top:40px; font-size:24px;">User</h2>
+            <p id="liveCallStatus" style="color:#00e676; font-size:14px; margin-top:10px;">Ringing...</p>
+            <div style="flex:1;"></div>
+            <div style="display:flex; gap:30px; margin-bottom:50px;">
+                <button id="acceptCallBtn" style="display:none; width:65px; height:65px; border-radius:50%; background:#00e676; border:none; font-size:24px; color:white; cursor:pointer; box-shadow:0 4px 15px rgba(0,230,118,0.4);">📞</button>
+                <button id="endCallBtn" style="width:65px; height:65px; border-radius:50%; background:#ff1744; border:none; font-size:24px; color:white; cursor:pointer; box-shadow:0 4px 15px rgba(255,23,68,0.4);">🛑</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(callOverlay);
+
+    const remoteVideo = document.getElementById('remoteVideo');
+    const localVideo = document.getElementById('localVideo');
+    const liveCallStatus = document.getElementById('liveCallStatus');
+    const acceptCallBtn = document.getElementById('acceptCallBtn');
+    const endCallBtn = document.getElementById('endCallBtn');
+
+    // 2. PeerJS सर्वर से कनेक्ट करना (स्मार्ट तरीका)
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            if(peer) peer.destroy(); // अगर पुराना अटका हो तो क्लियर करें
+            peer = new Peer(user.uid);
+            
+            peer.on('open', (id) => {
+                console.log("कॉलिंग सर्वर से जुड़ गए! ID:", id);
+            });
+
+            // 3. Incoming Call
+            peer.on('call', (call) => {
+                currentCall = call;
+                callOverlay.style.display = 'flex';
+                document.getElementById('liveCallName').innerText = "Incoming Call...";
+                liveCallStatus.innerText = "Tap to Answer";
+                acceptCallBtn.style.display = 'block';
+                remoteVideo.style.display = 'none';
+                localVideo.style.display = 'none';
+                
+                acceptCallBtn.onclick = async () => {
+                    acceptCallBtn.style.display = 'none';
+                    liveCallStatus.innerText = "Connecting live...";
+                    
+                    try {
+                        const isVideoCall = call.metadata && call.metadata.type === 'video';
+                        localStream = await navigator.mediaDevices.getUserMedia({ video: isVideoCall, audio: true });
+                        
+                        if(isVideoCall) {
+                            localVideo.srcObject = localStream;
+                            localVideo.style.display = 'block';
+                            remoteVideo.style.display = 'block';
+                        }
+                        
+                        call.answer(localStream);
+
+                        call.on('stream', (remoteStream) => {
+                            liveCallStatus.innerText = "";
+                            document.getElementById('callUIBox').style.background = 'transparent';
+                            if (isVideoCall) remoteVideo.srcObject = remoteStream;
+                            else liveCallStatus.innerText = "Audio Call Connected 🎙️";
+                        });
+
+                    } catch (err) {
+                        alert(`Call Failed! \n(चेक करें: कहीं स्क्रीन रिकॉर्डर तो चालू नहीं है?)`);
+                        endLiveCall();
+                    }
+                };
+            });
+        }
+    });
+
+    // 4. Outgoing Call (स्मार्ट चेक के साथ)
+    window.startLiveCall = async (type) => {
+        const receiverId = window.activeChatUserId;
+        
+        if (!receiverId) {
+            alert("चैट सही से लोड नहीं हुई। कृपया बैक जाकर दोबारा अपने दोस्त के नाम पर क्लिक करें!");
+            return;
+        }
+        if (!peer || peer.disconnected) {
+            alert("कॉलिंग सर्वर कनेक्ट हो रहा है... कृपया 2-3 सेकंड रुक कर दोबारा ट्राई करें ⏳");
+            return;
+        }
+
+        callOverlay.style.display = 'flex';
+        document.getElementById('liveCallName').innerText = document.getElementById('chatHeaderName').innerText;
+        liveCallStatus.innerText = type === 'video' ? "Video Calling..." : "Audio Calling...";
+        acceptCallBtn.style.display = 'none';
+        remoteVideo.style.display = 'none';
+        localVideo.style.display = 'none';
+
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: (type === 'video'), audio: true });
+            
+            if(type === 'video') {
+                localVideo.srcObject = localStream;
+                localVideo.style.display = 'block';
+            }
+
+            currentCall = peer.call(receiverId, localStream, { metadata: { type: type } });
+
+            currentCall.on('stream', (remoteStream) => {
+                liveCallStatus.innerText = "";
+                document.getElementById('callUIBox').style.background = 'transparent';
+                if(type === 'video') {
+                    remoteVideo.style.display = 'block';
+                    remoteVideo.srcObject = remoteStream;
+                } else {
+                    liveCallStatus.innerText = "Audio Call Connected 🎙️";
+                }
+            });
+
+            currentCall.on('close', endLiveCall);
+            currentCall.on('error', endLiveCall);
+
+        } catch (err) {
+            alert(`Call Failed! \n(चेक करें: कहीं स्क्रीन रिकॉर्डर तो चालू नहीं है?)`);
+            endLiveCall();
+        }
+    };
+
+    // 5. कॉल काटना
+    const endLiveCall = () => {
+        if (currentCall) currentCall.close();
+        if (localStream) localStream.getTracks().forEach(track => track.stop()); 
+        callOverlay.style.display = 'none';
+        remoteVideo.srcObject = null;
+        localVideo.srcObject = null;
+        document.getElementById('callUIBox').style.background = 'linear-gradient(to bottom, rgba(0,0,0,0.8), transparent, rgba(0,0,0,0.8))';
+    };
+    endCallBtn.addEventListener('click', endLiveCall);
+
+    // 6. चैट हेडर बटनों को कनेक्ट करना
+    setTimeout(() => {
+        const headerIcons = document.querySelector('.chat-header-icons').children;
+        if(headerIcons.length >= 2) {
+            const vidBtn = headerIcons[0];
+            const audBtn = headerIcons[1];
+
+            const newVidBtn = vidBtn.cloneNode(true);
+            const newAudBtn = audBtn.cloneNode(true);
+            vidBtn.replaceWith(newVidBtn);
+            audBtn.replaceWith(newAudBtn);
+
+            newVidBtn.addEventListener('click', () => window.startLiveCall('video'));
+            newAudBtn.addEventListener('click', () => window.startLiveCall('audio'));
+        }
+    }, 3500);
+
+</script>
