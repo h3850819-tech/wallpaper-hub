@@ -1609,6 +1609,105 @@ fileInput.addEventListener("change", async function(event) {
     fileInput.value = ""; 
 });
             
+// ==========================================
+// PART 11: Working Gallery Icon & Cloudinary Upload (100% Fixed)
+// ==========================================
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+const auth = getAuth();
+const db = getFirestore();
+
+// 1. गैलरी के लिए छुपा हुआ फाइल इनपुट 
+const fileInput = document.createElement('input');
+fileInput.type = 'file';
+fileInput.accept = 'image/*, video/*';
+fileInput.style.display = 'none';
+document.body.appendChild(fileInput); 
+
+// 2. 📎 वाले आइकॉन को ढूँढना (थोड़ा टाइम देकर ताकि HTML लोड हो जाए)
+setTimeout(() => {
+    const icons = document.querySelectorAll('.chat-input-area .action-icon');
+    let attachBtn = null;
+    icons.forEach(icon => {
+        if(icon.innerText.includes('📎')) {
+            attachBtn = icon;
+        }
+    });
+
+    if(attachBtn) {
+        // पुराने अटके हुए क्लिक्स को हटाने के लिए बटन को रिफ्रेश करना
+        const newAttachBtn = attachBtn.cloneNode(true);
+        attachBtn.replaceWith(newAttachBtn);
+        
+        newAttachBtn.addEventListener("click", () => {
+            if (window.activeChatUserId) { 
+                fileInput.click(); 
+            } else {
+                alert("Please open a chat first!");
+            }
+        });
+    }
+}, 2000); 
+
+// 3. जब यूज़र गैलरी से फोटो चुन ले, तब अपलोड का प्रोसेस
+fileInput.addEventListener("change", async function(event) {
+    const file = event.target.files[0];
+    if (!file || !window.activeChatUserId) return;
+
+    const tempMsg = document.createElement('div');
+    tempMsg.className = 'msg sent';
+    tempMsg.innerText = 'Uploading media to Cloudinary... ⏳';
+    tempMsg.style.background = '#e2f7cb';
+    document.getElementById('chatBody').appendChild(tempMsg);
+    document.getElementById('chatBody').scrollTop = document.getElementById('chatBody').scrollHeight;
+
+    const cloudName = "dkkzq8nve";
+    const uploadPreset = "himanshu_preset";
+    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", uploadPreset);
+
+    try {
+        const response = await fetch(cloudinaryUrl, {
+            method: "POST",
+            body: formData
+        });
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error.message);
+        }
+        
+        const mediaUrl = data.secure_url; 
+        const isVideo = file.type.startsWith('video/');
+
+        // 4. सही चैट ID निकालना (ताकि फोटो सही दोस्त को जाए)
+        const uid1 = auth.currentUser.uid;
+        const uid2 = window.activeChatUserId;
+        const chatId = uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
+
+        // 5. फायरबेस डेटाबेस में डायरेक्ट लिंक सेव करना
+        await addDoc(collection(db, "chats", chatId, "messages"), {
+            senderId: auth.currentUser.uid,
+            text: mediaUrl,
+            type: isVideo ? 'video' : 'image',
+            timestamp: serverTimestamp(),
+            status: 'sent'
+        });
+
+        tempMsg.remove(); 
+        
+    } catch (error) {
+        console.error("Upload Error: ", error);
+        tempMsg.innerText = 'Upload failed! ❌ Please check internet.';
+        setTimeout(() => tempMsg.remove(), 3000);
+    }
+    
+    fileInput.value = ""; 
+});
 
         
     </script>
