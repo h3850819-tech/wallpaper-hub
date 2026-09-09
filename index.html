@@ -1525,6 +1525,68 @@
     </script>
     ```
 
-Isko copy karke github pe push kar lijiye. Ab chat mein dates bhi aayengi, delete karne par message "This message was deleted" bhi show karega, aur naam ke niche Last Seen/Online status bhi ekdum badiya kaam karega!
+// ==========================================
+// PART 11: Working Gallery Icon & Cloudinary Upload
+// ==========================================
 
+// 1. गैलरी के लिए छुपा हुआ फाइल इनपुट (बिना HTML लिखे, सीधे JS से बना रहे हैं)
+const fileInput = document.createElement('input');
+fileInput.type = 'file';
+fileInput.accept = 'image/*, video/*';
+fileInput.style.display = 'none';
+document.body.appendChild(fileInput); // इसे बैकग्राउंड में जोड़ दिया
+
+// 2. आपका पुराना 📎 आइकॉन काम करे, उसके लिए उसे सेलेक्ट कर रहे हैं
+// (नोट: बस अपने HTML में जहाँ 📎 वाला आइकॉन है, वहाँ id="attach-btn" लिख देना)
+const attachBtn = document.getElementById("attach-btn"); 
+if(attachBtn) {
+    attachBtn.addEventListener("click", () => {
+        fileInput.click(); // आइकॉन पर क्लिक करते ही फोन की गैलरी खुलेगी
+    });
+} else {
+    console.log("ध्यान दें: HTML में अपने आइकॉन वाले टैग के अंदर id='attach-btn' लगाना न भूलें!");
+}
+
+// 3. जब यूज़र गैलरी से फोटो चुन ले, तब अपलोड का प्रोसेस
+fileInput.addEventListener("change", async function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    alert("फ़ाइल अपलोड हो रही है, कृपया 2-4 सेकंड इंतज़ार करें...");
     
+    // आपका Cloudinary डेटा
+    const cloudName = "dkkzq8nve";
+    const uploadPreset = "himanshu_preset";
+    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", uploadPreset);
+
+    try {
+        const response = await fetch(cloudinaryUrl, {
+            method: "POST",
+            body: formData
+        });
+        const data = await response.json();
+        
+        // यह रहा आपका पक्का लिंक
+        const mediaUrl = data.secure_url; 
+        console.log("अपलोड सक्सेस, यह रहा लिंक: ", mediaUrl);
+        
+        // 4. मैसेज को डेटाबेस में सेव करना 
+        // भाई, यहाँ आपको अपने पुराने 'मैसेज भेजने वाले' फंक्शन का नाम लिखना है
+        // ताकि mediaUrl फायरबेस में सेव हो जाए!
+        
+        alert("अपलोड पूरा हुआ! अब यह चैट में जाएगा।");
+        
+    } catch (error) {
+        console.error("अपलोड फेल हो गया: ", error);
+        alert("फ़ाइल अपलोड नहीं हो पाई, अपना इंटरनेट चेक करें।");
+    }
+    
+    // अपलोड के बाद इनपुट को खाली कर दें ताकि अगली फोटो जा सके
+    fileInput.value = ""; 
+});
+
+  
