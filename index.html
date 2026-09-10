@@ -3373,3 +3373,121 @@ fileInput.addEventListener("change", async function(event) {
 
         </script>
         
+
+
+     <!-- ========================================== -->
+<!-- PART 18: ONLINE/OFFLINE STATUS & TYPING INDICATOR -->
+<!-- ========================================== -->
+<script type="module">
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+    import { getFirestore, doc, updateDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+    const auth = getAuth();
+    const db = getFirestore();
+
+    let currentChatUnsubscribe = null;
+    let currentUserUnsubscribe = null;
+    let typingTimeout = null;
+
+    // 1. चैट हेडर में नाम के ठीक नीचे स्टेटस (Online/Typing) दिखाने की जगह बनाना
+    setTimeout(() => {
+        const headerNameEl = document.getElementById('chatHeaderName');
+        if (headerNameEl && !document.getElementById('chatHeaderStatus')) {
+            const statusEl = document.createElement('div');
+            statusEl.id = 'chatHeaderStatus';
+            statusEl.style.fontSize = '13px';
+            statusEl.style.fontWeight = '500';
+            statusEl.style.color = '#aaa'; // डिफ़ॉल्ट रंग
+            statusEl.style.marginTop = '-2px';
+            statusEl.innerText = "Offline";
+            headerNameEl.parentNode.insertBefore(statusEl, headerNameEl.nextSibling);
+        }
+    }, 2000);
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            const userRef = doc(db, "users", user.uid);
+            
+            // 2. अपना रियल-टाइम स्टेटस (Online/Offline) डेटाबेस में सेट करना
+            const setOnline = () => updateDoc(userRef, { status: "Online" }).catch(e=>console.log(e));
+            const setOffline = () => updateDoc(userRef, { status: "Offline" }).catch(e=>console.log(e));
+
+            // जैसे ही ऐप खुले, खुद को Online कर दो
+            setOnline();
+
+            // जब यूज़र ऐप बंद करे या दूसरी ऐप में जाए (Minimize करे) तो Offline कर दो
+            window.addEventListener('beforeunload', setOffline);
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') setOnline();
+                else setOffline();
+            });
+
+            // 3. सामने वाले दोस्त का स्टेटस चेक करना (हर 1 सेकंड में)
+            setInterval(() => {
+                const activeUserId = window.activeChatUserId;
+                const statusEl = document.getElementById('chatHeaderStatus');
+                
+                if (activeUserId && activeUserId !== window.lastTrackedUserId && statusEl) {
+                    window.lastTrackedUserId = activeUserId;
+                    
+                    if (currentUserUnsubscribe) currentUserUnsubscribe();
+                    if (currentChatUnsubscribe) currentChatUnsubscribe();
+
+                    // दोस्त Online है या Offline, यह सुनना
+                    currentUserUnsubscribe = onSnapshot(doc(db, "users", activeUserId), (docSnap) => {
+                        if (docSnap.exists() && statusEl) {
+                            const status = docSnap.data().status || "Offline";
+                            // अगर टाइपिंग नहीं चल रही है, तो ही ऑनलाइन/ऑफलाइन दिखाओ
+                            if(!statusEl.innerText.includes("Typing")) {
+                                statusEl.innerText = status;
+                                statusEl.style.color = status === "Online" ? "#00e676" : "#aaa";
+                            }
+                        }
+                    });
+
+                    // दोस्त Typing कर रहा है या नहीं, यह सुनना
+                    const chatId = user.uid < activeUserId ? `${user.uid}_${activeUserId}` : `${activeUserId}_${user.uid}`;
+                    currentChatUnsubscribe = onSnapshot(doc(db, "chats", chatId), (docSnap) => {
+                        if (docSnap.exists() && statusEl) {
+                            const isTyping = docSnap.data()[`typing_${activeUserId}`];
+                            if (isTyping) {
+                                statusEl.innerText = "Typing...";
+                                statusEl.style.color = "#00e676"; // टाइपिंग के लिए हरा रंग
+                            } else {
+                                // अगर टाइपिंग बंद कर दी, तो वापस पुराना स्टेटस दिखा दो
+                                const currentStatus = docSnap.data().status || "Online";
+                                statusEl.innerText = currentStatus;
+                            }
+                        }
+                    });
+                }
+            }, 1000);
+
+            // 4. जब हम खुद टाइप करें, तो डेटाबेस को बताना
+            // मान लेते हैं कि आपके मैसेज टाइप करने वाले बॉक्स की ID 'messageInput' है
+            setTimeout(() => {
+                const messageInput = document.getElementById('messageInput'); 
+                if (messageInput) {
+                    messageInput.addEventListener('input', () => {
+                        const activeUserId = window.activeChatUserId;
+                        if (!activeUserId) return;
+
+                        const chatId = user.uid < activeUserId ? `${user.uid}_${activeUserId}` : `${activeUserId}_${user.uid}`;
+                        const chatRef = doc(db, "chats", chatId);
+
+                        // Typing = True भेजना
+                        updateDoc(chatRef, { [`typing_${user.uid}`]: true }).catch(e => {
+                            setDoc(chatRef, { [`typing_${user.uid}`]: true }, { merge: true });
+                        });
+
+                        // 2 सेकंड तक कुछ न लिखने पर Typing = False कर देना
+                        clearTimeout(typingTimeout);
+                        typingTimeout = setTimeout(() => {
+                            updateDoc(chatRef, { [`typing_${user.uid}`]: false }).catch(e=>console.log(e));
+                        }, 2000);
+                    });
+                }
+            }, 3000); // 3 सेकंड का डिले ताकि पेज पूरी तरह लोड हो जाए
+        }
+    });
+</script>
