@@ -2837,3 +2837,257 @@ fileInput.addEventListener("change", async function(event) {
     }, 3500);
 
 </script>
+
+
+<!-- ========================================== -->
+<!-- PART 16: REAL-TIME ADVANCED CALLING (WITH 60s TIMEOUT & RINGING STATUS) -->
+<!-- ========================================== -->
+<script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+
+<script type="module">
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+    
+    const auth = getAuth();
+    let peer = null;
+    let currentCall = null;
+    let localStream = null;
+    let isAudioMuted = false;
+    let isVideoPaused = false;
+    
+    // 60 सेकंड कॉल कटने का टाइमर
+    let callTimeout = null; 
+
+    // 1. रियल कॉल के लिए एडवांस्ड फुल-स्क्रीन UI
+    const callOverlay = document.createElement('div');
+    callOverlay.id = "liveCallOverlay";
+    callOverlay.style.cssText = "display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#1a1a1a; z-index:999999; flex-direction:column; color:white; font-family:sans-serif;";
+    
+    callOverlay.innerHTML = `
+        <video id="remoteVideo" autoplay playsinline style="width:100%; height:100%; object-fit:cover; display:none; position:absolute; top:0; left:0;"></video>
+        <video id="localVideo" autoplay playsinline muted style="width:110px; height:150px; object-fit:cover; position:absolute; top:40px; right:20px; border-radius:12px; border:2px solid white; display:none; box-shadow:0 4px 10px rgba(0,0,0,0.5); z-index:2; background:#333;"></video>
+        
+        <div id="callUIBox" style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:space-between; z-index:3; background:linear-gradient(to bottom, rgba(0,0,0,0.7), transparent, rgba(0,0,0,0.9));">
+            
+            <div style="margin-top:50px; text-align:center;">
+                <h2 id="liveCallName" style="font-size:26px; margin:0; font-weight:600; text-shadow: 1px 1px 3px black;">User</h2>
+                <p id="liveCallStatus" style="color:#00e676; font-size:15px; margin-top:8px; font-weight:bold; letter-spacing:1px;">Connecting...</p>
+            </div>
+            
+            <div id="incomingControls" style="display:none; gap:40px; margin-bottom:60px;">
+                <button id="rejectCallBtn" style="width:70px; height:70px; border-radius:50%; background:#ff1744; border:none; font-size:28px; cursor:pointer; box-shadow:0 4px 15px rgba(255,23,68,0.5);">📞</button>
+                <button id="acceptCallBtn" style="width:70px; height:70px; border-radius:50%; background:#00e676; border:none; font-size:28px; cursor:pointer; box-shadow:0 4px 15px rgba(0,230,118,0.5); animation: pulse 1.5s infinite;">📞</button>
+            </div>
+
+            <div id="activeControls" style="display:none; gap:25px; margin-bottom:40px; background:rgba(0,0,0,0.5); padding:15px 25px; border-radius:30px; backdrop-filter:blur(10px);">
+                <button id="muteMicBtn" style="width:50px; height:50px; border-radius:50%; background:#444; border:none; font-size:20px; color:white; cursor:pointer; transition:0.3s;">🎤</button>
+                <button id="toggleVideoBtn" style="width:50px; height:50px; border-radius:50%; background:#444; border:none; font-size:20px; color:white; cursor:pointer; transition:0.3s;">📷</button>
+                <button id="endCallBtn" style="width:50px; height:50px; border-radius:50%; background:#ff1744; border:none; font-size:22px; color:white; cursor:pointer; box-shadow:0 4px 10px rgba(255,23,68,0.4);">🛑</button>
+            </div>
+            <style>@keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.1);} 100% {transform: scale(1);} }</style>
+        </div>
+    `;
+    document.body.appendChild(callOverlay);
+
+    const remoteVideo = document.getElementById('remoteVideo');
+    const localVideo = document.getElementById('localVideo');
+    const liveCallStatus = document.getElementById('liveCallStatus');
+    const incomingControls = document.getElementById('incomingControls');
+    const activeControls = document.getElementById('activeControls');
+    
+    // 2. PeerJS सेटअप
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            if(peer) peer.destroy();
+            peer = new Peer(user.uid);
+            
+            // 3. जब कोई कॉल करे (Incoming Call)
+            peer.on('call', (call) => {
+                currentCall = call;
+                callOverlay.style.display = 'flex';
+                document.getElementById('liveCallName').innerText = "Incoming Call...";
+                liveCallStatus.innerText = "is calling you...";
+                
+                incomingControls.style.display = 'flex';
+                activeControls.style.display = 'none';
+                remoteVideo.style.display = 'none';
+                localVideo.style.display = 'none';
+
+                // अगर 60 सेकंड तक फोन नहीं उठाया, तो मिस कॉल मानकर काट दो
+                clearTimeout(callTimeout);
+                callTimeout = setTimeout(() => {
+                    endLiveCall();
+                }, 60000); 
+                
+                // कॉल उठाना (Accept)
+                document.getElementById('acceptCallBtn').onclick = async () => {
+                    clearTimeout(callTimeout); // उठाते ही टाइमर बंद
+                    incomingControls.style.display = 'none';
+                    liveCallStatus.innerText = "Connecting...";
+                    
+                    try {
+                        const isVideoCall = call.metadata && call.metadata.type === 'video';
+                        localStream = await navigator.mediaDevices.getUserMedia({ video: isVideoCall, audio: true });
+                        
+                        if(isVideoCall) {
+                            localVideo.srcObject = localStream;
+                            localVideo.style.display = 'block';
+                            document.getElementById('toggleVideoBtn').style.display = 'block';
+                        } else {
+                            document.getElementById('toggleVideoBtn').style.display = 'none';
+                        }
+                        
+                        call.answer(localStream);
+                        activeControls.style.display = 'flex';
+
+                        call.on('stream', (remoteStream) => {
+                            liveCallStatus.innerText = "";
+                            if (isVideoCall) {
+                                remoteVideo.srcObject = remoteStream;
+                                remoteVideo.style.display = 'block';
+                            } else {
+                                liveCallStatus.innerText = "00:00 - Audio Call Active";
+                            }
+                        });
+                        
+                        call.on('close', endLiveCall);
+                    } catch (err) {
+                        alert("Microphone/Camera permission needed!");
+                        endLiveCall();
+                    }
+                };
+
+                // कॉल काटना (Reject)
+                document.getElementById('rejectCallBtn').onclick = () => {
+                    call.close();
+                    endLiveCall();
+                };
+            });
+        }
+    });
+
+    // 4. किसी को कॉल लगाना (Outgoing Call)
+    window.startLiveCall = async (type) => {
+        const receiverId = window.activeChatUserId;
+        if (!receiverId || !peer) return alert("चैट लोड नहीं हुई या नेटवर्क स्लो है।");
+
+        callOverlay.style.display = 'flex';
+        document.getElementById('liveCallName').innerText = document.getElementById('chatHeaderName').innerText;
+        
+        // कॉल मिलाते समय शुरुआत में Connecting दिखेगा
+        liveCallStatus.innerText = "Connecting...";
+        
+        incomingControls.style.display = 'none';
+        activeControls.style.display = 'flex'; 
+        remoteVideo.style.display = 'none';
+        localVideo.style.display = 'none';
+
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: (type === 'video'), audio: true });
+            
+            if(type === 'video') {
+                localVideo.srcObject = localStream;
+                localVideo.style.display = 'block';
+                document.getElementById('toggleVideoBtn').style.display = 'block';
+            } else {
+                document.getElementById('toggleVideoBtn').style.display = 'none';
+            }
+
+            // कॉल सर्वर पर जाने के बाद Ringing दिखाना 
+            currentCall = peer.call(receiverId, localStream, { metadata: { type: type } });
+            
+            // थोड़ी सी देरी (Delay) ताकि असली Ringing वाला फील आए
+            setTimeout(() => {
+                if(liveCallStatus.innerText === "Connecting...") {
+                    liveCallStatus.innerText = "Ringing...";
+                }
+            }, 1000);
+
+            // 60 सेकंड का रिंगिंग टाइमर
+            clearTimeout(callTimeout);
+            callTimeout = setTimeout(() => {
+                if (currentCall) {
+                    liveCallStatus.innerText = "No Answer";
+                    liveCallStatus.style.color = "#ff1744";
+                    // 2 सेकंड तक "No Answer" दिखाकर कॉल काट देना
+                    setTimeout(endLiveCall, 2000);
+                }
+            }, 60000);
+
+            currentCall.on('stream', (remoteStream) => {
+                clearTimeout(callTimeout); // सामने वाले ने कॉल उठा ली तो टाइमर बंद
+                liveCallStatus.innerText = "";
+                liveCallStatus.style.color = "#00e676";
+                if(type === 'video') {
+                    remoteVideo.srcObject = remoteStream;
+                    remoteVideo.style.display = 'block';
+                } else {
+                    liveCallStatus.innerText = "00:00 - Audio Call Active";
+                }
+            });
+
+            currentCall.on('close', endLiveCall);
+            currentCall.on('error', endLiveCall);
+
+        } catch (err) {
+            alert("Permission denied! Check Camera/Mic settings.");
+            endLiveCall();
+        }
+    };
+
+    // 5. Advanced Controls (Mute & Video Off)
+    document.getElementById('muteMicBtn').addEventListener('click', () => {
+        if(localStream && localStream.getAudioTracks().length > 0) {
+            isAudioMuted = !isAudioMuted;
+            localStream.getAudioTracks()[0].enabled = !isAudioMuted;
+            const btn = document.getElementById('muteMicBtn');
+            btn.innerText = isAudioMuted ? "🔇" : "🎤";
+            btn.style.background = isAudioMuted ? "#ff1744" : "#444";
+        }
+    });
+
+    document.getElementById('toggleVideoBtn').addEventListener('click', () => {
+        if(localStream && localStream.getVideoTracks().length > 0) {
+            isVideoPaused = !isVideoPaused;
+            localStream.getVideoTracks()[0].enabled = !isVideoPaused;
+            const btn = document.getElementById('toggleVideoBtn');
+            btn.innerText = isVideoPaused ? "🚫" : "📷";
+            btn.style.background = isVideoPaused ? "#ff1744" : "#444";
+        }
+    });
+
+    // 6. कॉल काटना (End Call)
+    const endLiveCall = () => {
+        clearTimeout(callTimeout); // टाइमर रीसेट करना
+        if (currentCall) currentCall.close();
+        if (localStream) localStream.getTracks().forEach(track => track.stop()); 
+        callOverlay.style.display = 'none';
+        remoteVideo.srcObject = null;
+        localVideo.srcObject = null;
+        
+        // UI Reset
+        isAudioMuted = false;
+        isVideoPaused = false;
+        document.getElementById('muteMicBtn').innerText = "🎤";
+        document.getElementById('muteMicBtn').style.background = "#444";
+        document.getElementById('toggleVideoBtn').innerText = "📷";
+        document.getElementById('toggleVideoBtn').style.background = "#444";
+        liveCallStatus.style.color = "#00e676"; // रंग वापस हरा कर देना
+    };
+    document.getElementById('endCallBtn').addEventListener('click', endLiveCall);
+
+    // 7. हेडर बटनों को कनेक्ट करना
+    setTimeout(() => {
+        const headerIcons = document.querySelector('.chat-header-icons').children;
+        if(headerIcons.length >= 2) {
+            const vidBtn = headerIcons[0];
+            const audBtn = headerIcons[1];
+            const newVidBtn = vidBtn.cloneNode(true);
+            const newAudBtn = audBtn.cloneNode(true);
+            vidBtn.replaceWith(newVidBtn);
+            audBtn.replaceWith(newAudBtn);
+            newVidBtn.addEventListener('click', () => window.startLiveCall('video'));
+            newAudBtn.addEventListener('click', () => window.startLiveCall('audio'));
+        }
+    }, 3500);
+
+</script>
