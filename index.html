@@ -2670,69 +2670,7 @@ fileInput.addEventListener("change", async function(event) {
 </script>
 
 
-                                        }
-            }, 60000);
 
-            currentCall.on('stream', (remoteStream) => {
-                clearTimeout(callTimeout); 
-                ringtone.pause(); // सामने वाले ने उठा ली, रिंगटोन बंद
-                ringtone.currentTime = 0;
-                
-                liveCallStatus.innerText = "";
-                liveCallStatus.style.color = "#00e676";
-                if(type === 'video') {
-                    remoteVideo.srcObject = remoteStream;
-                    remoteVideo.style.display = 'block';
-                } else {
-                    liveCallStatus.innerText = "00:00 - Audio Call Active";
-                }
-            });
-
-            currentCall.on('close', endLiveCall);
-            currentCall.on('error', endLiveCall);
-
-        } catch (err) {
-            alert("Permission denied! Check Camera/Mic settings.");
-            endLiveCall();
-        }
-    };
-
-    // 5. Advanced Controls (Mute & Video Off)
-    document.getElementById('muteMicBtn').addEventListener('click', () => {
-        if(localStream && localStream.getAudioTracks().length > 0) {
-            isAudioMuted = !isAudioMuted;
-            localStream.getAudioTracks()[0].enabled = !isAudioMuted;
-            const btn = document.getElementById('muteMicBtn');
-            btn.style.background = isAudioMuted ? "#ff1744" : "#444";
-        }
-    });
-
-    document.getElementById('toggleVideoBtn').addEventListener('click', () => {
-        if(localStream && localStream.getVideoTracks().length > 0) {
-            isVideoPaused = !isVideoPaused;
-            localStream.getVideoTracks()[0].enabled = !isVideoPaused;
-            const btn = document.getElementById('toggleVideoBtn');
-            btn.style.background = isVideoPaused ? "#ff1744" : "#444";
-        }
-    });
-
-    // 6. कॉल काटना (End Call) - अब अपनी तरफ से भी कटेगी 100%
-    const endLiveCall = () => {
-        clearTimeout(callTimeout); 
-        ringtone.pause(); 
-        ringtone.currentTime = 0;
-        
-        if (currentCall) {
-            currentCall.close();
-            currentCall = null;
-        }
-        if (localStream) {
-            localStream.getTracks().forEach(track => track.stop()); 
-            localStream = null;
-        }
-        
-        callOverlay.style.display = 'none';
-        remoteVideo.srcObject = null;
 
          </script>
 
