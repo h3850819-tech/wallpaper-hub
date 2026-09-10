@@ -3015,12 +3015,12 @@ fileInput.addEventListener("change", async function(event) {
 
 </script>
 
-<script type="module">
+
+                    <script type="module">
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-    // हिस्ट्री सेव करने के लिए collection, addDoc, serverTimestamp को जोड़ा गया
     import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-    // पुराने UI को हटाना
+    // पुराने UI को हटाना ताकि डबल स्क्रीन न बने
     const oldOverlay = document.getElementById('liveCallOverlay');
     if (oldOverlay) oldOverlay.remove();
 
@@ -3034,19 +3034,19 @@ fileInput.addEventListener("change", async function(event) {
     let isCallActive17 = false; 
     let currentFacingMode17 = 'user'; 
 
-    // कॉल हिस्ट्री ट्रैक करने के वेरिएबल
     let isCaller17 = false; 
     let callAnswered17 = false; 
     let callType17 = 'audio';
     let logSaved17 = false; 
 
+    // असली रिंगटोन
     const ringtone17 = new Audio("https://assets.mixkit.co/active_storage/sfx/2873/2873-preview.mp3");
     ringtone17.loop = true;
 
-    // 1. कॉल हिस्ट्री सेव करने का जादुई फंक्शन
+    // 1. कॉल हिस्ट्री चैट में सेव करने का फंक्शन
     const saveCallLogToChat = async (type, isMissed) => {
         if(!window.activeChatUserId || !auth.currentUser || logSaved17) return;
-        logSaved17 = true; // ताकि हिस्ट्री दो बार सेव न हो
+        logSaved17 = true; 
         
         const uid1 = auth.currentUser.uid;
         const uid2 = window.activeChatUserId;
@@ -3060,7 +3060,6 @@ fileInput.addEventListener("change", async function(event) {
         }
 
         try {
-            // चुपके से चैट में एक मैसेज भेज देना
             await addDoc(collection(db, "chats", chatId, "messages"), {
                 text: msg,
                 senderId: uid1,
@@ -3068,10 +3067,10 @@ fileInput.addEventListener("change", async function(event) {
                 status: 'sent',
                 type: 'text' 
             });
-        } catch(e) { console.error("Call history error", e); }
+        } catch(e) { console.error("History Save Error:", e); }
     };
 
-    // 2. UI बनाना
+    // 2. फुल-स्क्रीन UI
     const callOverlay = document.createElement('div');
     callOverlay.id = "liveCallOverlay";
     callOverlay.style.cssText = "display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#1a1a1a; z-index:9999999; flex-direction:column; color:white; font-family:sans-serif;";
@@ -3115,9 +3114,8 @@ fileInput.addEventListener("change", async function(event) {
     `;
     document.body.appendChild(callOverlay);
 
-    // 3. फास्ट कॉल कटने वाला फंक्शन (अब हिस्ट्री भी सेव करेगा)
+    // 3. फास्ट कॉल कट और हिस्ट्री सेव
     const endLiveCall17 = () => {
-        // सिर्फ कॉल करने वाला ही हिस्ट्री सेव करेगा (ताकि चैट में डबल मैसेज न जाए)
         if (isCaller17 && isCallActive17) {
             saveCallLogToChat(callType17, !callAnswered17);
         }
@@ -3148,21 +3146,19 @@ fileInput.addEventListener("change", async function(event) {
         endLiveCall17();
     };
     
-    const endBtn = document.getElementById('endCallBtn');
-    const rejectBtn = document.getElementById('rejectCallBtn');
-    endBtn.onclick = fastCutEvent;
-    endBtn.ontouchstart = fastCutEvent; 
-    rejectBtn.onclick = fastCutEvent;
-    rejectBtn.ontouchstart = fastCutEvent;
+    document.getElementById('endCallBtn').onclick = fastCutEvent;
+    document.getElementById('endCallBtn').ontouchstart = fastCutEvent; 
+    document.getElementById('rejectCallBtn').onclick = fastCutEvent;
+    document.getElementById('rejectCallBtn').ontouchstart = fastCutEvent;
 
-    // 4. नया पीयर सर्वर (Incoming Call)
+    // 4. Incoming Call
     onAuthStateChanged(auth, (user) => {
         if (user) {
             peer17 = new Peer(user.uid);
             
             peer17.on('call', async (call) => {
                 isCallActive17 = true;
-                isCaller17 = false; // हम कॉल रिसीव कर रहे हैं
+                isCaller17 = false; 
                 callAnswered17 = false;
                 logSaved17 = false;
                 callType17 = call.metadata.type;
@@ -3178,8 +3174,8 @@ fileInput.addEventListener("change", async function(event) {
                     }
                 } catch(e) {}
 
-                document.getElementById('liveCallStatus').innerText = "is calling you...";
-                ringtone17.play().catch(e => console.log("Ringtone waiting"));
+                document.getElementById('liveCallStatus').innerText = callType17 === 'video' ? "Video call from..." : "Audio call from...";
+                ringtone17.play().catch(e => console.log("Ringtone blocked"));
 
                 document.getElementById('incomingControls').style.display = 'flex';
                 document.getElementById('activeControls').style.display = 'none';
@@ -3195,6 +3191,7 @@ fileInput.addEventListener("change", async function(event) {
                     
                     try {
                         const isVideoCall = callType17 === 'video';
+                        // ऑडियो कॉल में कैमरा बिल्कुल नहीं खुलेगा (video: false)
                         const constraints = { 
                             audio: true, 
                             video: isVideoCall ? { facingMode: { ideal: currentFacingMode17 } } : false 
@@ -3208,22 +3205,27 @@ fileInput.addEventListener("change", async function(event) {
                             document.getElementById('localVideo').style.display = 'block';
                             document.getElementById('toggleVideoBtn').style.display = 'flex';
                             document.getElementById('flipCameraBtn').style.display = 'flex'; 
+                        } else {
+                            // ऑडियो कॉल में वीडियो के बटन गायब
+                            document.getElementById('toggleVideoBtn').style.display = 'none';
+                            document.getElementById('flipCameraBtn').style.display = 'none';
                         }
                         
                         call.answer(localStream17);
                         document.getElementById('activeControls').style.display = 'flex';
 
                         call.on('stream', (remoteStream) => {
-                            callAnswered17 = true; // कॉल उठा ली गई
+                            callAnswered17 = true; 
                             document.getElementById('liveCallStatus').innerText = "";
                             if (isVideoCall) {
                                 document.getElementById('remoteVideo').srcObject = remoteStream;
                                 document.getElementById('remoteVideo').style.display = 'block';
+                            } else {
+                                document.getElementById('liveCallStatus').innerText = "00:00 - Audio Call Active";
                             }
                         });
                         call.on('close', endLiveCall17);
                     } catch (err) {
-                        alert("Please Allow Camera Permission!");
                         endLiveCall17();
                     }
                 };
@@ -3231,13 +3233,13 @@ fileInput.addEventListener("change", async function(event) {
         }
     });
 
-    // 5. कॉल लगाना (Outgoing Call)
+    // 5. Outgoing Call
     window.startLiveCall = async (type) => {
         const receiverId = window.activeChatUserId;
         if (!receiverId || !peer17) return alert("चैट लोड हो रही है, 1 सेकंड रुकें...");
 
         isCallActive17 = true;
-        isCaller17 = true; // हम कॉल कर रहे हैं
+        isCaller17 = true; 
         callAnswered17 = false;
         logSaved17 = false;
         callType17 = type;
@@ -3245,7 +3247,7 @@ fileInput.addEventListener("change", async function(event) {
         
         callOverlay.style.display = 'flex';
         document.getElementById('liveCallName').innerText = document.getElementById('chatHeaderName').innerText;
-        document.getElementById('liveCallStatus').innerText = "Connecting...";
+        document.getElementById('liveCallStatus').innerText = type === 'video' ? "Starting Video Call..." : "Starting Audio Call...";
         
         document.getElementById('incomingControls').style.display = 'none';
         document.getElementById('activeControls').style.display = 'flex'; 
@@ -3255,6 +3257,7 @@ fileInput.addEventListener("change", async function(event) {
         document.getElementById('flipCameraBtn').style.display = 'none';
 
         try {
+            // ऑडियो कॉल में कैमरा बिल्कुल नहीं खुलेगा
             const constraints = { 
                 audio: true, 
                 video: (type === 'video') ? { facingMode: { ideal: currentFacingMode17 } } : false 
@@ -3268,6 +3271,9 @@ fileInput.addEventListener("change", async function(event) {
                 document.getElementById('localVideo').style.display = 'block';
                 document.getElementById('toggleVideoBtn').style.display = 'flex';
                 document.getElementById('flipCameraBtn').style.display = 'flex';
+            } else {
+                document.getElementById('toggleVideoBtn').style.display = 'none';
+                document.getElementById('flipCameraBtn').style.display = 'none';
             }
 
             ringtone17.play().catch(e => console.log("Ringtone waiting"));
@@ -3275,7 +3281,7 @@ fileInput.addEventListener("change", async function(event) {
             currentCall17 = peer17.call(receiverId, localStream17, { metadata: { type: type } });
             
             setTimeout(() => {
-                if(document.getElementById('liveCallStatus').innerText === "Connecting..." && isCallActive17) {
+                if(document.getElementById('liveCallStatus').innerText.includes("Starting") && isCallActive17) {
                     document.getElementById('liveCallStatus').innerText = "Ringing...";
                 }
             }, 1000);
@@ -3292,13 +3298,15 @@ fileInput.addEventListener("change", async function(event) {
 
             currentCall17.on('stream', (remoteStream) => {
                 clearTimeout(callTimeout17); 
-                callAnswered17 = true; // सामने वाले ने कॉल उठा ली
+                callAnswered17 = true; 
                 try { ringtone17.pause(); ringtone17.currentTime = 0; } catch(e){}
                 
                 document.getElementById('liveCallStatus').innerText = "";
                 if(type === 'video') {
                     document.getElementById('remoteVideo').srcObject = remoteStream;
                     document.getElementById('remoteVideo').style.display = 'block';
+                } else {
+                    document.getElementById('liveCallStatus').innerText = "00:00 - Audio Call Active";
                 }
             });
 
@@ -3306,14 +3314,29 @@ fileInput.addEventListener("change", async function(event) {
             currentCall17.on('error', endLiveCall17);
 
         } catch (err) {
-            alert("Camera Blocked! Settings में जाकर परमिशन दें।");
             endLiveCall17();
         }
     };
 
     // 6. कैमरा फ्लिप और म्यूट
+    document.getElementById('muteMicBtn').addEventListener('click', () => {
+        if(localStream17 && localStream17.getAudioTracks().length > 0) {
+            const track = localStream17.getAudioTracks()[0];
+            track.enabled = !track.enabled;
+            document.getElementById('muteMicBtn').style.background = !track.enabled ? "#ff1744" : "#444";
+        }
+    });
+
+    document.getElementById('toggleVideoBtn').addEventListener('click', () => {
+        if(localStream17 && localStream17.getVideoTracks().length > 0) {
+            const track = localStream17.getVideoTracks()[0];
+            track.enabled = !track.enabled;
+            document.getElementById('toggleVideoBtn').style.background = !track.enabled ? "#ff1744" : "#444";
+        }
+    });
+
     document.getElementById('flipCameraBtn').addEventListener('click', async () => {
-        if(!localStream17 || !currentCall17) return;
+        if(!localStream17 || !currentCall17 || callType17 !== 'video') return;
         currentFacingMode17 = currentFacingMode17 === 'user' ? 'environment' : 'user';
         try {
             const newStream = await navigator.mediaDevices.getUserMedia({
@@ -3332,5 +3355,21 @@ fileInput.addEventListener("change", async function(event) {
             document.getElementById('localVideo').srcObject = localStream17;
         } catch(err) { console.log(err); }
     });
-</script>
 
+    // 7. हेडर बटनों को कनेक्ट करना
+    setTimeout(() => {
+        const headerIcons = document.querySelector('.chat-header-icons').children;
+        if(headerIcons.length >= 2) {
+            const vidBtn = headerIcons[0];
+            const audBtn = headerIcons[1];
+            const newVidBtn = vidBtn.cloneNode(true);
+            const newAudBtn = audBtn.cloneNode(true);
+            vidBtn.replaceWith(newVidBtn);
+            audBtn.replaceWith(newAudBtn);
+            newVidBtn.addEventListener('click', () => window.startLiveCall('video'));
+            newAudBtn.addEventListener('click', () => window.startLiveCall('audio'));
+        }
+    }, 3500);
+
+        </script>
+        
