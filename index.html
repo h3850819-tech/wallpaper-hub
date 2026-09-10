@@ -2670,198 +2670,7 @@ fileInput.addEventListener("change", async function(event) {
 </script>
 
 
-    <!-- ========================================== -->
-<!-- PART 16: REAL-TIME CALLING (WITH RINGTONE & HD BUTTONS) -->
-<!-- ========================================== -->
-<script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
-
-<script type="module">
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-    
-    const auth = getAuth();
-    let peer = null;
-    let currentCall = null;
-    let localStream = null;
-    let isAudioMuted = false;
-    let isVideoPaused = false;
-    let callTimeout = null; 
-
-    // रिंगटोन सेटअप (Google की असली रिंगटोन)
-    const ringtone = new Audio("https://actions.google.com/sounds/v1/alarms/phone_ringing.ogg");
-    ringtone.loop = true;
-
-    // 1. रियल कॉल के लिए एडवांस्ड फुल-स्क्रीन UI
-    const callOverlay = document.createElement('div');
-    callOverlay.id = "liveCallOverlay";
-    callOverlay.style.cssText = "display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#1a1a1a; z-index:999999; flex-direction:column; color:white; font-family:sans-serif;";
-    
-    callOverlay.innerHTML = `
-        <video id="remoteVideo" autoplay playsinline style="width:100%; height:100%; object-fit:cover; display:none; position:absolute; top:0; left:0;"></video>
-        <video id="localVideo" autoplay playsinline muted style="width:110px; height:150px; object-fit:cover; position:absolute; top:40px; right:20px; border-radius:12px; border:2px solid white; display:none; box-shadow:0 4px 10px rgba(0,0,0,0.5); z-index:2; background:#333;"></video>
-        
-        <div id="callUIBox" style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:space-between; z-index:3; background:linear-gradient(to bottom, rgba(0,0,0,0.7), transparent, rgba(0,0,0,0.9));">
-            
-            <div style="margin-top:50px; text-align:center;">
-                <h2 id="liveCallName" style="font-size:26px; margin:0; font-weight:600; text-shadow: 1px 1px 3px black;">User</h2>
-                <p id="liveCallStatus" style="color:#00e676; font-size:15px; margin-top:8px; font-weight:bold; letter-spacing:1px;">Connecting...</p>
-            </div>
-            
-            <!-- Incoming Call Buttons (Accept / Reject) -->
-            <div id="incomingControls" style="display:none; gap:40px; margin-bottom:60px;">
-                <button id="rejectCallBtn" style="width:70px; height:70px; border-radius:50%; background:#ff1744; border:none; cursor:pointer; box-shadow:0 4px 15px rgba(255,23,68,0.5); display:flex; justify-content:center; align-items:center; z-index:10;">
-                    <!-- Red Phone Down Icon -->
-                    <svg width="35" height="35" viewBox="0 0 24 24" fill="white"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
-                </button>
-                <button id="acceptCallBtn" style="width:70px; height:70px; border-radius:50%; background:#00e676; border:none; cursor:pointer; box-shadow:0 4px 15px rgba(0,230,118,0.5); animation: pulse 1.5s infinite; display:flex; justify-content:center; align-items:center; z-index:10;">
-                    <!-- Green Phone Up Icon -->
-                    <svg width="35" height="35" viewBox="0 0 24 24" fill="white"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-                </button>
-            </div>
-
-            <!-- Active Call Controls (Mute, Video, End) -->
-            <div id="activeControls" style="display:none; gap:25px; margin-bottom:40px; background:rgba(0,0,0,0.5); padding:15px 25px; border-radius:30px; backdrop-filter:blur(10px); z-index:10;">
-                <button id="muteMicBtn" style="width:55px; height:55px; border-radius:50%; background:#444; border:none; cursor:pointer; transition:0.3s; display:flex; justify-content:center; align-items:center;">
-                    <!-- Mic Icon -->
-                    <svg id="micIconSvg" width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
-                </button>
-                <button id="toggleVideoBtn" style="width:55px; height:55px; border-radius:50%; background:#444; border:none; cursor:pointer; transition:0.3s; display:flex; justify-content:center; align-items:center;">
-                     <!-- Camera Icon -->
-                     <svg id="vidIconSvg" width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
-                </button>
-                <button id="endCallBtn" style="width:55px; height:55px; border-radius:50%; background:#ff1744; border:none; cursor:pointer; box-shadow:0 4px 10px rgba(255,23,68,0.4); display:flex; justify-content:center; align-items:center;">
-                    <!-- End Call Icon -->
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
-                </button>
-            </div>
-            <style>@keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.1);} 100% {transform: scale(1);} }</style>
-        </div>
-    `;
-    document.body.appendChild(callOverlay);
-
-    const remoteVideo = document.getElementById('remoteVideo');
-    const localVideo = document.getElementById('localVideo');
-    const liveCallStatus = document.getElementById('liveCallStatus');
-    const incomingControls = document.getElementById('incomingControls');
-    const activeControls = document.getElementById('activeControls');
-    
-    // 2. PeerJS सेटअप
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            if(peer) peer.destroy();
-            peer = new Peer(user.uid);
-            
-            // 3. जब कोई कॉल करे (Incoming Call)
-            peer.on('call', (call) => {
-                currentCall = call;
-                callOverlay.style.display = 'flex';
-                document.getElementById('liveCallName').innerText = "Incoming Call...";
-                liveCallStatus.innerText = "is calling you...";
-                
-                // रिंगटोन बजाना शुरू करें
-                ringtone.play().catch(e => console.log("Ringtone blocked by browser"));
-
-                incomingControls.style.display = 'flex';
-                activeControls.style.display = 'none';
-                remoteVideo.style.display = 'none';
-                localVideo.style.display = 'none';
-
-                clearTimeout(callTimeout);
-                callTimeout = setTimeout(() => { endLiveCall(); }, 60000); 
-                
-                // कॉल उठाना (Accept)
-                document.getElementById('acceptCallBtn').onclick = async () => {
-                    clearTimeout(callTimeout); 
-                    ringtone.pause(); // रिंगटोन बंद
-                    ringtone.currentTime = 0;
-                    
-                    incomingControls.style.display = 'none';
-                    liveCallStatus.innerText = "Connecting...";
-                    
-                    try {
-                        const isVideoCall = call.metadata && call.metadata.type === 'video';
-                        localStream = await navigator.mediaDevices.getUserMedia({ video: isVideoCall, audio: true });
-                        
-                        if(isVideoCall) {
-                            localVideo.srcObject = localStream;
-                            localVideo.style.display = 'block';
-                            document.getElementById('toggleVideoBtn').style.display = 'flex';
-                        } else {
-                            document.getElementById('toggleVideoBtn').style.display = 'none';
-                        }
-                        
-                        call.answer(localStream);
-                        activeControls.style.display = 'flex';
-
-                        call.on('stream', (remoteStream) => {
-                            liveCallStatus.innerText = "";
-                            if (isVideoCall) {
-                                remoteVideo.srcObject = remoteStream;
-                                remoteVideo.style.display = 'block';
-                            } else {
-                                liveCallStatus.innerText = "00:00 - Audio Call Active";
-                            }
-                        });
-                        
-                        call.on('close', endLiveCall);
-                    } catch (err) {
-                        alert("Microphone/Camera permission needed!");
-                        endLiveCall();
-                    }
-                };
-
-                // कॉल काटना (Reject)
-                document.getElementById('rejectCallBtn').onclick = () => {
-                    call.close();
-                    endLiveCall();
-                };
-            });
-        }
-    });
-
-    // 4. किसी को कॉल लगाना (Outgoing Call)
-    window.startLiveCall = async (type) => {
-        const receiverId = window.activeChatUserId;
-        if (!receiverId || !peer) return alert("चैट लोड नहीं हुई या नेटवर्क स्लो है।");
-
-        callOverlay.style.display = 'flex';
-        document.getElementById('liveCallName').innerText = document.getElementById('chatHeaderName').innerText;
-        liveCallStatus.innerText = "Connecting...";
-        
-        incomingControls.style.display = 'none';
-        activeControls.style.display = 'flex'; 
-        remoteVideo.style.display = 'none';
-        localVideo.style.display = 'none';
-
-        try {
-            localStream = await navigator.mediaDevices.getUserMedia({ video: (type === 'video'), audio: true });
-            
-            if(type === 'video') {
-                localVideo.srcObject = localStream;
-                localVideo.style.display = 'block';
-                document.getElementById('toggleVideoBtn').style.display = 'flex';
-            } else {
-                document.getElementById('toggleVideoBtn').style.display = 'none';
-            }
-
-            // रिंगटोन बजाना शुरू करें
-            ringtone.play().catch(e => console.log("Ringtone blocked by browser"));
-
-            currentCall = peer.call(receiverId, localStream, { metadata: { type: type } });
-            
-            setTimeout(() => {
-                if(liveCallStatus.innerText === "Connecting...") {
-                    liveCallStatus.innerText = "Ringing...";
-                }
-            }, 1000);
-
-            clearTimeout(callTimeout);
-            callTimeout = setTimeout(() => {
-                if (currentCall) {
-                    liveCallStatus.innerText = "No Answer";
-                    liveCallStatus.style.color = "#ff1744";
-                    ringtone.pause();
-                    setTimeout(endLiveCall, 2000);
-                }
+                                        }
             }, 60000);
 
             currentCall.on('stream', (remoteStream) => {
@@ -2924,6 +2733,314 @@ fileInput.addEventListener("change", async function(event) {
         
         callOverlay.style.display = 'none';
         remoteVideo.srcObject = null;
+
+         </script>
+
+
+                   <!-- ========================================== -->
+<!-- PART 16: REAL-TIME CALLING (WITH FLIP CAMERA & END CALL FIX) -->
+<!-- ========================================== -->
+<script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+
+<script type="module">
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+    
+    const auth = getAuth();
+    const db = getFirestore();
+    
+    let peer = null;
+    let currentCall = null;
+    let localStream = null;
+    let isAudioMuted = false;
+    let isVideoPaused = false;
+    let callTimeout = null; 
+    let isCallActive = false; 
+    let currentFacingMode = 'user'; // 'user' = Front Camera, 'environment' = Back Camera
+
+    const ringtone = new Audio("https://actions.google.com/sounds/v1/alarms/phone_ringing.ogg");
+    ringtone.loop = true;
+
+    // 1. रियल कॉल के लिए एडवांस्ड फुल-स्क्रीन UI
+    const callOverlay = document.createElement('div');
+    callOverlay.id = "liveCallOverlay";
+    callOverlay.style.cssText = "display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#1a1a1a; z-index:999999; flex-direction:column; color:white; font-family:sans-serif;";
+    
+    callOverlay.innerHTML = `
+        <video id="remoteVideo" autoplay playsinline style="width:100%; height:100%; object-fit:cover; display:none; position:absolute; top:0; left:0;"></video>
+        <video id="localVideo" autoplay playsinline muted style="width:110px; height:150px; object-fit:cover; position:absolute; top:40px; right:20px; border-radius:12px; border:2px solid white; display:none; box-shadow:0 4px 10px rgba(0,0,0,0.5); z-index:2; background:#333;"></video>
+        
+        <div id="callUIBox" style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:space-between; z-index:3; background:linear-gradient(to bottom, rgba(0,0,0,0.7), transparent, rgba(0,0,0,0.9)); pointer-events:none;">
+            
+            <div style="margin-top:50px; text-align:center; pointer-events:auto;">
+                <h2 id="liveCallName" style="font-size:26px; margin:0; font-weight:600; text-shadow: 1px 1px 3px black;">Connecting...</h2>
+                <p id="liveCallStatus" style="color:#00e676; font-size:15px; margin-top:8px; font-weight:bold; letter-spacing:1px;">Ringing...</p>
+            </div>
+            
+            <div id="incomingControls" style="display:none; gap:40px; margin-bottom:60px; pointer-events:auto;">
+                <button id="rejectCallBtn" style="width:70px; height:70px; border-radius:50%; background:#ff1744; border:none; cursor:pointer; box-shadow:0 4px 15px rgba(255,23,68,0.5); display:flex; justify-content:center; align-items:center; z-index:10;">
+                    <svg style="pointer-events:none;" width="35" height="35" viewBox="0 0 24 24" fill="white"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
+                </button>
+                <button id="acceptCallBtn" style="width:70px; height:70px; border-radius:50%; background:#00e676; border:none; cursor:pointer; box-shadow:0 4px 15px rgba(0,230,118,0.5); animation: pulse 1.5s infinite; display:flex; justify-content:center; align-items:center; z-index:10;">
+                    <svg style="pointer-events:none;" width="35" height="35" viewBox="0 0 24 24" fill="white"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                </button>
+            </div>
+
+            <div id="activeControls" style="display:none; gap:15px; margin-bottom:40px; background:rgba(0,0,0,0.5); padding:15px 20px; border-radius:30px; backdrop-filter:blur(10px); z-index:10; pointer-events:auto;">
+                <button id="muteMicBtn" style="width:50px; height:50px; border-radius:50%; background:#444; border:none; cursor:pointer; transition:0.3s; display:flex; justify-content:center; align-items:center;">
+                    <svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
+                </button>
+                <button id="toggleVideoBtn" style="width:50px; height:50px; border-radius:50%; background:#444; border:none; cursor:pointer; transition:0.3s; display:flex; justify-content:center; align-items:center;">
+                     <svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                </button>
+                <!-- नया फ्लिप कैमरा बटन -->
+                <button id="flipCameraBtn" style="width:50px; height:50px; border-radius:50%; background:#444; border:none; cursor:pointer; transition:0.3s; display:none; justify-content:center; align-items:center;">
+                     <svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M20 5h-3.17L15 3H9L7.17 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-8 13c-2.76 0-5-2.24-5-5h2c0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3v-2c2.76 0 5 2.24 5 5s-2.24 5-5 5zm4.5-9H12V7l-4 4 4 4v-2h4.5v-4z"/></svg>
+                </button>
+                <button id="endCallBtn" style="width:50px; height:50px; border-radius:50%; background:#ff1744; border:none; cursor:pointer; box-shadow:0 4px 10px rgba(255,23,68,0.4); display:flex; justify-content:center; align-items:center;">
+                    <svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
+                </button>
+            </div>
+            <style>@keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.1);} 100% {transform: scale(1);} }</style>
+        </div>
+    `;
+    document.body.appendChild(callOverlay);
+
+    const remoteVideo = document.getElementById('remoteVideo');
+    const localVideo = document.getElementById('localVideo');
+    const liveCallStatus = document.getElementById('liveCallStatus');
+    const incomingControls = document.getElementById('incomingControls');
+    const activeControls = document.getElementById('activeControls');
+    
+    // 2. PeerJS सेटअप
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            if(peer) peer.destroy();
+            peer = new Peer(user.uid);
+            
+            // 3. Incoming Call
+            peer.on('call', async (call) => {
+                isCallActive = true;
+                currentCall = call;
+                currentFacingMode = 'user'; // डिफ़ॉल्ट रूप से फ्रंट कैमरा
+                callOverlay.style.display = 'flex';
+                
+                document.getElementById('liveCallName').innerText = "Loading Name...";
+                try {
+                    const callerDoc = await getDoc(doc(db, "users", call.peer));
+                    if(callerDoc.exists() && isCallActive) {
+                        document.getElementById('liveCallName').innerText = callerDoc.data().name || "Unknown User";
+                    }
+                } catch(e) {
+                    document.getElementById('liveCallName').innerText = "Unknown User";
+                }
+
+                liveCallStatus.innerText = "is calling you...";
+                ringtone.play().catch(e => console.log("Ringtone blocked"));
+
+                incomingControls.style.display = 'flex';
+                activeControls.style.display = 'none';
+                remoteVideo.style.display = 'none';
+                localVideo.style.display = 'none';
+
+                clearTimeout(callTimeout);
+                callTimeout = setTimeout(() => { endLiveCall(); }, 60000); 
+                
+                document.getElementById('acceptCallBtn').onclick = async () => {
+                    clearTimeout(callTimeout); 
+                    ringtone.pause(); 
+                    ringtone.currentTime = 0;
+                    
+                    incomingControls.style.display = 'none';
+                    liveCallStatus.innerText = "Connecting...";
+                    
+                    try {
+                        const isVideoCall = call.metadata && call.metadata.type === 'video';
+                        const constraints = { audio: true, video: isVideoCall ? { facingMode: currentFacingMode } : false };
+                        localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                        
+                        if(!isCallActive) {
+                            localStream.getTracks().forEach(t => t.stop());
+                            return;
+                        }
+
+                        if(isVideoCall) {
+                            localVideo.srcObject = localStream;
+                            localVideo.style.display = 'block';
+                            document.getElementById('toggleVideoBtn').style.display = 'flex';
+                            document.getElementById('flipCameraBtn').style.display = 'flex'; // वीडियो कॉल में फ्लिप बटन दिखाएं
+                        } else {
+                            document.getElementById('toggleVideoBtn').style.display = 'none';
+                            document.getElementById('flipCameraBtn').style.display = 'none';
+                        }
+                        
+                        call.answer(localStream);
+                        activeControls.style.display = 'flex';
+
+                        call.on('stream', (remoteStream) => {
+                            liveCallStatus.innerText = "";
+                            if (isVideoCall) {
+                                remoteVideo.srcObject = remoteStream;
+                                remoteVideo.style.display = 'block';
+                            } else {
+                                liveCallStatus.innerText = "00:00 - Audio Call Active";
+                            }
+                        });
+                        
+                        call.on('close', endLiveCall);
+                    } catch (err) {
+                        alert("Microphone/Camera permission needed!");
+                        endLiveCall();
+                    }
+                };
+            });
+        }
+    });
+
+    // 4. Outgoing Call
+    window.startLiveCall = async (type) => {
+        const receiverId = window.activeChatUserId;
+        if (!receiverId || !peer) return alert("चैट लोड नहीं हुई या नेटवर्क स्लो है।");
+
+        isCallActive = true;
+        currentFacingMode = 'user'; // डिफ़ॉल्ट रूप से फ्रंट कैमरा
+        callOverlay.style.display = 'flex';
+        document.getElementById('liveCallName').innerText = document.getElementById('chatHeaderName').innerText;
+        liveCallStatus.innerText = "Connecting...";
+        
+        incomingControls.style.display = 'none';
+        activeControls.style.display = 'flex'; 
+        remoteVideo.style.display = 'none';
+        localVideo.style.display = 'none';
+
+        try {
+            const constraints = { audio: true, video: (type === 'video') ? { facingMode: currentFacingMode } : false };
+            localStream = await navigator.mediaDevices.getUserMedia(constraints);
+            
+            if(!isCallActive) {
+                localStream.getTracks().forEach(t => t.stop());
+                return;
+            }
+
+            if(type === 'video') {
+                localVideo.srcObject = localStream;
+                localVideo.style.display = 'block';
+                document.getElementById('toggleVideoBtn').style.display = 'flex';
+                document.getElementById('flipCameraBtn').style.display = 'flex'; // वीडियो कॉल में फ्लिप बटन दिखाएं
+            } else {
+                document.getElementById('toggleVideoBtn').style.display = 'none';
+                document.getElementById('flipCameraBtn').style.display = 'none';
+            }
+
+            ringtone.play().catch(e => console.log("Ringtone blocked"));
+
+            currentCall = peer.call(receiverId, localStream, { metadata: { type: type } });
+            
+            setTimeout(() => {
+                if(liveCallStatus.innerText === "Connecting..." && isCallActive) {
+                    liveCallStatus.innerText = "Ringing...";
+                }
+            }, 1000);
+
+            clearTimeout(callTimeout);
+            callTimeout = setTimeout(() => {
+                if (currentCall && isCallActive) {
+                    liveCallStatus.innerText = "No Answer";
+                    liveCallStatus.style.color = "#ff1744";
+                    ringtone.pause();
+                    setTimeout(endLiveCall, 2000);
+                }
+            }, 60000);
+
+            currentCall.on('stream', (remoteStream) => {
+                clearTimeout(callTimeout); 
+                ringtone.pause(); 
+                ringtone.currentTime = 0;
+                
+                liveCallStatus.innerText = "";
+                liveCallStatus.style.color = "#00e676";
+                if(type === 'video') {
+                    remoteVideo.srcObject = remoteStream;
+                    remoteVideo.style.display = 'block';
+                } else {
+                    liveCallStatus.innerText = "00:00 - Audio Call Active";
+                }
+            });
+
+            currentCall.on('close', endLiveCall);
+            currentCall.on('error', endLiveCall);
+
+        } catch (err) {
+            alert("Permission denied! Check Camera/Mic settings.");
+            endLiveCall();
+        }
+    };
+
+    // 5. Mute, Video Off, & Flip Camera Controls
+    document.getElementById('muteMicBtn').addEventListener('click', () => {
+        if(localStream && localStream.getAudioTracks().length > 0) {
+            isAudioMuted = !isAudioMuted;
+            localStream.getAudioTracks()[0].enabled = !isAudioMuted;
+            document.getElementById('muteMicBtn').style.background = isAudioMuted ? "#ff1744" : "#444";
+        }
+    });
+
+    document.getElementById('toggleVideoBtn').addEventListener('click', () => {
+        if(localStream && localStream.getVideoTracks().length > 0) {
+            isVideoPaused = !isVideoPaused;
+            localStream.getVideoTracks()[0].enabled = !isVideoPaused;
+            document.getElementById('toggleVideoBtn').style.background = isVideoPaused ? "#ff1744" : "#444";
+        }
+    });
+
+    // कैमरा पलटने का जादुई कोड
+    document.getElementById('flipCameraBtn').addEventListener('click', async () => {
+        if(!localStream || !currentCall) return;
+        
+        currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+        
+        try {
+            const newStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: currentFacingMode },
+                audio: false
+            });
+            
+            const newVideoTrack = newStream.getVideoTracks()[0];
+            
+            // सामने वाले के पास जा रही वीडियो स्ट्रीम को अपडेट करना
+            const sender = currentCall.peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
+            if(sender) {
+                sender.replaceTrack(newVideoTrack);
+            }
+            
+            // अपनी स्क्रीन पर पुरानी वीडियो हटाकर नई वीडियो दिखाना
+            const oldVideoTrack = localStream.getVideoTracks()[0];
+            localStream.removeTrack(oldVideoTrack);
+            oldVideoTrack.stop();
+            
+            localStream.addTrack(newVideoTrack);
+            localVideo.srcObject = localStream;
+            
+        } catch(err) {
+            console.log("Error flipping camera: ", err);
+        }
+    });
+
+    // 6. कॉल काटना (100% वर्किंग)
+    const endLiveCall = () => {
+        isCallActive = false;
+        clearTimeout(callTimeout); 
+        ringtone.pause(); 
+        ringtone.currentTime = 0;
+        
+        try { if (currentCall) currentCall.close(); } catch(e){}
+        currentCall = null;
+        
+        try { if (localStream) localStream.getTracks().forEach(track => track.stop()); } catch(e){}
+        localStream = null;
+        
+        callOverlay.style.display = 'none';
+        remoteVideo.srcObject = null;
         localVideo.srcObject = null;
         
         isAudioMuted = false;
@@ -2933,11 +3050,15 @@ fileInput.addEventListener("change", async function(event) {
         liveCallStatus.style.color = "#00e676"; 
     };
     
-    // यह है वो फिक्स जिससे आप कॉल काट पाएंगे
-    document.getElementById('endCallBtn').onclick = (e) => {
-        e.preventDefault(); // एक्स्ट्रा क्लिक ब्लॉक करने के लिए
+    document.getElementById('endCallBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
         endLiveCall();
-    };
+    });
+    
+    document.getElementById('rejectCallBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        endLiveCall();
+    });
 
     // 7. हेडर बटनों को कनेक्ट करना
     setTimeout(() => {
@@ -2954,5 +3075,5 @@ fileInput.addEventListener("change", async function(event) {
         }
     }, 3500);
 
-                           </script>
-                           
+</script>
+
