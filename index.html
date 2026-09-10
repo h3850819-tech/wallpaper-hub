@@ -2670,8 +2670,8 @@ fileInput.addEventListener("change", async function(event) {
 </script>
 
 
-<!-- ========================================== -->
-<!-- PART 16: REAL-TIME ADVANCED CALLING (WITH 60s TIMEOUT & RINGING STATUS) -->
+    <!-- ========================================== -->
+<!-- PART 16: REAL-TIME CALLING (WITH RINGTONE & HD BUTTONS) -->
 <!-- ========================================== -->
 <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
 
@@ -2684,9 +2684,11 @@ fileInput.addEventListener("change", async function(event) {
     let localStream = null;
     let isAudioMuted = false;
     let isVideoPaused = false;
-    
-    // 60 सेकंड कॉल कटने का टाइमर
     let callTimeout = null; 
+
+    // रिंगटोन सेटअप (Google की असली रिंगटोन)
+    const ringtone = new Audio("https://actions.google.com/sounds/v1/alarms/phone_ringing.ogg");
+    ringtone.loop = true;
 
     // 1. रियल कॉल के लिए एडवांस्ड फुल-स्क्रीन UI
     const callOverlay = document.createElement('div');
@@ -2704,15 +2706,32 @@ fileInput.addEventListener("change", async function(event) {
                 <p id="liveCallStatus" style="color:#00e676; font-size:15px; margin-top:8px; font-weight:bold; letter-spacing:1px;">Connecting...</p>
             </div>
             
+            <!-- Incoming Call Buttons (Accept / Reject) -->
             <div id="incomingControls" style="display:none; gap:40px; margin-bottom:60px;">
-                <button id="rejectCallBtn" style="width:70px; height:70px; border-radius:50%; background:#ff1744; border:none; font-size:28px; cursor:pointer; box-shadow:0 4px 15px rgba(255,23,68,0.5);">📞</button>
-                <button id="acceptCallBtn" style="width:70px; height:70px; border-radius:50%; background:#00e676; border:none; font-size:28px; cursor:pointer; box-shadow:0 4px 15px rgba(0,230,118,0.5); animation: pulse 1.5s infinite;">📞</button>
+                <button id="rejectCallBtn" style="width:70px; height:70px; border-radius:50%; background:#ff1744; border:none; cursor:pointer; box-shadow:0 4px 15px rgba(255,23,68,0.5); display:flex; justify-content:center; align-items:center; z-index:10;">
+                    <!-- Red Phone Down Icon -->
+                    <svg width="35" height="35" viewBox="0 0 24 24" fill="white"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
+                </button>
+                <button id="acceptCallBtn" style="width:70px; height:70px; border-radius:50%; background:#00e676; border:none; cursor:pointer; box-shadow:0 4px 15px rgba(0,230,118,0.5); animation: pulse 1.5s infinite; display:flex; justify-content:center; align-items:center; z-index:10;">
+                    <!-- Green Phone Up Icon -->
+                    <svg width="35" height="35" viewBox="0 0 24 24" fill="white"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                </button>
             </div>
 
-            <div id="activeControls" style="display:none; gap:25px; margin-bottom:40px; background:rgba(0,0,0,0.5); padding:15px 25px; border-radius:30px; backdrop-filter:blur(10px);">
-                <button id="muteMicBtn" style="width:50px; height:50px; border-radius:50%; background:#444; border:none; font-size:20px; color:white; cursor:pointer; transition:0.3s;">🎤</button>
-                <button id="toggleVideoBtn" style="width:50px; height:50px; border-radius:50%; background:#444; border:none; font-size:20px; color:white; cursor:pointer; transition:0.3s;">📷</button>
-                <button id="endCallBtn" style="width:50px; height:50px; border-radius:50%; background:#ff1744; border:none; font-size:22px; color:white; cursor:pointer; box-shadow:0 4px 10px rgba(255,23,68,0.4);">🛑</button>
+            <!-- Active Call Controls (Mute, Video, End) -->
+            <div id="activeControls" style="display:none; gap:25px; margin-bottom:40px; background:rgba(0,0,0,0.5); padding:15px 25px; border-radius:30px; backdrop-filter:blur(10px); z-index:10;">
+                <button id="muteMicBtn" style="width:55px; height:55px; border-radius:50%; background:#444; border:none; cursor:pointer; transition:0.3s; display:flex; justify-content:center; align-items:center;">
+                    <!-- Mic Icon -->
+                    <svg id="micIconSvg" width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
+                </button>
+                <button id="toggleVideoBtn" style="width:55px; height:55px; border-radius:50%; background:#444; border:none; cursor:pointer; transition:0.3s; display:flex; justify-content:center; align-items:center;">
+                     <!-- Camera Icon -->
+                     <svg id="vidIconSvg" width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                </button>
+                <button id="endCallBtn" style="width:55px; height:55px; border-radius:50%; background:#ff1744; border:none; cursor:pointer; box-shadow:0 4px 10px rgba(255,23,68,0.4); display:flex; justify-content:center; align-items:center;">
+                    <!-- End Call Icon -->
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
+                </button>
             </div>
             <style>@keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.1);} 100% {transform: scale(1);} }</style>
         </div>
@@ -2738,20 +2757,23 @@ fileInput.addEventListener("change", async function(event) {
                 document.getElementById('liveCallName').innerText = "Incoming Call...";
                 liveCallStatus.innerText = "is calling you...";
                 
+                // रिंगटोन बजाना शुरू करें
+                ringtone.play().catch(e => console.log("Ringtone blocked by browser"));
+
                 incomingControls.style.display = 'flex';
                 activeControls.style.display = 'none';
                 remoteVideo.style.display = 'none';
                 localVideo.style.display = 'none';
 
-                // अगर 60 सेकंड तक फोन नहीं उठाया, तो मिस कॉल मानकर काट दो
                 clearTimeout(callTimeout);
-                callTimeout = setTimeout(() => {
-                    endLiveCall();
-                }, 60000); 
+                callTimeout = setTimeout(() => { endLiveCall(); }, 60000); 
                 
                 // कॉल उठाना (Accept)
                 document.getElementById('acceptCallBtn').onclick = async () => {
-                    clearTimeout(callTimeout); // उठाते ही टाइमर बंद
+                    clearTimeout(callTimeout); 
+                    ringtone.pause(); // रिंगटोन बंद
+                    ringtone.currentTime = 0;
+                    
                     incomingControls.style.display = 'none';
                     liveCallStatus.innerText = "Connecting...";
                     
@@ -2762,7 +2784,7 @@ fileInput.addEventListener("change", async function(event) {
                         if(isVideoCall) {
                             localVideo.srcObject = localStream;
                             localVideo.style.display = 'block';
-                            document.getElementById('toggleVideoBtn').style.display = 'block';
+                            document.getElementById('toggleVideoBtn').style.display = 'flex';
                         } else {
                             document.getElementById('toggleVideoBtn').style.display = 'none';
                         }
@@ -2803,8 +2825,6 @@ fileInput.addEventListener("change", async function(event) {
 
         callOverlay.style.display = 'flex';
         document.getElementById('liveCallName').innerText = document.getElementById('chatHeaderName').innerText;
-        
-        // कॉल मिलाते समय शुरुआत में Connecting दिखेगा
         liveCallStatus.innerText = "Connecting...";
         
         incomingControls.style.display = 'none';
@@ -2818,34 +2838,37 @@ fileInput.addEventListener("change", async function(event) {
             if(type === 'video') {
                 localVideo.srcObject = localStream;
                 localVideo.style.display = 'block';
-                document.getElementById('toggleVideoBtn').style.display = 'block';
+                document.getElementById('toggleVideoBtn').style.display = 'flex';
             } else {
                 document.getElementById('toggleVideoBtn').style.display = 'none';
             }
 
-            // कॉल सर्वर पर जाने के बाद Ringing दिखाना 
+            // रिंगटोन बजाना शुरू करें
+            ringtone.play().catch(e => console.log("Ringtone blocked by browser"));
+
             currentCall = peer.call(receiverId, localStream, { metadata: { type: type } });
             
-            // थोड़ी सी देरी (Delay) ताकि असली Ringing वाला फील आए
             setTimeout(() => {
                 if(liveCallStatus.innerText === "Connecting...") {
                     liveCallStatus.innerText = "Ringing...";
                 }
             }, 1000);
 
-            // 60 सेकंड का रिंगिंग टाइमर
             clearTimeout(callTimeout);
             callTimeout = setTimeout(() => {
                 if (currentCall) {
                     liveCallStatus.innerText = "No Answer";
                     liveCallStatus.style.color = "#ff1744";
-                    // 2 सेकंड तक "No Answer" दिखाकर कॉल काट देना
+                    ringtone.pause();
                     setTimeout(endLiveCall, 2000);
                 }
             }, 60000);
 
             currentCall.on('stream', (remoteStream) => {
-                clearTimeout(callTimeout); // सामने वाले ने कॉल उठा ली तो टाइमर बंद
+                clearTimeout(callTimeout); 
+                ringtone.pause(); // सामने वाले ने उठा ली, रिंगटोन बंद
+                ringtone.currentTime = 0;
+                
                 liveCallStatus.innerText = "";
                 liveCallStatus.style.color = "#00e676";
                 if(type === 'video') {
@@ -2871,7 +2894,6 @@ fileInput.addEventListener("change", async function(event) {
             isAudioMuted = !isAudioMuted;
             localStream.getAudioTracks()[0].enabled = !isAudioMuted;
             const btn = document.getElementById('muteMicBtn');
-            btn.innerText = isAudioMuted ? "🔇" : "🎤";
             btn.style.background = isAudioMuted ? "#ff1744" : "#444";
         }
     });
@@ -2881,30 +2903,41 @@ fileInput.addEventListener("change", async function(event) {
             isVideoPaused = !isVideoPaused;
             localStream.getVideoTracks()[0].enabled = !isVideoPaused;
             const btn = document.getElementById('toggleVideoBtn');
-            btn.innerText = isVideoPaused ? "🚫" : "📷";
             btn.style.background = isVideoPaused ? "#ff1744" : "#444";
         }
     });
 
-    // 6. कॉल काटना (End Call)
+    // 6. कॉल काटना (End Call) - अब अपनी तरफ से भी कटेगी 100%
     const endLiveCall = () => {
-        clearTimeout(callTimeout); // टाइमर रीसेट करना
-        if (currentCall) currentCall.close();
-        if (localStream) localStream.getTracks().forEach(track => track.stop()); 
+        clearTimeout(callTimeout); 
+        ringtone.pause(); 
+        ringtone.currentTime = 0;
+        
+        if (currentCall) {
+            currentCall.close();
+            currentCall = null;
+        }
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop()); 
+            localStream = null;
+        }
+        
         callOverlay.style.display = 'none';
         remoteVideo.srcObject = null;
         localVideo.srcObject = null;
         
-        // UI Reset
         isAudioMuted = false;
         isVideoPaused = false;
-        document.getElementById('muteMicBtn').innerText = "🎤";
         document.getElementById('muteMicBtn').style.background = "#444";
-        document.getElementById('toggleVideoBtn').innerText = "📷";
         document.getElementById('toggleVideoBtn').style.background = "#444";
-        liveCallStatus.style.color = "#00e676"; // रंग वापस हरा कर देना
+        liveCallStatus.style.color = "#00e676"; 
     };
-    document.getElementById('endCallBtn').addEventListener('click', endLiveCall);
+    
+    // यह है वो फिक्स जिससे आप कॉल काट पाएंगे
+    document.getElementById('endCallBtn').onclick = (e) => {
+        e.preventDefault(); // एक्स्ट्रा क्लिक ब्लॉक करने के लिए
+        endLiveCall();
+    };
 
     // 7. हेडर बटनों को कनेक्ट करना
     setTimeout(() => {
@@ -2921,4 +2954,5 @@ fileInput.addEventListener("change", async function(event) {
         }
     }, 3500);
 
-</script>
+                           </script>
+                           
