@@ -3576,3 +3576,151 @@ fileInput.addEventListener("change", async function(event) {
     }, 5000);
 
 </script>
+   <!-- ========================================== -->
+<!-- PART 23: SMART CHAT SORTING & STRICT PRESENCE FIX -->
+<!-- ========================================== -->
+<script type="module">
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+    import { getFirestore, doc, updateDoc, serverTimestamp, collection, query, where, onSnapshot, orderBy, limit, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+    const auth = getAuth();
+    const db = getFirestore();
+
+    let chatListeners23 = {};
+    let friendsDataMap23 = {};
+
+    // 1. खुद को सख्ती से (Strictly) ऑफलाइन करने का सिस्टम
+    onAuthStateChanged(auth, (user) => {
+        if (!user) return;
+
+        const userRef = doc(db, "users", user.uid);
+        const setOffline = () => updateDoc(userRef, { isOnline: false, lastSeen: serverTimestamp() }).catch(()=>{});
+        const setOnline = () => updateDoc(userRef, { isOnline: true, lastSeen: serverTimestamp() }).catch(()=>{});
+
+        // जब भी स्क्रीन बंद हो या मिनिमाइज़ हो, तुरंत ऑफलाइन करें
+        window.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') setOnline();
+            else setOffline();
+        });
+        window.addEventListener('pagehide', setOffline);
+        window.addEventListener('beforeunload', setOffline);
+
+        // ==========================================
+        // 2. WhatsApp स्टाइल स्मार्ट सॉर्टिंग (New Message on Top)
+        // ==========================================
+        const reqQuery = query(collection(db, "friend_requests"), where("status", "==", "accepted"));
+        
+        onSnapshot(reqQuery, (snapshot) => {
+            snapshot.forEach(docSnap => {
+                const req = docSnap.data();
+                const friendId = req.senderId === user.uid ? req.receiverId : req.senderId;
+                
+                // अगर इस दोस्त का जासूस पहले से नहीं बैठा है
+                if(!chatListeners23[friendId]) {
+                    getDoc(doc(db, "users", friendId)).then(friendSnap => {
+                        if(friendSnap.exists()) {
+                            const friendInfo = friendSnap.data();
+                            const chatId = user.uid < friendId ? `${user.uid}_${friendId}` : `${friendId}_${user.uid}`;
+                            
+                            // इस चैट के सबसे आखिरी (लेटेस्ट) मैसेज को ट्रैक करें
+                            const msgQ = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "desc"), limit(1));
+                            
+                            chatListeners23[friendId] = onSnapshot(msgQ, (msgSnap) => {
+                                let lastMsgTime = 0;
+                                if (!msgSnap.empty) {
+                                    const msgData = msgSnap.docs[0].data();
+                                    lastMsgTime = msgData.timestamp ? msgData.timestamp.toMillis() : 0;
+                                }
+                                
+                                // दोस्त का डेटा और मैसेज टाइम सेव करें
+                                friendsDataMap23[friendId] = {
+                                    id: friendId,
+                                    info: friendInfo,
+                                    time: lastMsgTime
+                                };
+                                
+                                renderSortedChats23(); // लिस्ट को अपडेट करें
+                            });
+                        }
+                    });
+                }
+            });
+        });
+    });
+
+    // दोस्तों की लिस्ट को टाइम के हिसाब से रेंडर करने का फंक्शन
+    function renderSortedChats23() {
+        const myChatsContainer = document.getElementById('myChatsContainer');
+        if(!myChatsContainer) return;
+
+        // जिसके आखिरी मैसेज का टाइम सबसे ज़्यादा (नया) है, वो सबसे ऊपर जाएगा
+        const sortedFriends = Object.values(friendsDataMap23).sort((a, b) => b.time - a.time);
+        
+        myChatsContainer.innerHTML = '';
+        if(sortedFriends.length === 0) {
+            myChatsContainer.innerHTML = '<p style="font-size: 13px; color: #718096; text-align: center;">No chats yet</p>';
+            return;
+        }
+        
+        sortedFriends.forEach(f => {
+            myChatsContainer.innerHTML += `
+                <div class="member-item" style="cursor:pointer; border-left: 4px solid #3182ce; margin-bottom: 10px; transition: 0.3s;" onclick="openChat('${f.info.username}', '${f.info.dp}', '${f.id}')">
+                    <div class="member-left">
+                        <img src="${f.info.dp}" alt="User" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;">
+                        <div class="member-name" style="text-transform: capitalize; font-weight: 600; color: #2d3748;">
+                            ${f.info.username}
+                        </div>
+                    </div>
+                    <button class="btn-small accept-btn" style="background:#3182ce;">Message</button>
+                </div>
+            `;
+        });
+    }
+
+    // ==========================================
+    // 3. सटीक ऑनलाइन/ऑफलाइन दिखाने का फिक्स
+    // ==========================================
+    const originalOpenChat23 = window.openChat;
+    window.openChat = function(name, dp, receiverId) {
+        if(originalOpenChat23) originalOpenChat23(name, dp, receiverId);
+        window.activeChatUserId = receiverId;
+
+        if (receiverId && auth.currentUser) {
+            if(window.statusUnsub23) window.statusUnsub23(); // पुराना ट्रैकर बंद करें
+            
+            // सामने वाले का लाइव स्टेटस ट्रैक करें
+            window.statusUnsub23 = onSnapshot(doc(db, "users", receiverId), (docSnap) => {
+                const finalStatus = document.getElementById('finalStatus20') || document.getElementById('chatHeaderStatus');
+                if(docSnap.exists() && finalStatus) {
+                    const data = docSnap.data();
+                    
+                    // अगर टाइपिंग चल रही है तो उसे मत छेड़ो
+                    if(finalStatus.innerText.includes("Typing")) return;
+                    
+                    if(data.isOnline) {
+                        finalStatus.innerText = "Online";
+                        finalStatus.style.color = "#00e676";
+                    } else {
+                        // बंदा पक्का ऑफलाइन है, उसका टाइम दिखाओ
+                        if(data.lastSeen) {
+                            const date = data.lastSeen.toDate();
+                            const timeStr = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                            const today = new Date();
+                            const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+                            
+                            let dateStr = "";
+                            if(date.toDateString() === today.toDateString()) dateStr = "today";
+                            else if(date.toDateString() === yesterday.toDateString()) dateStr = "yesterday";
+                            else dateStr = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+                            finalStatus.innerText = `last seen ${dateStr} at ${timeStr}`;
+                        } else {
+                            finalStatus.innerText = "Offline";
+                        }
+                        finalStatus.style.color = "#cbd5e0"; // हल्का ग्रे कलर
+                    }
+                }
+            });
+        }
+    };
+</script>
