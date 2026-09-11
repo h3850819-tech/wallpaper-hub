@@ -4186,42 +4186,51 @@ fileInput.addEventListener("change", async function(event) {
 </script>
 
 <!-- ========================================== -->
-<!-- PART 28: ULTRA 3D GLOSSY SEND BUTTON FIX -->
+<!-- PART 28: PREMIUM GOLD & DARK BLUE SEND BUTTON -->
 <!-- ========================================== -->
 <script type="module">
     setTimeout(() => {
         const sendBtn = document.getElementById('sendMsgBtn');
         if (sendBtn) {
-            // यह कोड पुराने सेंड बटन को हटाकर नया 3D एरो लगा देगा
+            // डार्क ब्लू मेटैलिक बेस और गोल्डन 3D डिज़ाइन
             sendBtn.innerHTML = `
-            <svg width="42" height="42" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(3px 5px 6px rgba(0,0,0,0.5)); transform: rotate(-5deg);">
+            <svg width="45" height="45" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 5px 8px rgba(0,0,0,0.5)); transition: transform 0.2s;">
                 <defs>
-                    <!-- 3D कलर ग्रेडिएंट (Purple -> Orange -> Green) -->
-                    <linearGradient id="arrow3DGrad" x1="0%" y1="50%" x2="100%" y2="50%">
-                        <stop offset="0%" stop-color="#800080" />  <!-- पर्पल (Purple) -->
-                        <stop offset="50%" stop-color="#FF8C00" /> <!-- ऑरेंज (Orange) -->
-                        <stop offset="100%" stop-color="#00FF00" /> <!-- ग्रीन (Green) -->
+                    <!-- डार्क मेटैलिक ब्लू बैकग्राउंड -->
+                    <linearGradient id="bgDark" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#2a3342" />
+                        <stop offset="50%" stop-color="#181d26" />
+                        <stop offset="100%" stop-color="#0a0c10" />
                     </linearGradient>
                     
-                    <!-- कांच जैसी चमक (Glassy Shine Overlay) -->
-                    <linearGradient id="shineGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="rgba(255,255,255,0.8)" />
-                        <stop offset="40%" stop-color="rgba(255,255,255,0.1)" />
-                        <stop offset="100%" stop-color="rgba(255,255,255,0)" />
+                    <!-- गोल्डन रिम/बॉर्डर -->
+                    <linearGradient id="goldRim" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#f8e596" />
+                        <stop offset="25%" stop-color="#c19b44" />
+                        <stop offset="50%" stop-color="#e8c766" />
+                        <stop offset="75%" stop-color="#8a6723" />
+                        <stop offset="100%" stop-color="#f8e596" />
                     </linearGradient>
+
+                    <!-- चमकता हुआ गोल्डन पेपर प्लेन -->
+                    <linearGradient id="goldPlane" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#fff2c8" />
+                        <stop offset="40%" stop-color="#d4af37" />
+                        <stop offset="100%" stop-color="#8a6723" />
+                    </linearGradient>
+
+                    <!-- गोल्डन ग्लो इफ़ेक्ट (Shadow) -->
+                    <filter id="goldGlow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#d4af37" flood-opacity="0.6"/>
+                    </filter>
                 </defs>
                 
-                <!-- असली फोटो जैसा कर्व्ड (Curved) शेप -->
-                <path d="M15,25 C35,40 35,60 15,75 C45,65 60,70 60,70 L60,85 L95,50 L60,15 L60,30 C60,30 45,35 15,25 Z" 
-                      fill="url(#arrow3DGrad)" 
-                      stroke="#ffffff" 
-                      stroke-width="1.5"/>
-                      
-                <!-- चमक (Shine) की लेयर -->
-                <path d="M18,28 C32,40 32,50 20,60 C40,55 55,58 55,58 L55,38 C55,38 40,32 18,28 Z" 
-                      fill="url(#shineGrad)"/>
+                <!-- बटन का डार्क बेस और गोल्डन बॉर्डर -->
+                <rect x="2" y="2" width="46" height="46" rx="14" fill="url(#bgDark)" stroke="url(#goldRim)" stroke-width="1.5"/>
+                
+                <!-- गोल्डन पेपर प्लेन (Telegram Style) -->
+                <path d="M14 23 L36 12 L27 34 L22 27 L31 18 L18 25 Z" fill="url(#goldPlane)" filter="url(#goldGlow)"/>
             </svg>`;
         }
-    }, 4000); // 4 सेकंड का डिले ताकि यह पुराने सारे डिज़ाइन को ओवरराइड कर दे
+    }, 4000); // 4 सेकंड का डिले ताकि यह आराम से पुराने डिज़ाइन को ओवरराइड कर दे
 </script>
-
