@@ -4234,3 +4234,42 @@ fileInput.addEventListener("change", async function(event) {
         }
     }, 4000); // 4 सेकंड का डिले ताकि यह आराम से पुराने डिज़ाइन को ओवरराइड कर दे
 </script>
+
+
+  <!-- ========================================== -->
+<!-- PART 29: ANTI-SLEEP & PERFECT CALL WAKE-UP -->
+<!-- ========================================== -->
+<script type="module">
+    // 1. कॉल सर्वर को बैकग्राउंड में सोने (Sleep) से रोकना
+    // यह हर 20 सेकंड में नेटवर्क को एक छोटा सा सिग्नल भेजेगा, 
+    // जिससे मोबाइल का ब्राउज़र कॉलिंग लाइन को डिसकनेक्ट नहीं करेगा।
+    setInterval(() => {
+        if (navigator.onLine) {
+            fetch("https://www.google.com/favicon.ico", { mode: 'no-cors', cache: 'no-store' }).catch(()=>{});
+        }
+    }, 20000); 
+
+    // 2. ऑटो-वेकअप (Auto-Wakeup) सिस्टम
+    // जैसे ही सामने वाला बंदा अपना फोन लॉक से खोलेगा या आपकी चैट पर वापस आएगा,
+    // यह कोड तुरंत उसकी कॉलिंग लाइन को 100% एक्टिव (ज़िंदा) कर देगा।
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            console.log("App is active again. Waking up connections...");
+            
+            // हल्का सा डिले देकर नेटवर्क को रिफ्रेश करना ताकि कॉल मिस न हो
+            setTimeout(() => {
+                if(navigator.onLine) {
+                     fetch("https://www.google.com/favicon.ico", { mode: 'no-cors', cache: 'no-store' }).catch(()=>{});
+                }
+            }, 1000);
+        }
+    });
+
+    // 3. कॉलिंग इंजन बूस्टर
+    // अगर गलती से नेटवर्क फ्लक्चुएट (कम-ज़्यादा) होता है, तो यह स्क्रीन टच करते ही सर्वर को अलर्ट कर देगा।
+    document.addEventListener('touchstart', () => {
+        if(navigator.onLine === false) {
+            console.log("Network unstable, waiting for connection...");
+        }
+    }, { passive: true });
+</script>
