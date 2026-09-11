@@ -4184,3 +4184,44 @@ fileInput.addEventListener("change", async function(event) {
         }
     }, 500);
 </script>
+
+<!-- ========================================== -->
+<!-- PART 28: ULTRA 3D GLOSSY SEND BUTTON FIX -->
+<!-- ========================================== -->
+<script type="module">
+    setTimeout(() => {
+        const sendBtn = document.getElementById('sendMsgBtn');
+        if (sendBtn) {
+            // यह कोड पुराने सेंड बटन को हटाकर नया 3D एरो लगा देगा
+            sendBtn.innerHTML = `
+            <svg width="42" height="42" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(3px 5px 6px rgba(0,0,0,0.5)); transform: rotate(-5deg);">
+                <defs>
+                    <!-- 3D कलर ग्रेडिएंट (Purple -> Orange -> Green) -->
+                    <linearGradient id="arrow3DGrad" x1="0%" y1="50%" x2="100%" y2="50%">
+                        <stop offset="0%" stop-color="#800080" />  <!-- पर्पल (Purple) -->
+                        <stop offset="50%" stop-color="#FF8C00" /> <!-- ऑरेंज (Orange) -->
+                        <stop offset="100%" stop-color="#00FF00" /> <!-- ग्रीन (Green) -->
+                    </linearGradient>
+                    
+                    <!-- कांच जैसी चमक (Glassy Shine Overlay) -->
+                    <linearGradient id="shineGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="rgba(255,255,255,0.8)" />
+                        <stop offset="40%" stop-color="rgba(255,255,255,0.1)" />
+                        <stop offset="100%" stop-color="rgba(255,255,255,0)" />
+                    </linearGradient>
+                </defs>
+                
+                <!-- असली फोटो जैसा कर्व्ड (Curved) शेप -->
+                <path d="M15,25 C35,40 35,60 15,75 C45,65 60,70 60,70 L60,85 L95,50 L60,15 L60,30 C60,30 45,35 15,25 Z" 
+                      fill="url(#arrow3DGrad)" 
+                      stroke="#ffffff" 
+                      stroke-width="1.5"/>
+                      
+                <!-- चमक (Shine) की लेयर -->
+                <path d="M18,28 C32,40 32,50 20,60 C40,55 55,58 55,58 L55,38 C55,38 40,32 18,28 Z" 
+                      fill="url(#shineGrad)"/>
+            </svg>`;
+        }
+    }, 4000); // 4 सेकंड का डिले ताकि यह पुराने सारे डिज़ाइन को ओवरराइड कर दे
+</script>
+
