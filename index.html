@@ -3849,3 +3849,185 @@ fileInput.addEventListener("change", async function(event) {
     }, 2000);
 </script>
 
+
+  <!-- ========================================== -->
+<!-- PART 25: APPLE iOS PREMIUM CALL UI OVERRIDE -->
+<!-- ========================================== -->
+<style>
+    /* iOS Style Background Blur */
+    .ios-call-bg {
+        background: rgba(15, 15, 15, 0.98) !important;
+        backdrop-filter: blur(25px);
+    }
+    
+    /* 3x2 Grid for Active Call */
+    .ios-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 25px 40px;
+        margin-bottom: 50px;
+    }
+    
+    .ios-icon-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: transparent;
+        border: none;
+        color: white;
+        cursor: pointer;
+    }
+    
+    .ios-icon-circle {
+        width: 65px;
+        height: 65px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.2s;
+    }
+    
+    .ios-icon-btn:active .ios-icon-circle {
+        background: rgba(255, 255, 255, 0.4);
+    }
+    
+    .ios-icon-text {
+        font-size: 13px;
+        font-weight: 400;
+        letter-spacing: 0.5px;
+        color: #e0e0e0;
+    }
+
+    .ios-action-text {
+        font-size: 16px;
+        margin-top: 12px;
+        font-weight: 400;
+        color: white;
+    }
+</style>
+
+<script type="module">
+    setTimeout(() => {
+        const callOverlay = document.getElementById('finalCallOverlay22');
+        const activeControls = document.getElementById('activeControls22');
+        const incomingControls = document.getElementById('incomingControls22');
+        const callBox = document.getElementById('callUIBox22');
+
+        if(callOverlay && activeControls && incomingControls && callBox) {
+            
+            // 1. बैकग्राउंड को Apple जैसा डार्क और ब्लर बनाना
+            callBox.classList.add('ios-call-bg');
+
+            // 2. 6 बटनों वाला ग्रिड (Mute, Keypad, Audio, Add Call, FaceTime, Contacts)
+            const gridHtml = `
+                <div class="ios-grid">
+                    <!-- Mute Button -->
+                    <button id="iosMuteBtn" class="ios-icon-btn">
+                        <div class="ios-icon-circle" id="muteCircle"><svg width="28" height="28" fill="white" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg></div>
+                        <span class="ios-icon-text">mute</span>
+                    </button>
+                    <!-- Keypad Button -->
+                    <button class="ios-icon-btn" onclick="alert('Keypad is locked for security.')">
+                        <div class="ios-icon-circle"><svg width="26" height="26" fill="white" viewBox="0 0 24 24"><path d="M4 4h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 10h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 16h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4z"/></svg></div>
+                        <span class="ios-icon-text">keypad</span>
+                    </button>
+                    <!-- Audio Button -->
+                    <button class="ios-icon-btn">
+                        <div class="ios-icon-circle"><svg width="28" height="28" fill="white" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></div>
+                        <span class="ios-icon-text">audio</span>
+                    </button>
+                    <!-- Add Call Button -->
+                    <button class="ios-icon-btn" onclick="alert('Group calling coming soon!')">
+                        <div class="ios-icon-circle"><b style="font-size:32px; font-weight:300; margin-top:-4px;">+</b></div>
+                        <span class="ios-icon-text">add call</span>
+                    </button>
+                    <!-- Video (FaceTime) Button -->
+                    <button id="iosVideoBtn" class="ios-icon-btn">
+                        <div class="ios-icon-circle" id="videoCircle"><svg width="28" height="28" fill="white" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg></div>
+                        <span class="ios-icon-text">FaceTime</span>
+                    </button>
+                    <!-- Contacts Button -->
+                    <button class="ios-icon-btn">
+                        <div class="ios-icon-circle"><svg width="26" height="26" fill="white" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+                        <span class="ios-icon-text">contacts</span>
+                    </button>
+                </div>
+            `;
+
+            // Active Call Screen Design Override
+            const endBtn = document.getElementById('endCallBtn22');
+            activeControls.style.background = 'transparent';
+            activeControls.style.boxShadow = 'none';
+            activeControls.style.flexDirection = 'column';
+            
+            // ग्रिड और लाल बटन सेट करना
+            activeControls.innerHTML = gridHtml;
+            const endWrapper = document.createElement('div');
+            endWrapper.style.cssText = "display:flex; justify-content:center; width:100%;";
+            
+            endBtn.style.cssText = "width:75px; height:75px; border-radius:50%; background:#FF3B30; display:flex; justify-content:center; align-items:center; border:none; cursor:pointer;";
+            endBtn.innerHTML = `<svg width="38" height="38" fill="white" viewBox="0 0 24 24" style="transform: rotate(135deg);"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>`;
+            
+            endWrapper.appendChild(endBtn);
+            activeControls.appendChild(endWrapper);
+
+            // 3. Incoming Call Design Override (Decline / Accept)
+            incomingControls.style.gap = "80px";
+            const rejectBtn = document.getElementById('rejectCallBtn22');
+            const acceptBtn = document.getElementById('acceptCallBtn22');
+
+            rejectBtn.style.cssText = "width:75px; height:75px; border-radius:50%; background:#FF3B30; display:flex; justify-content:center; align-items:center; border:none; cursor:pointer;";
+            rejectBtn.innerHTML = `<svg width="38" height="38" fill="white" viewBox="0 0 24 24" style="transform: rotate(135deg);"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>`;
+            
+            acceptBtn.style.cssText = "width:75px; height:75px; border-radius:50%; background:#34C759; display:flex; justify-content:center; align-items:center; border:none; cursor:pointer; animation: pulse 2s infinite;";
+            acceptBtn.innerHTML = `<svg width="38" height="38" fill="white" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>`;
+
+            const rejectWrapper = document.createElement('div');
+            rejectWrapper.className = 'ios-icon-btn';
+            rejectBtn.parentNode.insertBefore(rejectWrapper, rejectBtn);
+            rejectWrapper.appendChild(rejectBtn);
+            rejectWrapper.insertAdjacentHTML('beforeend', '<span class="ios-action-text">Decline</span>');
+
+            const acceptWrapper = document.createElement('div');
+            acceptWrapper.className = 'ios-icon-btn';
+            acceptBtn.parentNode.insertBefore(acceptWrapper, acceptBtn);
+            acceptWrapper.appendChild(acceptBtn);
+            acceptWrapper.insertAdjacentHTML('beforeend', '<span class="ios-action-text">Accept</span>');
+
+            // 4. Mute और Video बटन को जिंदा करना (Working logic)
+            let isMuted = false;
+            let isVideoOff = false;
+
+            document.getElementById('iosMuteBtn').addEventListener('click', () => {
+                const videoEl = document.getElementById('localVideo22');
+                if(videoEl && videoEl.srcObject) {
+                    const audioTracks = videoEl.srcObject.getAudioTracks();
+                    if(audioTracks.length > 0) {
+                        isMuted = !isMuted;
+                        audioTracks[0].enabled = !isMuted;
+                        document.getElementById('muteCircle').style.background = isMuted ? 'white' : 'rgba(255, 255, 255, 0.15)';
+                        document.querySelector('#muteCircle svg').style.fill = isMuted ? 'black' : 'white';
+                    }
+                }
+            });
+
+            document.getElementById('iosVideoBtn').addEventListener('click', () => {
+                const videoEl = document.getElementById('localVideo22');
+                if(videoEl && videoEl.srcObject) {
+                    const videoTracks = videoEl.srcObject.getVideoTracks();
+                    if(videoTracks.length > 0) {
+                        isVideoOff = !isVideoOff;
+                        videoTracks[0].enabled = !isVideoOff;
+                        document.getElementById('videoCircle').style.background = isVideoOff ? 'white' : 'rgba(255, 255, 255, 0.15)';
+                        document.querySelector('#videoCircle svg').style.fill = isVideoOff ? 'black' : 'white';
+                    }
+                }
+            });
+        }
+    }, 4500); // 4.5s delay to ensure Part 22 UI is fully loaded before overriding
+</script>
+
