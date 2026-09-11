@@ -3724,3 +3724,128 @@ fileInput.addEventListener("change", async function(event) {
         }
     };
 </script>
+
+   <!-- ========================================== -->
+<!-- PART 24: NO-FILE PREMIUM UI (100% PURE CODE) -->
+<!-- ========================================== -->
+<style>
+    /* सेंड बटन का बैकग्राउंड हटाना ताकि नया डिज़ाइन अच्छा लगे */
+    .send-btn-colorful {
+        background: transparent !important;
+        box-shadow: none !important;
+        transition: transform 0.2s;
+    }
+    .send-btn-colorful:active {
+        transform: scale(0.9);
+    }
+</style>
+
+<script type="module">
+    // 1. आपके दिए गए डिज़ाइन को SVG 'कोड' में बदलना (बिना इमेज फाइल के)
+    
+    // सेंड बटन (कलरफुल एरो)
+    const sendIconCode = `
+        <svg width="35" height="35" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#8A2387;stop-opacity:1" />
+                    <stop offset="50%" style="stop-color:#E94057;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#F27121;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            <path d="M2 12L22 2L15 22L11 13L2 12Z" fill="url(#grad1)" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>`;
+
+    // प्रीमियम कैमरा (गोल्डन/ब्लैक)
+    const cameraIconCode = `
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="7" width="20" height="14" rx="3" fill="#1a1a1a" stroke="#d4af37" stroke-width="1.5"/>
+            <circle cx="12" cy="14" r="5" fill="#1a1a1a" stroke="#d4af37" stroke-width="2"/>
+            <circle cx="12" cy="14" r="2" fill="#00bcd4"/>
+            <rect x="17" y="9" width="3" height="2" rx="1" fill="#d4af37"/>
+            <path d="M6 7V5C6 4.44772 6.44772 4 7 4H10C10.5523 4 11 4.44772 11 5V7H6Z" fill="#1a1a1a" stroke="#d4af37" stroke-width="1.5"/>
+        </svg>`;
+
+    // क्लासिक माइक
+    const micIconCode = `
+        <svg width="25" height="25" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="9" y="2" width="6" height="12" rx="3" fill="#333" stroke="#222" stroke-width="1"/>
+            <path d="M5 10V11C5 14.866 8.13401 18 12 18V18C15.866 18 19 14.866 19 11V10" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+            <line x1="12" y1="18" x2="12" y2="22" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+            <line x1="8" y1="22" x2="16" y2="22" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="10.5" cy="4.5" r="0.5" fill="#ccc"/><circle cx="12" cy="4.5" r="0.5" fill="#ccc"/><circle cx="13.5" cy="4.5" r="0.5" fill="#ccc"/>
+            <circle cx="10.5" cy="7.5" r="0.5" fill="#ccc"/><circle cx="12" cy="7.5" r="0.5" fill="#ccc"/><circle cx="13.5" cy="7.5" r="0.5" fill="#ccc"/>
+        </svg>`;
+
+    // हरा कॉल उठाने वाला बटन (Green Accept)
+    const acceptCallCode = `
+        <svg width="70" height="70" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="35" cy="35" r="35" fill="#4CAF50"/>
+            <path d="M25.32 30.79C28.2 36.45 32.84 41.09 38.5 43.97L42.9 39.57C43.44 39.03 44.24 38.85 44.94 39.09C47.18 39.83 49.6 40.23 52.1 40.23C53.2 40.23 54.1 41.13 54.1 42.23V49.1C54.1 50.2 53.2 51.1 52.1 51.1C33.32 51.1 18.1 35.88 18.1 17.1C18.1 16 19 15.1 20.1 15.1H26.97C28.07 15.1 28.97 16 28.97 17.1C28.97 19.6 29.37 22.02 30.11 24.26C30.35 24.96 30.17 25.76 29.63 26.3L25.32 30.79Z" fill="white"/>
+        </svg>`;
+
+    // लाल कॉल काटने वाला बटन (Red Reject)
+    const rejectCallCode = `
+        <svg width="70" height="70" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="35" cy="35" r="35" fill="#F44336"/>
+            <path d="M52.1 31.87C49.6 31.87 47.18 31.47 44.94 30.73C44.24 30.49 43.44 30.67 42.9 31.21L38.5 35.61C32.84 32.73 28.2 28.09 25.32 22.43L29.63 17.94C30.17 17.4 30.35 16.6 30.11 15.9C29.37 13.66 28.97 11.24 28.97 8.74C28.97 7.64 28.07 6.74 26.97 6.74H20.1C19 6.74 18.1 7.64 18.1 8.74C18.1 27.52 33.32 42.74 52.1 42.74C53.2 42.74 54.1 41.84 54.1 40.74V33.87C54.1 32.77 53.2 31.87 52.1 31.87Z" fill="white" transform="rotate(135 35 35)"/>
+        </svg>`;
+
+    // 2. चैट बॉक्स के अंदर आइकन्स सेट करना
+    setTimeout(() => {
+        const sendBtn = document.getElementById('sendMsgBtn');
+        if (sendBtn) sendBtn.innerHTML = sendIconCode;
+
+        const actionIcons = document.querySelectorAll('.chat-input-area .action-icon');
+        actionIcons.forEach(icon => {
+            if (icon.innerText.includes('📸')) {
+                icon.innerHTML = cameraIconCode;
+                icon.style.marginRight = "5px";
+            }
+            else if (icon.innerText.includes('🎤')) {
+                icon.innerHTML = micIconCode;
+            }
+        });
+    }, 2500);
+
+    // 3. कॉल स्क्रीन पर "User" नाम की जगह असली नाम फिक्स करना
+    const callOverlay = document.getElementById('finalCallOverlay22');
+    if (callOverlay) {
+        const observer = new MutationObserver(() => {
+            if (callOverlay.style.display === 'flex') {
+                const headerName = document.getElementById('chatHeaderName');
+                const callName = document.getElementById('liveCallName22');
+                if (callName && headerName && callName.innerText === 'User') {
+                    callName.innerText = headerName.innerText;
+                }
+            }
+        });
+        observer.observe(callOverlay, { attributes: true, attributeFilter: ['style'] });
+    }
+
+    // 4. कॉल स्क्रीन पर नए बटन (हरे/लाल) सेट करना
+    setTimeout(() => {
+        const acceptBtn = document.getElementById('acceptCallBtn22');
+        const rejectBtn = document.getElementById('rejectCallBtn22');
+        const activeEndBtn = document.getElementById('endCallBtn22');
+
+        if (acceptBtn) {
+            acceptBtn.style.background = "transparent";
+            acceptBtn.style.boxShadow = "none";
+            acceptBtn.innerHTML = acceptCallCode;
+        }
+        if (rejectBtn) {
+            rejectBtn.style.background = "transparent";
+            rejectBtn.style.boxShadow = "none";
+            rejectBtn.innerHTML = rejectCallCode;
+        }
+        if (activeEndBtn) {
+            activeEndBtn.style.background = "transparent";
+            activeEndBtn.style.boxShadow = "none";
+            activeEndBtn.style.width = "70px";
+            activeEndBtn.style.height = "70px";
+            activeEndBtn.innerHTML = rejectCallCode;
+        }
+    }, 2000);
+</script>
+
