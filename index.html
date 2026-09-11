@@ -4144,3 +4144,43 @@ fileInput.addEventListener("change", async function(event) {
         }
     }, 5500); // 5.5s delay ताकि पुराने सारे पार्ट लोड हो जाएं, फिर यह अपना काम करे
 </script>
+
+  <!-- ========================================== -->
+<!-- PART 27: APPLE UI VIDEO TRANSPARENCY FIX -->
+<!-- ========================================== -->
+<script type="module">
+    // यह कोड हर 0.5 सेकंड में चेक करेगा कि वीडियो चालू है या नहीं
+    setInterval(() => {
+        const callBox = document.getElementById('callUIBox22');
+        const localVid = document.getElementById('localVideo22');
+        const remoteVid = document.getElementById('remoteVideo22');
+
+        if (callBox && localVid) {
+            // 1. अगर वीडियो कॉल चल रही है (कैमरा चालू है)
+            if (localVid.style.display === 'block' || (localVid.srcObject && localVid.srcObject.getVideoTracks().length > 0)) {
+                
+                // डार्क ब्लर वाली iOS क्लास को हटाना ताकि वीडियो आर-पार दिख सके
+                callBox.classList.remove('ios-call-bg');
+                
+                // बटनों को दिखाने के लिए बस हल्का सा ट्रांसपेरेंट शैडो लगाना
+                callBox.style.background = 'linear-gradient(to bottom, rgba(0,0,0,0.4), transparent, rgba(0,0,0,0.8))';
+                callBox.style.backdropFilter = 'none'; // ब्लर हटाना
+                
+                // कैमरे की लेयर (Z-Index) को सबसे ऊपर लाना
+                localVid.style.zIndex = "99";
+                if(remoteVid) remoteVid.style.zIndex = "1";
+                callBox.style.zIndex = "100"; 
+            } 
+            // 2. अगर ऑडियो कॉल चल रही है, तो वापस iOS वाला डार्क बैकग्राउंड लगा दो
+            else {
+                callBox.classList.add('ios-call-bg');
+            }
+        }
+
+        // 3. मास्टर-लॉक: अगर गलती से पुराने किसी बटन पर क्लिक हो जाए, 
+        // तो भी कॉल सीधा हमारे नए और एकदम फ्रेश कोड (Part 22) से ही लगनी चाहिए।
+        if (typeof window.startLiveCall22 === 'function') {
+            window.startLiveCall = window.startLiveCall22;
+        }
+    }, 500);
+</script>
