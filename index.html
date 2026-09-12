@@ -5105,3 +5105,105 @@ fileInput.addEventListener("change", async function(event) {
     }
  </script>
 
+  <script type="module">
+    // 1. वीडियो क्वालिटी और आवाज़ (Echo/शोर) फिक्स करना
+    // यह कोड कैमरा और माइक चालू होने से पहले उन्हें हाई-क्वालिटी और बिना शोर वाला बना देगा
+    const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+    navigator.mediaDevices.getUserMedia = function(constraints) {
+        if (constraints.audio) {
+            constraints.audio = {
+                echoCancellation: true, // गूंज और खड़खड़ की आवाज़ खत्म करेगा
+                noiseSuppression: true,
+                autoGainControl: true
+            };
+        }
+        if (constraints.video) {
+            constraints.video = {
+                width: { ideal: 1280 }, // HD वीडियो
+                height: { ideal: 720 },
+                facingMode: "user"
+            };
+        }
+        return originalGetUserMedia(constraints);
+    };
+
+    setInterval(() => {
+        // 2. कॉल डिक्लाइन (उठाने से पहले काटना) फिक्स
+        const rejectBtn = document.querySelector('.reject-btn, .end-call-btn, #endCallBtn');
+        if (rejectBtn && !rejectBtn.dataset.rejectFixed) {
+            rejectBtn.dataset.rejectFixed = "true";
+            rejectBtn.addEventListener('click', () => {
+                // सामने वाले को जबरदस्ती कनेक्शन काटने का सिग्नल भेजना
+                if (window.peer22 && window.peer22.connections) {
+                    Object.values(window.peer22.connections).forEach(conns => {
+                        conns.forEach(conn => { if(conn.open) conn.send('CALL_REJECTED'); conn.close(); });
+                    });
+                }
+                if (window.currentCall) window.currentCall.close();
+                
+                // UI बंद करना
+                const callOverlay = document.getElementById('finalCallOverlay22');
+                if (callOverlay) callOverlay.style.cssText = 'display: none !important;';
+            });
+        }
+
+        // सामने वाले की तरफ से 'CALL_REJECTED' सिग्नल पकड़ने का कोड
+        if (window.peer22 && !window.peer22.dataset.rejectListener) {
+            window.peer22.dataset.rejectListener = "true";
+            window.peer22.on('connection', (conn) => {
+                conn.on('data', (data) => {
+                    if (data === 'CALL_REJECTED') {
+                        console.log("सामने वाले ने कॉल काट दी है!");
+                        if (window.currentCall) window.currentCall.close();
+                        const callOverlay = document.getElementById('finalCallOverlay22');
+                        if (callOverlay) callOverlay.style.cssText = 'display: none !important;';
+                    }
+                });
+            });
+        }
+
+        // 3. टाइमर (0:00) स्टार्ट करने वाला फिक्स
+        const activeControls = document.getElementById('activeControls22');
+        if (activeControls && activeControls.style.display !== 'none' && !window.callTimerActive) {
+            window.callTimerActive = true;
+            window.callStartTime = Date.now();
+            
+            window.callInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - window.callStartTime) / 1000);
+                const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
+                const secs = String(elapsed % 60).padStart(2, '0');
+                
+                const timerDisplays = document.querySelectorAll('.call-timer, #liveTimer, .timer-text');
+                timerDisplays.forEach(display => {
+                    display.innerText = `${mins}:${secs}`;
+                });
+            }, 1000);
+        } else if (activeControls && (activeControls.style.display === 'none' || activeControls.style.display === '') && window.callTimerActive) {
+            clearInterval(window.callInterval);
+            window.callTimerActive = false;
+        }
+
+        // 4. वीडियो स्वैप (छोटा/बड़ा स्क्रीन) करने का असली WhatsApp वाला फिक्स
+        const localVid = document.getElementById('localVideo') || document.querySelector('.small-video');
+        const remoteVid = document.getElementById('remoteVideo') || document.querySelector('.large-video');
+        
+        if (localVid && remoteVid && localVid.dataset.swapFixed !== "v3") {
+            localVid.dataset.swapFixed = "v3";
+            localVid.onclick = (e) => {
+                e.preventDefault(); e.stopPropagation();
+                
+                // दोनों वीडियो की पोज़िशन आपस में बदलना
+                const isSmall = localVid.style.width === '120px' || localVid.style.width.includes('100px') || localVid.classList.contains('small-video');
+                
+                if (isSmall) {
+                    localVid.style.cssText = "position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 1; object-fit: cover;";
+                    remoteVid.style.cssText = "position: absolute; width: 120px; height: 160px; bottom: 120px; right: 20px; z-index: 99; border-radius: 12px; object-fit: cover; border: 2px solid white;";
+                } else {
+                    remoteVid.style.cssText = "position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 1; object-fit: cover;";
+                    localVid.style.cssText = "position: absolute; width: 120px; height: 160px; bottom: 120px; right: 20px; z-index: 99; border-radius: 12px; object-fit: cover; border: 2px solid white;";
+                }
+            };
+        }
+    }, 1000);
+  </script>
+
