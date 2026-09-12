@@ -4598,3 +4598,50 @@ fileInput.addEventListener("change", async function(event) {
         }
     }, 1000);
 </script>
+
+<style>
+    /* 1. पूरे हेडर को एक परफेक्ट लाइन (Flexbox) में सेट करना */
+    .chat-header, #chatHeader {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding-right: 15px !important;
+    }
+
+    /* 2. नाम और बैक बटन वाले हिस्से (Left Side) को लेफ्ट में धकेलना */
+    .chat-header .user-info, 
+    .chat-header .profile-section,
+    .chat-header > div:first-child {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        text-align: left !important;
+        flex-grow: 1 !important; /* बची हुई सारी जगह इसे दे देना */
+    }
+
+    /* 3. टेक्स्ट को सेंटर से हटाकर लेफ्ट करना */
+    .chat-header h1, 
+    .chat-header h2, 
+    .chat-header span {
+        text-align: left !important;
+    }
+
+    /* 4. 3D बटनों को ओवरलैप से बचाना (Absolute कमांड को हटाकर रिलेटिव करना) */
+    .vip-final-icons33 {
+        position: relative !important; 
+        right: auto !important;
+        top: auto !important;
+        transform: none !important;
+        display: flex !important;
+        gap: 20px !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        min-width: 70px !important; /* बटनों के लिए फिक्स जगह बचाना */
+        margin-left: 10px !important;
+        z-index: 9999 !important;
+    }
+</style>
+
