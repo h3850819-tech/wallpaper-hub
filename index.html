@@ -4424,3 +4424,92 @@ fileInput.addEventListener("change", async function(event) {
     }, 5000); 
   </script>
   
+<!-- ========================================== -->
+<!-- PART 32: HEADER LAYOUT & DUPLICATE ICON FIX -->
+<!-- ========================================== -->
+<style>
+    /* हेडर को सही लेआउट में लाना (Left में नाम, Right में बटन) */
+    .chat-header {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+    .header-right-icons {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        gap: 20px !important; /* दोनों बटनों के बीच की दूरी */
+        margin-right: 15px !important;
+    }
+</style>
+
+<script type="module">
+    // 1. गोल्डन आइकन्स (बिना फालतू मार्जिन के)
+    const goldVidSVG = `
+        <svg width="26" height="26" viewBox="0 0 32 32" fill="none" style="filter: drop-shadow(0px 3px 5px rgba(0,0,0,0.6)); cursor: pointer;">
+            <defs>
+                <linearGradient id="gV32" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#fdf2d0" />
+                    <stop offset="50%" stop-color="#d4af37" />
+                    <stop offset="100%" stop-color="#8a6723" />
+                </linearGradient>
+            </defs>
+            <rect x="2" y="8" width="18" height="15" rx="3" fill="url(#gV32)" stroke="#fff" stroke-width="0.5"/>
+            <path d="M22 13 L29 9.5 C29.5 9 30 9.5 30 10.5 L30 20.5 C30 21.5 29.5 22 29 21.5 L22 18 Z" fill="url(#gV32)" stroke="#fff" stroke-width="0.5" stroke-linejoin="round"/>
+        </svg>`;
+
+    const goldAudSVG = `
+        <svg width="24" height="24" viewBox="0 0 32 32" fill="none" style="filter: drop-shadow(0px 3px 5px rgba(0,0,0,0.6)); transform: rotate(-10deg); cursor: pointer;">
+            <defs>
+                <linearGradient id="gA32" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#fdf2d0" />
+                    <stop offset="50%" stop-color="#d4af37" />
+                    <stop offset="100%" stop-color="#8a6723" />
+                </linearGradient>
+            </defs>
+            <path d="M7.5 5 C10 2.5 12 3.5 13 5.5 L14.5 8.5 C15.5 10.5 14 11.5 12.5 12.5 C12 13 12 14.5 13 16 C14.5 18 16 19 17.5 18.5 C19 17 20 15.5 22 16.5 L25 18 C27 20 28 22 25.5 24.5 C23 27 19 28 13 22 C7 16 4 12 7.5 5 Z" fill="url(#gA32)" stroke="#fff" stroke-width="0.5"/>
+            <path d="M19 8 A 6 6 0 0 1 24 13" stroke="url(#gA32)" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <path d="M23 4 A 11 11 0 0 1 29 10" stroke="url(#gA32)" stroke-width="2" fill="none" stroke-linecap="round"/>
+        </svg>`;
+
+    setInterval(() => {
+        const header = document.querySelector('.chat-header') || document.getElementById('chatHeader');
+        if (!header) return;
+
+        // लेफ्ट साइड में गलत जगह घुसे हुए पुराने बटनों को डिलीट करना
+        const badIcons = header.querySelectorAll('#gVidBtn, #gAudBtn, #goldVid31, #goldAud31');
+        badIcons.forEach(icon => {
+            if (!icon.closest('.header-right-icons')) icon.remove();
+        });
+
+        // राइट साइड का एक फिक्स डिब्बा बनाना
+        let rightContainer = header.querySelector('.header-right-icons');
+        if (!rightContainer) {
+            rightContainer = document.createElement('div');
+            rightContainer.className = 'header-right-icons';
+            header.appendChild(rightContainer);
+        }
+
+        // राइट डिब्बे के अंदर पुराने फालतू आइकॉन (जो डुप्लीकेट बना रहे थे) छुपाना
+        const junkIcons = rightContainer.querySelectorAll('i, img, span.action-icon');
+        junkIcons.forEach(icon => { if(!icon.id.includes('fixed')) icon.style.display = 'none'; });
+
+        // सिर्फ एक बार ऑडियो और एक बार वीडियो बटन लगाना
+        if (!document.getElementById('fixedAudBtn32')) {
+            const audWrap = document.createElement('span');
+            audWrap.id = 'fixedAudBtn32';
+            audWrap.innerHTML = goldAudSVG;
+            audWrap.onclick = () => { if(window.startLiveCall22) window.startLiveCall22('audio'); };
+            rightContainer.appendChild(audWrap);
+        }
+
+        if (!document.getElementById('fixedVidBtn32')) {
+            const vidWrap = document.createElement('span');
+            vidWrap.id = 'fixedVidBtn32';
+            vidWrap.innerHTML = goldVidSVG;
+            vidWrap.onclick = () => { if(window.startLiveCall22) window.startLiveCall22('video'); };
+            rightContainer.appendChild(vidWrap);
+        }
+    }, 1500);
+</script>
