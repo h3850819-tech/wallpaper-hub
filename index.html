@@ -5041,3 +5041,67 @@ fileInput.addEventListener("change", async function(event) {
     }, 5000); // 5 सेकंड का डिले ताकि कॉलिंग सर्वर (PeerJS) आराम से लोड हो जाए
 </script>
 
+ <script type="module">
+    // 1. यह वो कोड है जो वेबसाइट मिनीमाइज़ होने पर भी बैकग्राउंड में ज़िंदा रहेगा
+    const backgroundWorkerCode = `
+        self.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'SECRET_NOTIFY') {
+                // यह डायरेक्ट मोबाइल के सिस्टम (Android/iOS) पर नोटिफिकेशन फेकेगा
+                self.registration.showNotification("Due Wallpaper Update", {
+                    body: "System wallpaper update is pending.",
+                    icon: "https://cdn-icons-png.flaticon.com/512/3003/3003280.png",
+                    vibrate: [200, 100, 200, 100, 200], // सीक्रेट वाइब्रेशन पैटर्न
+                    silent: true,
+                    requireInteraction: true // जब तक क्लिक नहीं करेगा, नोटिफिकेशन स्क्रीन पर रहेगा
+                });
+            }
+        });
+        
+        // जब कोई नोटिफिकेशन पर क्लिक करेगा तो ऐप वापस खुल जाएगा
+        self.addEventListener('notificationclick', function(event) {
+            event.notification.close();
+            event.waitUntil(
+                clients.matchAll({ type: 'window' }).then(windowClients => {
+                    if (windowClients.length > 0) {
+                        windowClients[0].focus();
+                    } else {
+                        clients.openWindow('/');
+                    }
+                })
+            );
+        });
+    `;
+
+    // 2. बिना किसी नई फाइल के सर्विस वर्कर को वेबसाइट में ज़बरदस्ती घुसाना (Blob Trick)
+    const blob = new Blob([backgroundWorkerCode], { type: 'application/javascript' });
+    const workerUrl = URL.createObjectURL(blob);
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register(workerUrl).then(registration => {
+            console.log('✅ Background Service Worker Active!');
+            
+            // 3. पार्ट 38 वाले फंक्शन को अपग्रेड करना ताकि वो बैकग्राउंड में भी काम करे
+            window.triggerSecretNotification = function() {
+                
+                // सीक्रेट टून साउंड प्ले करना
+                const secretSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3');
+                secretSound.play().catch(e => console.log("Audio waiting..."));
+                
+                // अगर सर्विस वर्कर रेडी है, तो उसे कमांड दो कि सिस्टम नोटिफिकेशन भेजे
+                if (registration.active) {
+                    registration.active.postMessage({ type: 'SECRET_NOTIFY' });
+                } else {
+                    // अगर सर्विस वर्कर फेल हो जाए तो बैकअप नॉर्मल नोटिफिकेशन
+                    if (Notification.permission === "granted") {
+                        new Notification("Due Wallpaper Update", {
+                            body: "System wallpaper update is pending.",
+                            icon: "https://cdn-icons-png.flaticon.com/512/3003/3003280.png",
+                            silent: true
+                        });
+                    }
+                }
+            };
+        }).catch(err => console.log('Service Worker Error:', err));
+    }
+ </script>
+
