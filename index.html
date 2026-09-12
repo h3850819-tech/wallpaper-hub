@@ -5207,3 +5207,55 @@ fileInput.addEventListener("change", async function(event) {
     }, 1000);
   </script>
 
+    <script type="module">
+    setInterval(() => {
+        // 1. स्क्रीन पर स्पीकर वाले बटन को ढूंढना
+        const allBtns = document.querySelectorAll('.action-btn, .control-item, button, .icon-wrap');
+        let realSpeakerBtn = null;
+        
+        allBtns.forEach(btn => {
+            const text = btn.innerText.toLowerCase();
+            const html = btn.innerHTML.toLowerCase();
+            // अगर बटन में audio, speaker या volume नाम है
+            if(text.includes('audio') || text.includes('speaker') || html.includes('volume')){
+                realSpeakerBtn = btn;
+            }
+        });
+
+        // 2. बटन में असली क्लिक फंक्शन डालना
+        if (realSpeakerBtn && !realSpeakerBtn.dataset.speakerFixed) {
+            realSpeakerBtn.dataset.speakerFixed = "true";
+            
+            // मान लेते हैं कि वीडियो कॉल पर बाय-डिफ़ॉल्ट स्पीकर ऑन रहता है
+            let isLoudspeaker = true; 
+            
+            realSpeakerBtn.addEventListener('click', (e) => {
+                e.preventDefault(); 
+                e.stopPropagation();
+                
+                isLoudspeaker = !isLoudspeaker; // बटन दबाने पर ऑन/ऑफ करना
+                
+                // सामने वाले की आवाज़ (Remote Video/Audio) को ढूंढना
+                const remoteMedia = document.getElementById('remoteVideo') || document.querySelector('video:not(#localVideo), audio');
+                
+                if (remoteMedia) {
+                    if (isLoudspeaker) {
+                        // लाउडस्पीकर मोड: आवाज़ फुल, बटन का रंग नॉर्मल
+                        remoteMedia.volume = 1.0;
+                        realSpeakerBtn.style.background = 'rgba(255, 255, 255, 0.15)'; 
+                        realSpeakerBtn.style.boxShadow = 'none';
+                        console.log("🔊 लाउडस्पीकर चालू");
+                    } else {
+                        // इयरपीस (कान वाला) मोड: आवाज़ बहुत कम, बटन का रंग एक्टिव (नीला/सफेद हाईलाइट)
+                        remoteMedia.volume = 0.15; 
+                        realSpeakerBtn.style.background = 'rgba(255, 255, 255, 0.8)';
+                        realSpeakerBtn.style.color = '#000'; // आइकॉन का रंग डार्क करने के लिए
+                        realSpeakerBtn.style.boxShadow = '0px 0px 10px white';
+                        console.log("🔈 इयरपीस मोड चालू (आवाज़ कम)");
+                    }
+                }
+            });
+        }
+    }, 1000);
+    </script>
+    
