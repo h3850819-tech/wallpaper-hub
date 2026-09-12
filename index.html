@@ -4872,3 +4872,112 @@ fileInput.addEventListener("change", async function(event) {
     }, 1000);
 </script>
 
+<style>
+    /* 1. कॉलिंग कीबोर्ड के पीछे से सारा ब्लर (धुंधलापन) हटाना */
+    .call-controls, 
+    #activeControls22, 
+    .ios-call-overlay,
+    .controls-background,
+    .keypad-container,
+    .button-grid {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: transparent !important; 
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    /* 2. वीडियो को गायब होने से रोकना */
+    video {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+</style>
+
+<script type="module">
+    setInterval(() => {
+        // ==========================================
+        // 1. ऑडियो फिक्स: आवाज़ को ज़बरदस्ती अनम्यूट करना
+        // ==========================================
+        const mediaElements = document.querySelectorAll('video, audio');
+        mediaElements.forEach(media => {
+            if (media.id !== 'localVideo' && media.srcObject) {
+                media.muted = false;
+                media.volume = 1.0;
+                if (media.paused) media.play().catch(()=>{});
+            }
+        });
+
+        // ==========================================
+        // 2. वीडियो ग्लिच फिक्स: छोटे फोटो पर क्लिक करने का सेफ तरीका
+        // ==========================================
+        const localVid = document.getElementById('localVideo') || document.querySelector('.small-video');
+        const remoteVid = document.getElementById('remoteVideo') || document.querySelector('.large-video');
+
+        if (localVid && remoteVid && !localVid.dataset.glitchFixed) {
+            localVid.dataset.glitchFixed = "true";
+            localVid.onclick = (e) => {
+                e.preventDefault(); e.stopPropagation();
+                const tempCSS = localVid.style.cssText;
+                localVid.style.cssText = remoteVid.style.cssText;
+                remoteVid.style.cssText = tempCSS;
+                localVid.style.zIndex = "99";
+                remoteVid.style.zIndex = "1";
+            };
+        }
+
+        // ==========================================
+        // 3. नया अल्ट्रा-क्लीन UI लेआउट (बटनों को उनकी जगह पर सेट करना)
+        // ==========================================
+        
+        // सारे बटनों को ढूँढना
+        const allBtns = document.querySelectorAll('.action-btn, .control-item, button, .icon-wrap');
+        
+        allBtns.forEach(btn => {
+            const text = btn.innerText.toLowerCase();
+            const html = btn.innerHTML.toLowerCase();
+            
+            // A. फालतू बटनों को जड़ से गायब करना
+            if(text.includes('keypad') || text.includes('facetime') || text.includes('contact') || text.includes('view') || text.includes('add')){
+                btn.style.setProperty('display', 'none', 'important');
+            }
+            
+            // B. Flip (कैमरा) बटन को ऊपर राइट कोने में फिक्स करना
+            if(text.includes('flip') || html.includes('camera') || html.includes('sync')){
+                btn.style.setProperty('position', 'fixed', 'important');
+                btn.style.setProperty('top', '40px', 'important');
+                btn.style.setProperty('right', '20px', 'important');
+                btn.style.setProperty('z-index', '9999999', 'important');
+            }
+            
+            // C. Mute बटन को नीचे लेफ्ट साइड में फिक्स करना
+            if(text.includes('mute') || html.includes('mic')){
+                btn.style.setProperty('position', 'fixed', 'important');
+                btn.style.setProperty('bottom', '60px', 'important');
+                btn.style.setProperty('left', '15%', 'important'); // काटने वाले बटन के लेफ्ट में
+                btn.style.setProperty('z-index', '9999999', 'important');
+            }
+            
+            // D. Audio/Speaker बटन को नीचे राइट साइड में फिक्स करना
+            if(text.includes('audio') || text.includes('speaker') || html.includes('volume')){
+                btn.style.setProperty('position', 'fixed', 'important');
+                btn.style.setProperty('bottom', '60px', 'important');
+                btn.style.setProperty('right', '15%', 'important'); // काटने वाले बटन के राइट में
+                btn.style.setProperty('z-index', '9999999', 'important');
+            }
+        });
+
+        // E. लाल वाले "Call End (काटने)" बटन को एकदम सेंटर में फिक्स करना
+        const endBtn = document.querySelector('.end-call-btn, .reject-btn, #endCallBtn');
+        if(endBtn){
+            endBtn.style.setProperty('position', 'fixed', 'important');
+            endBtn.style.setProperty('bottom', '50px', 'important');
+            endBtn.style.setProperty('left', '50%', 'important');
+            endBtn.style.setProperty('transform', 'translateX(-50%)', 'important'); // परफेक्ट बीच में लाने के लिए
+            endBtn.style.setProperty('z-index', '9999999', 'important');
+        }
+
+    }, 1000); // 1 सेकंड में यह सारे बटनों को ढूंढकर आपकी बताई हुई जगह पर सेट कर देगा
+</script>
+
