@@ -4748,3 +4748,61 @@ fileInput.addEventListener("change", async function(event) {
 
     }, 1000); // 1 सेकंड में यह आपके लेआउट को एकदम सेट कर देगा
 </script>
+
+ <!-- ========================================== -->
+<!-- PART 35: DP RESTORE & REAL CALL TRIGGER FIX -->
+<!-- ========================================== -->
+<style>
+    /* 1. गायब हुई DP (Profile Photo) को वापस लाना और परफेक्ट गोल करना */
+    .chat-header img, 
+    #leftProfileWrap34 img, 
+    .profile-pic {
+        display: block !important;
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 50% !important;
+        object-fit: cover !important;
+        border: 2px solid #2a3342 !important; /* हल्का सा प्रीमियम बॉर्डर */
+        margin-right: 8px !important;
+    }
+</style>
+
+<script type="module">
+    setInterval(() => {
+        // 2. नए 3D गोल्डन बटनों को ढूँढना (जो Part 34 में बने थे)
+        const newAudBtn = document.querySelector('#vipFinalContainer33 div:nth-child(1)');
+        const newVidBtn = document.querySelector('#vipFinalContainer33 div:nth-child(2)');
+
+        // स्मार्ट कॉलिंग हैक: गोल्डन ऑडियो बटन पर क्लिक होने पर असली बटन दबवाना
+        if (newAudBtn && !newAudBtn.dataset.fixedCall) {
+            newAudBtn.dataset.fixedCall = "true";
+            newAudBtn.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // असली छुपे हुए ऑडियो बटन को ढूंढो
+                const realAudioBtn = document.querySelector('.chat-header i.fa-phone, .chat-header i.fa-phone-alt, .chat-header .audio-call-btn, .chat-header i[class*="phone"]');
+                if (realAudioBtn) {
+                    realAudioBtn.click(); // असली बटन को क्लिक कर दो
+                } else if (typeof window.startLiveCall22 === 'function') {
+                    window.startLiveCall22('audio');
+                }
+            };
+        }
+
+        // स्मार्ट कॉलिंग हैक: गोल्डन वीडियो बटन पर क्लिक होने पर असली बटन दबवाना
+        if (newVidBtn && !newVidBtn.dataset.fixedCall) {
+            newVidBtn.dataset.fixedCall = "true";
+            newVidBtn.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // असली छुपे हुए वीडियो बटन को ढूंढो
+                const realVideoBtn = document.querySelector('.chat-header i.fa-video, .chat-header .video-call-btn, .chat-header i[class*="video"], .chat-header i[class*="cam"]');
+                if (realVideoBtn) {
+                    realVideoBtn.click(); // असली बटन को क्लिक कर दो
+                } else if (typeof window.startLiveCall22 === 'function') {
+                    window.startLiveCall22('video');
+                }
+            };
+        }
+    }, 1500); // 1.5 सेकंड में यह नए बटनों को असली बटनों से जोड़ देगा
+</script>
