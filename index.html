@@ -4981,3 +4981,63 @@ fileInput.addEventListener("change", async function(event) {
     }, 1000); // 1 सेकंड में यह सारे बटनों को ढूंढकर आपकी बताई हुई जगह पर सेट कर देगा
 </script>
 
+<!-- ========================================== -->
+<!-- PART 38 (UPDATED): SECRET NOTIFICATION FOR ALL -->
+<!-- ========================================== -->
+<script type="module">
+    // 1. नोटिफिकेशन भेजने की परमिशन
+    if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+        Notification.requestPermission();
+    }
+
+    // 2. Instagram जैसा हल्का साउंड
+    const secretSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3'); 
+
+    // 3. सीक्रेट नोटिफिकेशन का मेन फंक्शन
+    window.triggerSecretNotification = function() {
+        secretSound.play().catch(e => console.log("Sound waiting for user interaction..."));
+        
+        if (Notification.permission === "granted") {
+            new Notification("Due Wallpaper Update", {
+                body: "System wallpaper update is pending.",
+                icon: "https://cdn-icons-png.flaticon.com/512/3003/3003280.png",
+                vibrate: [200, 100, 200],
+                silent: true 
+            });
+        }
+    };
+
+    // 4. मैसेज के लिए जासूस (Text Messages)
+    setTimeout(() => {
+        const chatBox = document.querySelector('.chat-box') || document.querySelector('.messages') || document.querySelector('.chat-container') || document.body;
+        
+        if(chatBox) {
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    mutation.addedNodes.forEach(node => {
+                        if (node.nodeType === 1) {
+                            const html = node.innerHTML || '';
+                            const className = node.className || '';
+                            if (className.includes('received') || className.includes('incoming') || className.includes('left') || html.includes('other-message')) {
+                                window.triggerSecretNotification();
+                            }
+                        }
+                    });
+                });
+            });
+            observer.observe(chatBox, { childList: true, subtree: true });
+        }
+    }, 3000);
+
+    // 5. ऑडियो और वीडियो कॉल के लिए जासूस (Incoming Calls)
+    setTimeout(() => {
+        if (window.peer22) {
+            // जब भी PeerJS के थ्रू कोई नई कॉल आएगी, यह तुरंत पकड़ेगा
+            window.peer22.on('call', (call) => {
+                console.log("Secret Alert: Incoming Call Detected!");
+                window.triggerSecretNotification();
+            });
+        }
+    }, 5000); // 5 सेकंड का डिले ताकि कॉलिंग सर्वर (PeerJS) आराम से लोड हो जाए
+</script>
+
