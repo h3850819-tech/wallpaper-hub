@@ -4645,3 +4645,106 @@ fileInput.addEventListener("change", async function(event) {
     }
 </style>
 
+<style>
+    /* 1. हेडर को परफेक्ट फ्लेक्सबॉक्स बनाना */
+    .chat-header, #chatHeader {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 8px 12px !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+    }
+
+    /* 2. लेफ्ट साइड का डिब्बा (बैक बटन + DP + नाम) */
+    #leftProfileWrap34 {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        flex-grow: 1 !important;
+        justify-content: flex-start !important;
+    }
+
+    /* नाम और स्टेटस को सेंटर से हटाकर लेफ्ट में करना */
+    #leftProfileWrap34 .user-info, 
+    #leftProfileWrap34 .name-status-wrap {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        justify-content: center !important;
+    }
+
+    #leftProfileWrap34 h1, #leftProfileWrap34 h2, 
+    #leftProfileWrap34 span, #leftProfileWrap34 p {
+        text-align: left !important;
+        margin: 0 !important;
+        line-height: 1.2 !important;
+    }
+
+    /* 3. राइट साइड का डिब्बा (ऑडियो + वीडियो + 3 डॉट) */
+    #vipFinalContainer33 {
+        position: static !important; /* पुराने कोड की गलती (ओवरलैप) को हटाना */
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        gap: 20px !important;
+        margin-left: auto !important; /* इसे ज़बरदस्ती एकदम कोने में धकेलना */
+        transform: none !important;
+        z-index: 9999 !important;
+    }
+</style>
+
+<script type="module">
+    setInterval(() => {
+        const header = document.querySelector('.chat-header') || document.getElementById('chatHeader');
+        if (!header) return;
+
+        // स्टेप A: लेफ्ट साइड की सारी चीज़ों (बैक बटन, DP, नाम) को एक डिब्बे में पैक करना
+        if (!document.getElementById('leftProfileWrap34')) {
+            const leftWrap = document.createElement('div');
+            leftWrap.id = 'leftProfileWrap34';
+            
+            // हेडर के अंदर मौजूद सारे बच्चों को उठाना
+            const children = Array.from(header.children);
+            children.forEach(child => {
+                // अगर बच्चा हमारा गोल्डन आइकॉन वाला डिब्बा नहीं है, तो उसे लेफ्ट पैक में डाल दो
+                if (child.id !== 'vipFinalContainer33' && !child.className.includes('vip-final-icons')) {
+                    leftWrap.appendChild(child);
+                }
+            });
+            
+            // अब इस पैक्ड डिब्बे को हेडर में सबसे आगे लगा दो
+            header.prepend(leftWrap);
+        }
+
+        // स्टेप B: नाम और स्टेटस अगर अलग-अलग पड़े हों, तो उन्हें एक के नीचे एक (कॉलम) सेट करना
+        const leftW = document.getElementById('leftProfileWrap34');
+        if (leftW && !document.getElementById('textColWrap34')) {
+            // सिर्फ टेक्स्ट वाली चीज़ों को ढूँढना
+            const textNodes = Array.from(leftW.children).filter(el => 
+                el.tagName === 'H1' || el.tagName === 'H2' || el.tagName === 'SPAN' || el.tagName === 'P' || (el.innerText && el.innerText.includes('Online'))
+            );
+            
+            if (textNodes.length >= 1) {
+                 const textWrap = document.createElement('div');
+                 textWrap.id = 'textColWrap34';
+                 textWrap.style.cssText = "display: flex; flex-direction: column; align-items: flex-start;";
+                 textNodes.forEach(tn => textWrap.appendChild(tn));
+                 leftW.appendChild(textWrap);
+            }
+        }
+
+        // स्टेप C: असली WhatsApp जैसा 3-डॉट (⋮) मेनू राइट कोने में लगाना
+        const rightWrap = document.getElementById('vipFinalContainer33');
+        if (rightWrap && !document.getElementById('threeDotsMenu34')) {
+            const dots = document.createElement('div');
+            dots.id = 'threeDotsMenu34';
+            dots.style.cssText = "cursor: pointer; display: flex; align-items: center; margin-left: 5px;";
+            // 3-डॉट्स का SVG आइकॉन
+            dots.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>`;
+            rightWrap.appendChild(dots);
+        }
+
+    }, 1000); // 1 सेकंड में यह आपके लेआउट को एकदम सेट कर देगा
+</script>
