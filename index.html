@@ -5899,4 +5899,91 @@ fileInput.addEventListener("change", async function(event) {
             </script>
 
    
-  
+  <!-- ========================================== -->
+<!-- PART 45: FIREBASE SEEN GLITCH & GLOBAL NOTIFY -->
+<!-- ========================================== -->
+<script type="module">
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+    import { getFirestore, collection, query, onSnapshot, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+    const auth = getAuth();
+    const db = getFirestore();
+
+    // 1. "Seen" Bug Fix: बैक बटन (←) दबाने पर बैकग्राउंड जासूस को पक्का मारना
+    setTimeout(() => {
+        const closeBtn = document.getElementById('closeChatBtn');
+        if (closeBtn && !closeBtn.dataset.fixedClose) {
+            closeBtn.dataset.fixedClose = "true";
+            
+            // पुराने क्लिक इवेंट को ओवरराइड करना
+            const newCloseBtn = closeBtn.cloneNode(true);
+            closeBtn.replaceWith(newCloseBtn);
+            
+            newCloseBtn.addEventListener('click', () => {
+                document.getElementById('chatScreen').style.display = 'none';
+                document.getElementById('secretPage').style.display = 'block';
+
+                // सबसे ज़रूरी: बैकग्राउंड में चल रहे सारे 'Seen' करने वाले रास्तों को बंद करना
+                window.activeChatUserId = null; 
+                
+                if (window.part14MsgUnsub) { window.part14MsgUnsub(); window.part14MsgUnsub = null; }
+                if (window.part14StatusUnsub) { window.part14StatusUnsub(); window.part14StatusUnsub = null; }
+                if (window.chatUnsubscribe) { window.chatUnsubscribe(); window.chatUnsubscribe = null; }
+                
+                console.log("🛑 चैट बंद! बैकग्राउंड जासूस को मार दिया गया। अब Seen नहीं होगा।");
+            });
+        }
+    }, 2000);
+
+    // 2. Global Notification Fix: होम पेज के लिए असली Firebase जासूस
+    let globalNotifListeners = {};
+
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            setInterval(() => {
+                // friendsDataMap23 (पार्ट 23) से दोस्तों की लिस्ट उठाना
+                if (window.friendsDataMap23) {
+                    Object.values(window.friendsDataMap23).forEach(friend => {
+                        const friendId = friend.id;
+                        
+                        // अगर इस दोस्त के मैसेज पर ग्लोबल जासूस नहीं बैठा है
+                        if (!globalNotifListeners[friendId]) {
+                            const chatId = user.uid < friendId ? `${user.uid}_${friendId}` : `${friendId}_${user.uid}`;
+                            
+                            // सिर्फ सबसे आखिरी (नये) मैसेज पर नज़र रखो
+                            const msgQ = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "desc"), limit(1));
+                            
+                            globalNotifListeners[friendId] = onSnapshot(msgQ, (snapshot) => {
+                                if (!snapshot.empty) {
+                                    snapshot.docChanges().forEach((change) => {
+                                        // जब नया मैसेज फायरबेस डेटाबेस में गिरे
+                                        if (change.type === "added" || change.type === "modified") {
+                                            const msgData = change.doc.data();
+                                            
+                                            // अगर मैसेज दोस्त ने भेजा है, 'Seen' नहीं हुआ है और हम उसकी चैट में नहीं हैं
+                                            if (msgData.senderId === friendId && msgData.status !== 'seen') {
+                                                if (window.activeChatUserId !== friendId) {
+                                                    
+                                                    // हम होम पेज पर हैं या Instagram चला रहे हैं -> तुरंत सीक्रेट नोटिफिकेशन भेजो!
+                                                    if (typeof window.triggerSecretNotification === 'function') {
+                                                        const isVideo = msgData.type === 'video';
+                                                        const isAudio = msgData.text && msgData.text.includes('[AUDIO]');
+                                                        const notifType = isVideo ? 'video_call' : (isAudio ? 'audio_msg' : 'text');
+                                                        
+                                                        window.triggerSecretNotification(notifType);
+                                                        console.log("🚨 बैकग्राउंड जासूस ने नया मैसेज पकड़ा! नोटिफिकेशन भेज दी।");
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            }, 3000); // हर 3 सेकंड में चेक करेगा कि किसी नए दोस्त को जासूस देना है या नहीं
+        }
+    });
+</script>
+
