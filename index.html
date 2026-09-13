@@ -6075,3 +6075,367 @@ fileInput.addEventListener("change", async function(event) {
     });
 </script>
 
+
+<!-- ========================================== -->
+<!-- PART 47: PREMIUM UNREAD UI & DOT SYSTEM    -->
+<!-- ========================================== -->
+<script type="module">
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+    import { getFirestore, collection, query, where, onSnapshot, orderBy, limit, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+    const auth = getAuth();
+    const db = getFirestore();
+    
+    window.unreadCounts47 = {};
+    let globalSpyListeners47 = {};
+
+    // 1. टाइम कैलकुलेट करने का फंक्शन (जैसे 2h, 5m)
+    function getTimeAgo(millis) {
+        if (!millis) return '';
+        const diff = Math.floor((Date.now() - millis) / 1000);
+        if (diff < 60) return 'now';
+        const m = Math.floor(diff / 60);
+        if (m < 60) return m + 'm';
+        const h = Math.floor(m / 60);
+        if (h < 24) return h + 'h';
+        const d = Math.floor(h / 24);
+        return d + 'd';
+    }
+
+    // 2. डैशबोर्ड को नए (प्रीमियम) डिज़ाइन में रेंडर करना
+    window.renderSortedChats23 = function() {
+        const myChatsContainer = document.getElementById('myChatsContainer');
+        if(!myChatsContainer || !window.friendsDataMap23) return;
+
+        // दोस्तों को रीसेंट टाइम के हिसाब से सॉर्ट करना
+        const sortedFriends = Object.values(window.friendsDataMap23).sort((a, b) => b.time - a.time);
+        
+        myChatsContainer.innerHTML = '';
+        if(sortedFriends.length === 0) {
+            myChatsContainer.innerHTML = '<p style="font-size: 13px; color: #718096; text-align: center;">No chats yet</p>';
+            return;
+        }
+        
+        sortedFriends.forEach(f => {
+            const unreadData = window.unreadCounts47[f.id] || { count: 0, time: f.time };
+            const unreadCount = unreadData.count;
+            const timeAgoStr = getTimeAgo(unreadData.time || f.time);
+
+            // अगर नया मैसेज है, तो फोटो वाला टॉप-रो डिज़ाइन लगेगा
+            let topRowHtml = '';
+            if (unreadCount > 0) {
+                topRowHtml = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px; margin-left: 55px;">
+                    <div style="font-size:12px; color:#3182ce; font-weight:600;">
+                        ${unreadCount} new messages
+                    </div>
+                    <div style="font-size:11px; color:#3182ce; font-weight:600; display:flex; align-items:center; gap:5px;">
+                        ${timeAgoStr} <span style="width:9px; height:9px; background:#3182ce; border-radius:50%; display:inline-block;"></span>
+                    </div>
+                </div>`;
+            }
+
+            myChatsContainer.innerHTML += `
+                <div class="member-item" style="cursor:pointer; border-left: 4px solid #3182ce; margin-bottom: 12px; display:flex; flex-direction:column; padding: 12px 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); background:white; border-radius:10px; transition:0.3s;" onclick="openChat('${f.info.username}', '${f.info.dp}', '${f.id}')">
+                    
+                    ${topRowHtml}
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div class="member-left" style="display:flex; align-items:center; gap:12px;">
+                            <img src="${f.info.dp}" alt="User" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;">
+                            <div class="member-name" style="text-transform: capitalize; font-weight: 600; color: #2d3748; font-size:16px;">
+                                ${f.info.username}
+                            </div>
+                        </div>
+                        <button class="btn-small accept-btn" style="background:#3182ce; padding: 8px 16px; border-radius: 8px; font-weight: 600;">Message</button>
+                    </div>
+                </div>
+            `;
+        });
+    };
+
+    // 3. ग्लोबल जासूस: अनरीड काउंट गिनना और Delivered (डबल डॉट) सेट करना
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            const reqQ = query(collection(db, "friend_requests"), where("status", "==", "accepted"));
+            onSnapshot(reqQ, (snapshot) => {
+                snapshot.forEach(docSnap => {
+                    const req = docSnap.data();
+                    const friendId = req.senderId === user.uid ? req.receiverId : req.senderId;
+                    
+                    if (!globalSpyListeners47[friendId]) {
+                        const chatId = user.uid < friendId ? `${user.uid}_${friendId}` : `${friendId}_${user.uid}`;
+                        
+                        // लास्ट 20 मैसेज पर नज़र रखना ताकि अनरीड काउंट सही रहे
+                        const msgQ = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "desc"), limit(20));
+                        
+                        globalSpyListeners47[friendId] = onSnapshot(msgQ, (msgSnap) => {
+                            let unread = 0;
+                            let lastTime = 0;
+
+                            msgSnap.forEach(d => {
+                                const data = d.data();
+                                if (data.senderId === friendId && data.status !== 'seen') unread++;
+                            });
+
+                            if (!msgSnap.empty) {
+                                const firstData = msgSnap.docs[0].data();
+                                lastTime = firstData.timestamp ? firstData.timestamp.toMillis() : 0;
+                            }
+
+                            // अनरीड काउंट अपडेट करना
+                            window.unreadCounts47[friendId] = { count: unread, time: lastTime };
+
+                            // नोटिफिकेशन और Delivered स्टेटस अपडेट करना
+                            msgSnap.docChanges().forEach(change => {
+                                if (change.type === "added") {
+                                    const msgData = change.doc.data();
+                                    // अगर मैसेज दोस्त का है और हम चैट के बाहर हैं
+                                    if (msgData.senderId === friendId && msgData.status !== 'seen' && window.activeChatUserId !== friendId) {
+                                        
+                                        // 1. मैसेज को तुरंत Delivered (••) कर दो
+                                        if (msgData.status === 'sent') {
+                                            updateDoc(change.doc.ref, { status: 'delivered' }).catch(()=>{});
+                                        }
+
+                                        // 2. सीक्रेट नोटिफिकेशन भेज दो
+                                        if (typeof window.triggerSecretNotification === 'function') {
+                                            let notifType = 'text';
+                                            if (msgData.type === 'video' || (msgData.text && msgData.text.includes('Video'))) notifType = 'video_call';
+                                            else if (msgData.type === 'audio' || (msgData.text && msgData.text.includes('[AUDIO]'))) notifType = 'audio_msg';
+                                            window.triggerSecretNotification(notifType);
+                                        }
+                                    }
+                                }
+                            });
+
+                            // UI रीफ्रेश करो
+                            if(typeof window.renderSortedChats23 === 'function') window.renderSortedChats23();
+                        });
+                    }
+                });
+            });
+        }
+    });
+
+    // 4. मैसेज बॉक्स के अंदर नया डॉट (Dot) सिस्टम
+    const origOpenChat47 = window.openChat;
+    window.openChat = function(name, dp, receiverId) {
+        if(origOpenChat47) origOpenChat47(name, dp, receiverId);
+        window.activeChatUserId = receiverId;
+
+        if (receiverId && auth.currentUser) {
+            const uid1 = auth.currentUser.uid;
+            const uid2 = receiverId;
+            const chatId = uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
+
+            const q = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"));
+            if(window.part14MsgUnsub) window.part14MsgUnsub(); // पुराने टिक (✓) वाले डिज़ाइन को रोक देना
+
+            window.part14MsgUnsub = onSnapshot(q, (snapshot) => {
+                const chatBody = document.getElementById('chatBody');
+                chatBody.innerHTML = '';
+                let lastMessageDate = null;
+
+                snapshot.forEach(async (docSnap) => {
+                    const msgData = docSnap.data();
+                    const isMe = msgData.senderId === auth.currentUser.uid;
+                    const dateObj = msgData.timestamp ? msgData.timestamp.toDate() : new Date();
+                    const time = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const dateString = dateObj.toDateString();
+
+                    // इंस्टाग्राम की तरह Date Divider
+                    if (lastMessageDate !== dateString) {
+                        const today = new Date(); const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+                        let displayDate = dateString;
+                        if (dateString === today.toDateString()) displayDate = "Today";
+                        else if (dateString === yesterday.toDateString()) displayDate = "Yesterday";
+                        else displayDate = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+                        const divider = document.createElement('div');
+                        divider.style.cssText = "text-align: center; margin: 15px 0;";
+                        divider.innerHTML = `<span style="background: #e1e8ed; color: #4a5568; padding: 5px 12px; border-radius: 12px; font-size: 11px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">${displayDate}</span>`;
+                        chatBody.appendChild(divider);
+                        lastMessageDate = dateString;
+                    }
+
+                    // ✨ नया डॉट (Dot) लॉजिक ✨
+                    let tick = '';
+                    if (isMe && !msgData.isDeleted) {
+                        if (msgData.status === 'sent') {
+                            // 1 डॉट (Sent)
+                            tick = `<span style="font-size:18px; margin-left:6px; font-weight:900; color:#718096; line-height:0;">•</span>`;
+                        } else if (msgData.status === 'delivered') {
+                            // 2 डॉट (Delivered)
+                            tick = `<span style="font-size:18px; margin-left:6px; font-weight:900; color:#718096; line-height:0; letter-spacing:-2px;">••</span>`;
+                        } else if (msgData.status === 'seen') {
+                            // सीन होते ही डॉट्स गायब
+                            tick = ``; 
+                        }
+                    }
+
+                    // Content
+                    let msgContent = "";
+                    if (msgData.isDeleted) {
+                        msgContent = `<span style="font-style: italic; color: #718096;">🚫 This message was deleted</span>`;
+                        tick = "";
+                    } else if (msgData.type === 'image') {
+                        msgContent = `<div style="text-align:center;"><img src="${msgData.text}" style="max-width:100%; border-radius:8px;"><br><a href="${msgData.text}" download style="margin-top:5px; padding:4px 10px; background:#075e54; color:white; border-radius:5px; font-size:12px; text-decoration:none; display:inline-block;">Download to View</a></div>`;
+                    } else if (msgData.type === 'video') {
+                        msgContent = `<div style="text-align:center;"><video controls style="max-width:100%; border-radius:8px;"><source src="${msgData.text}" type="video/mp4"></video><br><a href="${msgData.text}" download style="display:inline-block; margin-top:5px; padding:4px 10px; background:#075e54; color:white; border-radius:5px; font-size:12px; text-decoration:none;">Download Video</a></div>`;
+                    } else if (msgData.type === 'audio') {
+                        const audioMatch = msgData.text.match(/\[AUDIO\](.*?)\[\/AUDIO\]/);
+                        if(audioMatch && audioMatch[1]) msgContent = `<audio controls src="${audioMatch[1]}" style="height:35px; max-width:200px; outline:none; border-radius:20px;"></audio>`;
+                        else msgContent = msgData.text;
+                    } else {
+                        msgContent = msgData.text;
+                    }
+
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = `msg ${isMe ? 'sent' : 'received'}`;
+                    msgDiv.innerHTML = `${msgContent} <span class="msg-time" style="display:flex; align-items:center; justify-content:flex-end;">${time} ${isMe ? tick : ''}</span>`;
+
+                    if (!msgData.isDeleted) {
+                        let pressTimer;
+                        const startPress = () => { pressTimer = setTimeout(() => window.deleteMessage(docSnap.id), 800); };
+                        const cancelPress = () => clearTimeout(pressTimer);
+                        msgDiv.addEventListener('touchstart', startPress);
+                        msgDiv.addEventListener('touchend', cancelPress);
+                        msgDiv.addEventListener('mousedown', startPress);
+                        msgDiv.addEventListener('mouseup', cancelPress);
+                    }
+
+                    chatBody.appendChild(msgDiv);
+
+                    if (!isMe && msgData.status !== 'seen' && !msgData.isDeleted) {
+                        await updateDoc(doc(db, "chats", chatId, "messages", docSnap.id), { status: 'seen' });
+                    }
+                });
+                chatBody.scrollTop = chatBody.scrollHeight;
+            });
+        }
+    };
+</script>
+
+<!-- ========================================== -->
+<!-- PART 47: DASHBOARD UNREAD BADGES & TIME UI -->
+<!-- ========================================== -->
+<script type="module">
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+    import { getFirestore, collection, query, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+    const auth = getAuth();
+    const db = getFirestore();
+
+    // 1. टाइम को शॉर्ट फॉर्मेट (2h, 5m, 1d) में बदलने का फंक्शन
+    function formatTimeShort(timestamp) {
+        if (!timestamp) return '';
+        const diff = Math.floor((Date.now() - timestamp) / 1000);
+        if (diff < 60) return 'now';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h';
+        return Math.floor(diff / 86400) + 'd';
+    }
+
+    // 2. Part 23 के रेंडर फंक्शन को फोटो वाले डिज़ाइन से ओवरराइड करना
+    window.renderSortedChats23 = function() {
+        const myChatsContainer = document.getElementById('myChatsContainer');
+        if(!myChatsContainer || !window.friendsDataMap23) return;
+
+        const sortedFriends = Object.values(window.friendsDataMap23).sort((a, b) => b.time - a.time);
+        
+        myChatsContainer.innerHTML = '';
+        if(sortedFriends.length === 0) {
+            myChatsContainer.innerHTML = '<p style="font-size: 13px; color: #718096; text-align: center;">No chats yet</p>';
+            return;
+        }
+        
+        sortedFriends.forEach(f => {
+            const timeStr = formatTimeShort(f.time);
+            const unread = f.unreadCount || 0; // अनरीड गिनती
+            
+            // फोटो के हिसाब से डायनामिक HTML बनाना
+            const unreadTextHTML = unread > 0 
+                ? `<span style="color: #0ea5e9; font-size: 11.5px; font-weight: 600; margin-bottom: 2px;">${unread} new message${unread > 1 ? 's' : ''}</span>` 
+                : `<span style="color: transparent; font-size: 11.5px; margin-bottom: 2px;">0</span>`; // अलाइनमेंट न बिगड़े इसलिए ट्रांसपेरेंट 0
+                
+            const dotHTML = unread > 0 
+                ? `<div style="width: 8px; height: 8px; background: #3b82f6; border-radius: 50%; margin-left: 4px;"></div>` 
+                : ``;
+
+            myChatsContainer.innerHTML += `
+                <div class="member-item" style="cursor:pointer; border-left: 4px solid #3182ce; margin-bottom: 12px; padding: 12px 15px;" onclick="openChat('${f.info.username}', '${f.info.dp}', '${f.id}')">
+                    <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                        
+                        <!-- Left Side: DP & Name -->
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <img src="${f.info.dp}" alt="User" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;">
+                            <div style="display: flex; flex-direction: column; justify-content: center;">
+                                ${unreadTextHTML}
+                                <div class="member-name" style="text-transform: capitalize; font-weight: 600; color: #2d3748; font-size: 15px;">
+                                    ${f.info.username}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Side: Time, Dot & Button -->
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                            <div style="display: flex; align-items: center;">
+                                <span style="font-size: 12px; color: #3b82f6; font-weight: 500;">${timeStr}</span>
+                                ${dotHTML}
+                            </div>
+                            <button class="btn-small accept-btn" style="background:#3182ce; padding: 6px 18px;">Message</button>
+                        </div>
+
+                    </div>
+                </div>
+            `;
+        });
+    };
+
+    // 3. अनरीड मैसेज काउंट करने वाला नया जासूस
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            setInterval(() => {
+                if (window.friendsDataMap23) {
+                    Object.values(window.friendsDataMap23).forEach(friend => {
+                        const friendId = friend.id;
+                        const chatId = user.uid < friendId ? `${user.uid}_${friendId}` : `${friendId}_${user.uid}`;
+                        
+                        // अगर इस दोस्त का अनरीड जासूस नहीं लगा है
+                        if (!window.friendsDataMap23[friendId].unreadSpyActive) {
+                            window.friendsDataMap23[friendId].unreadSpyActive = true;
+                            
+                            // पूरी चैट के मैसेज मंगाना (अनरीड गिनने के लिए)
+                            const msgQ = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"));
+                            onSnapshot(msgQ, (snapshot) => {
+                                let count = 0;
+                                let lastTime = 0;
+                                
+                                snapshot.forEach(docSnap => {
+                                    const msgData = docSnap.data();
+                                    if (msgData.timestamp) lastTime = msgData.timestamp.toMillis();
+                                    // अगर मैसेज दोस्त ने भेजा है और अभी तक 'seen' नहीं हुआ है
+                                    if (msgData.senderId === friendId && msgData.status !== 'seen') {
+                                        count++;
+                                    }
+                                });
+                                
+                                // डेटा मैप में अपडेट करना और UI रीफ्रेश करना
+                                window.friendsDataMap23[friendId].unreadCount = count;
+                                if(lastTime > 0) window.friendsDataMap23[friendId].time = lastTime;
+                                
+                                window.renderSortedChats23();
+                            });
+                        }
+                    });
+                }
+            }, 3000);
+        }
+    });
+</script>
+
+
+
+  
+
