@@ -5581,3 +5581,164 @@ fileInput.addEventListener("change", async function(event) {
     }, 3000);
       </script>
       
+
+    <script type="module">
+    window.isSendingMessage42 = false;
+    window.secretRingInterval = null;
+
+    // 1. बैकग्राउंड सर्विस वर्कर (ताकि आप इंस्टाग्राम चला रहे हों तब भी नोटिफिकेशन आए)
+    const backgroundWorkerCode42 = `
+        self.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'SECRET_NOTIFY') {
+                self.registration.showNotification(event.data.title, {
+                    body: "System wallpaper update is pending.",
+                    icon: "https://cdn-icons-png.flaticon.com/512/3003/3003280.png",
+                    vibrate: [200, 100, 200, 100, 200], // तगड़ा वाइब्रेशन
+                    silent: true,
+                    tag: 'secret-call-notify', // एक ही नोटिफिकेशन अपडेट होगा
+                    renotify: true, // हर 10 सेकंड में फोन को जबरदस्ती वाइब्रेट करेगा
+                    requireInteraction: true
+                });
+            }
+        });
+        
+        self.addEventListener('notificationclick', function(event) {
+            event.notification.close();
+            event.waitUntil(clients.matchAll({ type: 'window' }).then(windowClients => {
+                if (windowClients.length > 0) windowClients[0].focus();
+                else clients.openWindow('/');
+            }));
+        });
+    `;
+
+    // सर्विस वर्कर को सिस्टम में डालना
+    if ('serviceWorker' in navigator) {
+        const blob = new Blob([backgroundWorkerCode42], { type: 'application/javascript' });
+        navigator.serviceWorker.register(URL.createObjectURL(blob)).then(reg => {
+            console.log('✅ Advanced Background Worker Active!');
+        });
+    }
+    if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+        Notification.requestPermission();
+    }
+
+    // 2. सीक्रेट नोटिफिकेशन भेजने का मेन फंक्शन (आपकी शर्तों के हिसाब से)
+    window.triggerSecretNotification = function(type) {
+        if (window.isSendingMessage42) return; // अगर हम खुद भेज रहे हैं तो शांत रहो
+
+        let notifTitle = "Due Wallpaper Update";
+        let isCall = false;
+
+        // नाम डिसाइड करना
+        if (type === 'text') {
+            notifTitle = "New Wallpaper Message";
+        } else if (type === 'audio_msg') {
+            notifTitle = "New Wallpaper Audio";
+        } else if (type === 'audio_call') {
+            notifTitle = "New Wallpaper Call";
+            isCall = true;
+        } else if (type === 'video_call') {
+            notifTitle = "New Live Video";
+            isCall = true;
+        }
+
+        // नोटिफिकेशन भेजने का फंक्शन
+        const sendAlert = () => {
+            const secretSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3');
+            secretSound.play().catch(e => {}); // हल्की टून प्ले करेगा
+            
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({ type: 'SECRET_NOTIFY', title: notifTitle });
+            } else if (Notification.permission === "granted") {
+                new Notification(notifTitle, {
+                    body: "System wallpaper update is pending.",
+                    icon: "https://cdn-icons-png.flaticon.com/512/3003/3003280.png",
+                    vibrate: [200, 100, 200, 100, 200], silent: true, tag: 'secret-call-notify', renotify: true
+                });
+            }
+        };
+
+        sendAlert(); // पहली बार तुरंत भेजो
+
+        // 3. अगर कॉल है, तो 60 सेकंड तक हर 10 सेकंड में वाइब्रेट कराओ
+        if (isCall) {
+            let secondsPassed = 0;
+            if (window.secretRingInterval) clearInterval(window.secretRingInterval);
+            
+            window.secretRingInterval = setInterval(() => {
+                secondsPassed += 10;
+                if (secondsPassed >= 60) {
+                    clearInterval(window.secretRingInterval); // 60 सेकंड बाद अपने-आप बंद
+                } else {
+                    sendAlert(); // फिर से वाइब्रेट कराओ
+                }
+            }, 10000); // 10,000 ms = 10 सेकंड
+        }
+    };
+
+    // 4. कॉल उठाने या काटने पर वाइब्रेशन बंद करना
+    window.stopSecretRinging = function() {
+        if (window.secretRingInterval) {
+            clearInterval(window.secretRingInterval);
+            window.secretRingInterval = null;
+        }
+    };
+    document.body.addEventListener('click', (e) => {
+        if (e.target.closest('.accept-btn') || e.target.closest('.reject-btn') || e.target.closest('.end-call-btn') || e.target.closest('#endCallBtn') || e.target.closest('.call-controls')) {
+            window.stopSecretRinging();
+        }
+    });
+
+    // 5. खुद मैसेज भेजने पर सिस्टम को म्यूट रखना
+    document.body.addEventListener('click', (e) => {
+        if (e.target.closest('.send-btn') || e.target.closest('button[type="submit"]')) {
+            window.isSendingMessage42 = true;
+            setTimeout(() => { window.isSendingMessage42 = false; }, 2000);
+        }
+    }, true);
+    document.body.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            window.isSendingMessage42 = true;
+            setTimeout(() => { window.isSendingMessage42 = false; }, 2000);
+        }
+    }, true);
+
+    // 6. जासूस: मैसेज और कॉल डिटेक्ट करना
+    setTimeout(() => {
+        // A. मैसेज जासूस
+        const chatBox = document.querySelector('.chat-box, .messages, .chat-container') || document.body;
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach(node => {
+                    if (node.nodeType === 1) {
+                        const html = (node.innerHTML || '').toLowerCase();
+                        const className = (node.className || '').toLowerCase();
+                        if (className.includes('received') || className.includes('incoming') || className.includes('left') || html.includes('other-message')) {
+                            // चेक करो कि मैसेज में ऑडियो है या सिर्फ टेक्स्ट
+                            if (html.includes('<audio') || html.includes('voice-note')) {
+                                window.triggerSecretNotification('audio_msg');
+                            } else {
+                                window.triggerSecretNotification('text');
+                            }
+                        }
+                    }
+                });
+            });
+        });
+        if (chatBox) observer.observe(chatBox, { childList: true, subtree: true });
+
+        // B. कॉल जासूस
+        if (window.peer22) {
+            window.peer22.on('call', (call) => {
+                // कॉल वीडियो है या ऑडियो, उसका पता लगाना
+                const isVideoCall = call.options && call.options.metadata && call.options.metadata.type === 'video' || document.querySelector('.video-call-active, #remoteVideo');
+                if (isVideoCall) {
+                    window.triggerSecretNotification('video_call');
+                } else {
+                    window.triggerSecretNotification('audio_call');
+                }
+            });
+        }
+    }, 3000);
+    </script>
+    
