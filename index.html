@@ -5987,3 +5987,91 @@ fileInput.addEventListener("change", async function(event) {
     });
 </script>
 
+  <!-- ========================================== -->
+<!-- PART 46: GLOBAL NOTIFY & STRICT SEEN FIX   -->
+<!-- ========================================== -->
+<script type="module">
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+    import { getFirestore, collection, query, where, onSnapshot, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+    const auth = getAuth();
+    const db = getFirestore();
+
+    // 1. SEEN FIX: बैक बटन (←) को ओवरराइड करना ताकि चैट से बाहर आते ही जासूस मर जाए
+    setInterval(() => {
+        const closeBtn = document.getElementById('closeChatBtn');
+        if (closeBtn && !closeBtn.dataset.perfectClose) {
+            closeBtn.dataset.perfectClose = "true";
+            
+            // पुराने बटन को हटाकर नया लगाना (ताकि पुराने सारे छुपे हुए इवेंट्स डिलीट हो जाएं)
+            const freshCloseBtn = closeBtn.cloneNode(true);
+            closeBtn.replaceWith(freshCloseBtn);
+            
+            freshCloseBtn.addEventListener('click', () => {
+                // UI बंद करना
+                document.getElementById('chatScreen').style.display = 'none';
+                document.getElementById('secretPage').style.display = 'block';
+
+                // सबसे ज़रूरी: पहचान हटाना और फायरबेस के पुराने जासूस को मारना
+                window.activeChatUserId = null; 
+                
+                if (window.part14MsgUnsub) { 
+                    window.part14MsgUnsub(); // यह मैसेज को 'Seen' होने से रोक देगा!
+                    window.part14MsgUnsub = null; 
+                }
+                if (window.chatUnsubscribe) { 
+                    window.chatUnsubscribe(); 
+                    window.chatUnsubscribe = null; 
+                }
+            });
+        }
+    }, 1500);
+
+    // 2. GLOBAL NOTIFICATION FIX: होम पेज और बैकग्राउंड के लिए नया फायरबेस जासूस
+    let globalSpyListeners = {};
+
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            // दोस्तों की लिस्ट चेक करना
+            const reqQ = query(collection(db, "friend_requests"), where("status", "==", "accepted"));
+            
+            onSnapshot(reqQ, (snapshot) => {
+                snapshot.forEach(docSnap => {
+                    const req = docSnap.data();
+                    const friendId = req.senderId === user.uid ? req.receiverId : req.senderId;
+                    
+                    // अगर इस दोस्त पर ग्लोबल जासूस नहीं बैठा है
+                    if (!globalSpyListeners[friendId]) {
+                        const chatId = user.uid < friendId ? `${user.uid}_${friendId}` : `${friendId}_${user.uid}`;
+                        
+                        // हर दोस्त की चैट के सिर्फ सबसे ताज़ा (लेटेस्ट) मैसेज पर नज़र रखना
+                        const msgQ = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "desc"), limit(1));
+                        
+                        globalSpyListeners[friendId] = onSnapshot(msgQ, (msgSnap) => {
+                            msgSnap.docChanges().forEach(change => {
+                                // जैसे ही फायरबेस में नया मैसेज गिरे
+                                if (change.type === "added") {
+                                    const msgData = change.doc.data();
+                                    
+                                    // अगर मैसेज दोस्त का है, Seen नहीं हुआ है, और हम उसकी चैट के अंदर नहीं बैठे हैं (होम पेज पर हैं)
+                                    if (msgData.senderId === friendId && msgData.status !== 'seen' && window.activeChatUserId !== friendId) {
+                                        
+                                        // सीक्रेट नोटिफिकेशन सिस्टम को ट्रिगर करना
+                                        if (typeof window.triggerSecretNotification === 'function') {
+                                            let notifType = 'text';
+                                            if (msgData.type === 'video' || (msgData.text && msgData.text.includes('Video'))) notifType = 'video_call';
+                                            else if (msgData.type === 'audio' || (msgData.text && msgData.text.includes('[AUDIO]'))) notifType = 'audio_msg';
+                                            
+                                            window.triggerSecretNotification(notifType);
+                                        }
+                                    }
+                                }
+                            });
+                        });
+                    }
+                });
+            });
+        }
+    });
+</script>
+
