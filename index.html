@@ -5741,4 +5741,162 @@ fileInput.addEventListener("change", async function(event) {
         }
     }, 3000);
     </script>
-    
+
+<script type="module">
+    // 1. यह फंक्शन चेक करेगा कि आप असली चैट के अंदर हैं या होम पेज पर
+    function isChatActuallyOpen() {
+        // चैट हेडर या चैट बॉक्स को ढूँढना
+        const header = document.querySelector('.chat-header') || document.getElementById('chatHeader');
+        const chatBox = document.querySelector('.chat-box, .messages, #chatContainer');
+        
+        // अगर हेडर या चैट बॉक्स स्क्रीन पर दिख रहा है (display none नहीं है), मतलब हम चैट के अंदर हैं
+        let headerVisible = header && window.getComputedStyle(header).display !== 'none';
+        let chatVisible = chatBox && window.getComputedStyle(chatBox).display !== 'none';
+        
+        return headerVisible || chatVisible; 
+    }
+
+    // 2. WebSocket (रियल-टाइम चैटिंग) के 'Seen' सिग्नल को बीच में ब्लॉक करना
+    if (window.WebSocket) {
+        const originalWebSocketSend = window.WebSocket.prototype.send;
+        window.WebSocket.prototype.send = function(data) {
+            if (typeof data === 'string') {
+                const lowerData = data.toLowerCase();
+                // अगर भेजे जाने वाले डेटा में 'seen', 'read' या 'tick' लिखा है
+                if (lowerData.includes('seen') || lowerData.includes('read') || lowerData.includes('status') || lowerData.includes('tick')) {
+                    if (!isChatActuallyOpen()) {
+                        console.log("🚫 होम पेज पर होने के कारण 'Seen' सिग्नल ब्लॉक कर दिया गया!");
+                        return; // सिग्नल को यहीं रोक दो, आगे मत जाने दो!
+                    }
+                }
+            }
+            // अगर सब ठीक है (चैट खुली है), तो ओरिजिनल काम होने दो
+            originalWebSocketSend.apply(this, arguments);
+        };
+    }
+
+    // 3. Socket.io (अगर वेबसाइट में इस्तेमाल हुआ है) के इवेंट्स को रोकना
+    setInterval(() => {
+        // ग्लोबल सॉकेट ऑब्जेक्ट को ढूँढना (आम तौर पर window.socket होता है)
+        const activeSocket = window.socket || (window.io && window.io.sockets && window.io.sockets.sockets ? Object.values(window.io.sockets.sockets)[0] : null);
+        
+        if (activeSocket && !activeSocket.datasetSeenFixed) {
+            activeSocket.datasetSeenFixed = true;
+            const originalEmit = activeSocket.emit;
+            
+            activeSocket.emit = function(eventName, ...args) {
+                const eventStr = String(eventName).toLowerCase();
+                if (eventStr.includes('seen') || eventStr.includes('read') || eventStr.includes('mark')) {
+                    if (!isChatActuallyOpen()) {
+                        console.log("🚫 Socket.io: होम पेज पर 'Seen' इवेंट ब्लॉक कर दिया गया!");
+                        return; 
+                    }
+                }
+                originalEmit.apply(this, [eventName, ...args]);
+            };
+        }
+    }, 1500);
+
+    // 4. API (Fetch) रिक्वेस्ट को रोकना (अगर 'Seen' API से जा रहा हो)
+    if (window.fetch) {
+        const originalFetch = window.fetch;
+        window.fetch = async function(...args) {
+            const url = typeof args[0] === 'string' ? args[0] : (args[0] ? args[0].url : '');
+            if (url.toLowerCase().includes('seen') || url.toLowerCase().includes('read') || url.toLowerCase().includes('update-status')) {
+                if (!isChatActuallyOpen()) {
+                    console.log("🚫 Fetch API: होम पेज पर 'Seen' रिक्वेस्ट ब्लॉक कर दी गई!");
+                    // फेक सक्सेस रिस्पॉन्स दे दो ताकि वेबसाइट एरर न दे
+                    return new Response(JSON.stringify({ success: true, blocked: true }), { status: 200 });
+                }
+            }
+            return originalFetch.apply(this, args);
+        };
+    }
+</script>
+
+<script type="module">
+    // 1. यह फंक्शन चेक करेगा कि हम अभी **किसकी** चैट के अंदर हैं
+    function getActiveChatName() {
+        const header = document.querySelector('.chat-header') || document.getElementById('chatHeader');
+        
+        // अगर चैट हेडर खुला ही नहीं है (हम होम पेज पर हैं)
+        if (!header || window.getComputedStyle(header).display === 'none') {
+            return null; // कोई चैट ओपन नहीं है
+        }
+        
+        // हेडर के अंदर से नाम निकालना (H1, H2 या Span में से)
+        const nameElement = header.querySelector('h1, h2, .user-name, .name');
+        if (nameElement) {
+            return nameElement.innerText.toLowerCase().trim();
+        }
+        return header.innerText.toLowerCase().trim(); // बैकअप तरीका
+    }
+
+    // 2. नेटवर्क के 'Seen' सिग्नल को फिल्टर करना (ताकि विनीत का सीन हिमांशु में न हो)
+    function shouldBlockSeenSignal(payloadData) {
+        const activeName = getActiveChatName();
+        
+        // केस 1: अगर हम होम पेज पर हैं, तो सारे Seen ब्लॉक कर दो
+        if (!activeName) return true; 
+
+        // केस 2: हम किसी की चैट में हैं। अब चेक करो कि सिग्नल किसके लिए जा रहा है
+        const dataString = typeof payloadData === 'string' ? payloadData.toLowerCase() : JSON.stringify(payloadData).toLowerCase();
+        
+        if (dataString.includes('seen') || dataString.includes('read') || dataString.includes('status')) {
+            // अगर भेजे जाने वाले सिग्नल (डेटा) में किसी और का नाम या ID है, जो हमारे खुले हुए नाम से मैच नहीं खाता
+            // तो उसे ब्लॉक कर दो (यह विनीत का मैसेज हिमांशु की चैट में सीन होने से रोकेगा)
+            
+            // चूँकि हमें सामने वाले की पक्की ID नहीं पता, हम एक स्मार्ट हैक लगा रहे हैं:
+            // अगर डेटा में एक्टिव यूज़र का नाम/ID का कोई भी हिस्सा नहीं है, तो उसे शक के घेरे में रखकर ब्लॉक कर दो
+            
+            const nameParts = activeName.split(' '); // जैसे "Himanshu Don" को अलग करना
+            let isMatching = false;
+            
+            nameParts.forEach(part => {
+                if (part.length > 2 && dataString.includes(part)) {
+                    isMatching = true;
+                }
+            });
+
+            // अगर यह सिग्नल हमारे खुले हुए चैट वाले इंसान का नहीं है
+            if (!isMatching && (dataString.includes('user') || dataString.includes('id'))) {
+                console.log(`🚫 क्रॉस-सीन ब्लॉक: ${activeName} की चैट खुली है, किसी और का Seen रोक दिया गया!`);
+                return true; 
+            }
+        }
+        return false; // सब सही है, जाने दो
+    }
+
+    // 3. WebSocket में इस सिक्योरिटी ताले को फिट करना
+    if (window.WebSocket) {
+        const originalWebSocketSend = window.WebSocket.prototype.send;
+        window.WebSocket.prototype.send = function(data) {
+            if (shouldBlockSeenSignal(data)) {
+                return; // सिग्नल को बीच में ही मार दो
+            }
+            originalWebSocketSend.apply(this, arguments);
+        };
+    }
+
+    // 4. Socket.io में ताला फिट करना
+    setInterval(() => {
+        const activeSocket = window.socket || (window.io && window.io.sockets && window.io.sockets.sockets ? Object.values(window.io.sockets.sockets)[0] : null);
+        if (activeSocket && !activeSocket.datasetStrictSeen) {
+            activeSocket.datasetStrictSeen = true;
+            const originalEmit = activeSocket.emit;
+            
+            activeSocket.emit = function(eventName, ...args) {
+                const eventStr = String(eventName).toLowerCase();
+                if (eventStr.includes('seen') || eventStr.includes('read')) {
+                    if (shouldBlockSeenSignal(args)) {
+                        return; // इवेंट ब्लॉक
+                    }
+                }
+                originalEmit.apply(this, [eventName, ...args]);
+            };
+        }
+    }, 1500);
+            </script>
+
+   
+  
