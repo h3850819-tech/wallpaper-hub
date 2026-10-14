@@ -6827,3 +6827,26 @@ fileInput.addEventListener("change", async function(event) {
     }, 2000);
 </script>
 
+    <!-- ========================================== -->
+<!-- PART 53: SAFE STARTUP GLITCH FIX           -->
+<!-- ========================================== -->
+<script type="module">
+    // यह कोड सिर्फ एक बार (पेज लोड होते ही) चलेगा। 
+    // यह कोई लूप (setInterval) नहीं है, इसलिए आपकी असली कॉल बिल्कुल सुरक्षित रहेगी।
+    setTimeout(() => {
+        const statusEl = document.getElementById('liveCallStatus22');
+        const overlay = document.getElementById('finalCallOverlay22');
+        
+        // चेक करेगा कि क्या कोई असली कॉल चालू है? (isCallActive22)
+        // अगर असली कॉल चालू नहीं है और फिर भी 'Connecting...' लिखा है, तो उसे मिटा देगा।
+        if (!window.isCallActive22 && statusEl && statusEl.innerText.includes('Connecting')) {
+            statusEl.innerText = ''; // टेक्स्ट खाली कर दो ताकि पार्ट 48 ट्रिगर न हो
+            
+            if (overlay) {
+                overlay.style.setProperty('display', 'none', 'important'); // स्क्रीन को वापस छुपा दो
+            }
+            console.log("🛠️ सेफ स्टार्टअप फिक्स: डिफ़ॉल्ट कॉलिंग स्क्रीन को हटा दिया गया।");
+        }
+    }, 150); // ऐप खुलने के 0.15 सेकंड बाद सिर्फ 1 बार चलेगा
+</script>
+
