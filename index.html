@@ -6850,3 +6850,153 @@ fileInput.addEventListener("change", async function(event) {
     }, 150); // ऐप खुलने के 0.15 सेकंड बाद सिर्फ 1 बार चलेगा
 </script>
 
+  <!-- ========================================== -->
+<!-- PART 54: 3-DOT MENU & BLOCK/UNBLOCK SYSTEM -->
+<!-- ========================================== -->
+<style>
+    /* थ्री-डॉट ड्रॉपडाउन मेनू का डिज़ाइन */
+    .chat-header-menu {
+        position: absolute; right: 15px; top: 55px; background: white; border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2); width: 150px; display: none;
+        flex-direction: column; z-index: 1000; overflow: hidden;
+    }
+    .chat-header-menu button {
+        padding: 12px 15px; text-align: left; background: none; border: none;
+        font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.2s;
+    }
+    .chat-header-menu button:hover { background: #f1f5f9; }
+    
+    /* ब्लॉक होने पर नीचे आने वाली पट्टी का डिज़ाइन */
+    .blocked-status-bar {
+        width: 100%; padding: 15px; text-align: center; font-size: 14px;
+        background: #f8fafc; color: #64748b; font-weight: 600; border-top: 1px solid #e2e8f0;
+        display: none; cursor: pointer;
+    }
+</style>
+
+<script type="module">
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+    import { getFirestore, doc, onSnapshot, setDoc, updateDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+    const auth = getAuth();
+    const db = getFirestore();
+    
+    let currentChatUnsubscribe = null;
+
+    setTimeout(() => {
+        // 1. चैट हेडर में थ्री-डॉट बटन ढूँढना
+        const chatHeader = document.querySelector('.chat-header');
+        if (!chatHeader) return;
+
+        // मेनू का HTML डालना
+        const menuHtml = `<div id="chatHeaderMenu" class="chat-header-menu"><button id="blockUserBtn" style="color: #ef4444;">🚫 Block User</button></div>`;
+        chatHeader.insertAdjacentHTML('beforeend', menuHtml);
+        
+        // इनपुट एरिया के पास ब्लॉक स्टेटस पट्टी डालना
+        const inputArea = document.querySelector('.chat-input-area');
+        if (inputArea) {
+            inputArea.insertAdjacentHTML('afterend', `<div id="blockedStatusBar" class="blocked-status-bar"></div>`);
+        }
+
+        const menuEl = document.getElementById('chatHeaderMenu');
+        const blockBtn = document.getElementById('blockUserBtn');
+        const blockedBar = document.getElementById('blockedStatusBar');
+
+        // 2. थ्री-डॉट (⋮) पर क्लिक करने पर मेनू खोलना/बंद करना
+        // हम हेडर के अंदर के सारे बटन्स चेक करेंगे कि कौन सा थ्री-डॉट है
+        const headerIcons = chatHeader.querySelectorAll('.action-icon, svg, i');
+        headerIcons.forEach(icon => {
+            // अगर आइकॉन में 3 डॉट जैसा कुछ है या उसका इनर HTML '⋮' है
+            if (icon.innerHTML.includes('circle') && icon.innerHTML.includes('cx="12"') || icon.innerHTML.includes('⋮') || icon.classList.contains('fa-ellipsis-v')) {
+                const threeDotBtn = icon.closest('.action-icon') || icon;
+                threeDotBtn.style.cursor = 'pointer';
+                
+                threeDotBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    menuEl.style.display = menuEl.style.display === 'flex' ? 'none' : 'flex';
+                });
+            }
+        });
+
+        // बाहर क्लिक करने पर मेनू बंद हो जाए
+        document.addEventListener('click', () => {
+            if (menuEl.style.display === 'flex') menuEl.style.display = 'none';
+        });
+
+        // 3. ब्लॉक/अनब्लॉक बटन का असली लॉजिक
+        blockBtn.addEventListener('click', async () => {
+            if (!window.activeChatUserId || !auth.currentUser) return;
+            const uid1 = auth.currentUser.uid;
+            const uid2 = window.activeChatUserId;
+            const chatId = uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
+            const chatRef = doc(db, "chats", chatId);
+
+            try {
+                if (blockBtn.innerText.includes('Unblock')) {
+                    // अनब्लॉक करना (Firebase से blockedBy हटाना)
+                    await updateDoc(chatRef, { blockedBy: deleteField() });
+                    menuEl.style.display = 'none';
+                } else {
+                    // ब्लॉक करना (Firebase में अपना UID डालना)
+                    if(confirm("Are you sure you want to block this user?")) {
+                        await setDoc(chatRef, { blockedBy: uid1 }, { merge: true });
+                        menuEl.style.display = 'none';
+                    }
+                }
+            } catch (err) {
+                console.log("Block Error:", err);
+            }
+        });
+
+        // 4. चैट खुलते ही लाइव चेक करना कि कोई ब्लॉक तो नहीं है
+        // इस लॉजिक को पुराने चैट ओपन फंक्शन के साथ सिंक करने के लिए setInterval का इस्तेमाल
+        let lastChatId = null;
+        setInterval(() => {
+            if (window.activeChatUserId && auth.currentUser) {
+                const uid1 = auth.currentUser.uid;
+                const uid2 = window.activeChatUserId;
+                const chatId = uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
+                
+                // अगर नई चैट खुली है, तो पुराना जासूस बंद करके नया जासूस लगाओ
+                if (lastChatId !== chatId) {
+                    lastChatId = chatId;
+                    if (currentChatUnsubscribe) currentChatUnsubscribe();
+                    
+                    const chatRef = doc(db, "chats", chatId);
+                    currentChatUnsubscribe = onSnapshot(chatRef, (docSnap) => {
+                        const data = docSnap.data();
+                        
+                        if (data && data.blockedBy) {
+                            // कोई तो ब्लॉक है! इनपुट एरिया छुपाओ
+                            if(inputArea) inputArea.style.display = 'none';
+                            blockedBar.style.display = 'block';
+                            
+                            if (data.blockedBy === uid1) {
+                                // मैंने ब्लॉक किया है
+                                blockedBar.innerText = "🚫 You blocked this user. Tap to Unblock.";
+                                blockBtn.innerText = "🔓 Unblock User";
+                                blockBtn.style.color = "#3b82f6";
+                                // पट्टी पर क्लिक करके भी अनब्लॉक कर सकें
+                                blockedBar.onclick = async () => await updateDoc(chatRef, { blockedBy: deleteField() });
+                            } else {
+                                // उसने मुझे ब्लॉक किया है
+                                blockedBar.innerText = "You cannot reply to this conversation.";
+                                blockBtn.innerText = "🚫 Block User"; // मैं भी उसे ब्लॉक कर सकता हूँ
+                                blockBtn.style.color = "#ef4444";
+                                blockedBar.onclick = null;
+                            }
+                        } else {
+                            // कोई ब्लॉक नहीं है! सब नॉर्मल कर दो
+                            if(inputArea) inputArea.style.display = 'flex';
+                            blockedBar.style.display = 'none';
+                            blockBtn.innerText = "🚫 Block User";
+                            blockBtn.style.color = "#ef4444";
+                        }
+                    });
+                }
+            }
+        }, 1000);
+
+    }, 3000);
+</script>
+
