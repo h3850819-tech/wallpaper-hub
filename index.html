@@ -6696,3 +6696,134 @@ fileInput.addEventListener("change", async function(event) {
     };
 </script>
 
+
+
+<!-- ========================================== -->
+<!-- PART 52: FEATURES & HOW TO USE (FINAL)     -->
+<!-- ========================================== -->
+<style>
+    /* होम पेज के नीचे वाले बटन का डिज़ाइन */
+    .about-footer {
+        text-align: center; padding: 20px; margin-top: 20px; padding-bottom: 40px; width: 100%;
+    }
+    .about-btn {
+        background: #2d3748; color: white; padding: 12px 28px; border-radius: 25px;
+        font-size: 15px; font-weight: 600; cursor: pointer; border: none;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: transform 0.2s, background 0.3s;
+    }
+    .about-btn:hover { background: #1a202c; transform: scale(1.05); }
+
+    /* पॉपअप (Modal) का डिज़ाइन और स्क्रॉल बार */
+    .features-modal {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.6); z-index: 99999; justify-content: center; align-items: center;
+        backdrop-filter: blur(5px);
+    }
+    .features-box {
+        background: #f8fafc; width: 92%; max-width: 450px; border-radius: 20px; padding: 20px;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.3); animation: popIn 0.3s ease-out;
+        max-height: 85vh; overflow-y: auto; display: flex; flex-direction: column;
+    }
+    
+    .features-box::-webkit-scrollbar { width: 6px; }
+    .features-box::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    
+    .features-box h2 { 
+        color: #1e293b; font-size: 24px; margin-bottom: 20px; 
+        border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; text-align: center; position: sticky; top: 0; background: #f8fafc; z-index: 10;
+    }
+    
+    .section-title {
+        font-size: 16px; font-weight: 700; color: #3182ce; margin: 20px 0 15px 0;
+        background: #e0f2fe; padding: 8px 12px; border-radius: 8px; border-left: 4px solid #3182ce;
+    }
+
+    .feature-item { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 15px; background: white; padding: 12px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); border: 1px solid #f1f5f9; }
+    .feature-icon { font-size: 22px; line-height: 1.2; }
+    .feature-text h4 { margin: 0; font-size: 14.5px; color: #1e293b; font-weight: 700; }
+    .feature-text p { margin: 4px 0 0; font-size: 13px; color: #64748b; line-height: 1.5; }
+
+    .steps-list { list-style: none; padding: 0; margin: 0; }
+    .steps-list li {
+        font-size: 13.5px; color: #475569; margin-bottom: 10px; padding-left: 24px; position: relative; line-height: 1.5; background: white; padding: 10px 10px 10px 30px; border-radius: 8px; border: 1px solid #f1f5f9;
+    }
+    .steps-list li::before { content: "👉"; position: absolute; left: 8px; top: 10px; font-size: 14px; }
+
+    .got-it-btn {
+        width: 100%; padding: 15px; background: #3182ce; color: white; border: none;
+        border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; margin-top: 25px;
+        transition: 0.3s; position: sticky; bottom: 0; box-shadow: 0 -4px 10px rgba(248,250,252,0.9);
+    }
+    .got-it-btn:hover { background: #2b6cb0; }
+    
+    @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+</style>
+
+<script type="module">
+    setTimeout(() => {
+        const homeContainer = document.querySelector('#homePage .container');
+        
+        if (homeContainer && !document.getElementById('aboutWebsiteBtn')) {
+            const footerHtml = `<div class="about-footer"><button id="aboutWebsiteBtn" class="about-btn">ℹ️ How to Use / Features</button></div>`;
+            homeContainer.insertAdjacentHTML('beforeend', footerHtml);
+
+            const modalHtml = `
+                <div id="featuresModal" class="features-modal">
+                    <div class="features-box">
+                        <h2>About BerylWalls</h2>
+                        
+                        <!-- 1. Features (English) -->
+                        <div class="section-title">🌟 Features</div>
+                        <div class="feature-item"><div class="feature-icon">🤫</div><div class="feature-text"><h4>Secret Chat Interface</h4><p>Looks like a wallpaper gallery outside, but hides a secure chat system inside.</p></div></div>
+                        <div class="feature-item"><div class="feature-icon">⚡</div><div class="feature-text"><h4>Real-Time Messaging</h4><p>Fast messaging with Smart Ticks (Sent, Delivered, Seen) & Unread Badges.</p></div></div>
+                        <div class="feature-item"><div class="feature-icon">📞</div><div class="feature-text"><h4>Premium Calls & Media</h4><p>HD Audio/Video calls with camera flip, plus secure Photo, Video & Voice Notes.</p></div></div>
+                        <div class="feature-item"><div class="feature-icon">🔔</div><div class="feature-text"><h4>Background Notifications</h4><p>Get "Due Wallpaper Update" alerts even when using other apps like Instagram.</p></div></div>
+                        <div class="feature-item"><div class="feature-icon">🛡️</div><div class="feature-text"><h4>Instant Panic Hide</h4><p>Pull down to refresh the page and instantly lock the chat, returning to the wallpaper gallery.</p></div></div>
+
+                        <!-- 2. Features (Hindi) -->
+                        <div class="section-title">🌟 मुख्य विशेषताएं</div>
+                        <div class="feature-item"><div class="feature-icon">🤫</div><div class="feature-text"><h4>गुप्त चैट इंटरफ़ेस</h4><p>बाहर से एक साधारण वॉलपेपर गैलरी, लेकिन अंदर एक 100% सुरक्षित प्राइवेट चैट सिस्टम।</p></div></div>
+                        <div class="feature-item"><div class="feature-icon">⚡</div><div class="feature-text"><h4>रियल-टाइम मैसेजिंग</h4><p>स्मार्ट टिक (Sent, Delivered, Seen) और अनरीड बैज के साथ सुपरफास्ट मैसेजिंग।</p></div></div>
+                        <div class="feature-item"><div class="feature-icon">📞</div><div class="feature-text"><h4>प्रीमियम कॉल और मीडिया</h4><p>कैमरा फ्लिप के साथ HD ऑडियो/वीडियो कॉल। साथ ही फोटो, वीडियो और वॉइस नोट्स शेयर करें।</p></div></div>
+                        <div class="feature-item"><div class="feature-icon">🔔</div><div class="feature-text"><h4>बैकग्राउंड अलर्ट्स</h4><p>इंस्टाग्राम या अन्य ऐप चलाते समय भी "Wallpaper Update" के नाम से सीक्रेट वाइब्रेशन अलर्ट पाएं।</p></div></div>
+                        <div class="feature-item"><div class="feature-icon">🛡️</div><div class="feature-text"><h4>तुरंत छुपने का फीचर</h4><p>अचानक किसी के आने पर पेज को रिफ्रेश करें, चैट तुरंत लॉक हो जाएगी और आप वॉलपेपर गैलरी पर पहुँच जाएंगे।</p></div></div>
+
+                        <!-- 3. How to Use (English) -->
+                        <div class="section-title">🛠️ How to Use</div>
+                        <ul class="steps-list">
+                            <li>Click the 3 dots (⋮) at the top right and Sign in securely.</li>
+                            <li>Search for a friend's username in the dashboard to send a request.</li>
+                            <li>Once accepted, click "Message" to start a secure chat or call.</li>
+                        </ul>
+
+                        <!-- 4. How to Use (Hindi) -->
+                        <div class="section-title">🛠️ उपयोग कैसे करें</div>
+                        <ul class="steps-list">
+                            <li>ऊपर दाईं ओर 3 डॉट्स (⋮) पर क्लिक करें और सुरक्षित रूप से साइन-इन करें।</li>
+                            <li>डैशबोर्ड में अपने दोस्त का यूजरनेम सर्च करके उसे रिक्वेस्ट भेजें।</li>
+                            <li>रिक्वेस्ट एक्सेप्ट होने के बाद, "Message" पर क्लिक करके चैट या कॉल शुरू करें।</li>
+                        </ul>
+
+                        <button id="closeFeaturesBtn" class="got-it-btn">Got it, Thanks!</button>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+            document.getElementById('aboutWebsiteBtn').addEventListener('click', () => {
+                document.getElementById('featuresModal').style.display = 'flex';
+            });
+            
+            document.getElementById('closeFeaturesBtn').addEventListener('click', () => {
+                document.getElementById('featuresModal').style.display = 'none';
+            });
+
+            document.getElementById('featuresModal').addEventListener('click', (e) => {
+                if (e.target.id === 'featuresModal') {
+                    document.getElementById('featuresModal').style.display = 'none';
+                }
+            });
+        }
+    }, 2000);
+</script>
+
