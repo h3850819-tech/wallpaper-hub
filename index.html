@@ -6437,5 +6437,84 @@ fileInput.addEventListener("change", async function(event) {
 
 
 
+
+<!-- ========================================== -->
+<!-- PART 48: AUDIO CALL NO-SOUND & UI FIX      -->
+<!-- ========================================== -->
+<script type="module">
+    // 1. MASTER AUDIO ROUTER (आवाज़ को स्पीकर से जबरदस्ती जोड़ना)
+    // यह कोड हर 1 सेकंड में चेक करेगा कि अगर कॉल चालू है और आवाज़ नहीं आ रही, 
+    // तो यह सीधा नेटवर्क से आवाज़ खींच कर फोन के स्पीकर में डाल देगा!
+    setInterval(() => {
+        // window.activeWebRTC26 हमारी असली कॉलिंग लाइन है
+        if (window.activeWebRTC26) {
+            // जो आवाज़ या वीडियो हवा में आ रहा है, उसे पकड़ो
+            const receivers = window.activeWebRTC26.getReceivers();
+            if (receivers && receivers.length > 0) {
+                const remoteTracks = receivers.map(r => r.track).filter(t => t);
+                
+                if (remoteTracks.length > 0) {
+                    const remoteVid = document.getElementById('remoteVideo22') || document.getElementById('remoteVideo');
+                    
+                    if (remoteVid) {
+                        let currentStream = remoteVid.srcObject;
+                        let needsUpdate = false;
+                        
+                        // अगर स्पीकर (Player) में कोई आवाज़ सेट नहीं है, तो उसे अपडेट करने का सिग्नल दो
+                        if (!currentStream) {
+                            needsUpdate = true;
+                        } else {
+                            const existingTracks = currentStream.getTracks();
+                            const missingTracks = remoteTracks.some(t => !existingTracks.includes(t));
+                            if (missingTracks) needsUpdate = true;
+                        }
+                        
+                        // आवाज़ को स्पीकर से जोड़ना
+                        if (needsUpdate) {
+                            const newStream = new MediaStream(remoteTracks);
+                            remoteVid.srcObject = newStream;
+                            remoteVid.muted = false; // म्यूट हटाना
+                            remoteVid.volume = 1.0;  // वॉल्यूम फुल करना
+                            remoteVid.play().catch(e => console.log("Audio Auto-Play waiting for user..."));
+                            
+                            console.log("🔊 ऑडियो कॉल फिक्स एक्टिव! आवाज़ स्पीकर से जुड़ गई है।");
+                        }
+                    }
+                }
+            }
+        }
+    }, 1000);
+
+    // 2. RECEIVER UI FIX (सामने वाले को स्क्रीन 100% शो करना)
+    // कभी-कभी ऑडियो कॉल में वीडियो स्क्रीन गायब होने से पूरा कॉल डिब्बा ही पीछे दब जाता था।
+    setInterval(() => {
+        const statusEl = document.getElementById('liveCallStatus22');
+        const overlay = document.getElementById('finalCallOverlay22');
+        const callBox = document.getElementById('callUIBox22');
+        
+        if (statusEl && overlay && callBox) {
+            const text = statusEl.innerText.toLowerCase();
+            
+            // अगर ऑडियो कॉल आ रही है, बज रही है या कनेक्ट हो रही है
+            if (text.includes("audio call") || text.includes("ringing") || text.includes("connecting")) {
+                
+                // स्क्रीन को जबरदस्ती सबसे ऊपर (Front) खींच लाना
+                if (overlay.style.display === 'none' || overlay.style.display === '') {
+                    overlay.style.setProperty('display', 'flex', 'important');
+                    overlay.style.setProperty('z-index', '9999999', 'important');
+                    overlay.style.setProperty('opacity', '1', 'important');
+                }
+                
+                // ऑडियो कॉल में बैकग्राउंड को प्रीमियम डार्क ब्लू रखना (ताकि काली स्क्रीन न दिखे)
+                if (text.includes("audio") || (window.currentCall22 && window.currentCall22.metadata && window.currentCall22.metadata.type === 'audio')) {
+                    callBox.style.background = 'linear-gradient(135deg, #0f2027, #203a43, #2c5364)';
+                    callBox.style.backdropFilter = 'none';
+                }
+            }
+        }
+    }, 800);
+</script>
+
+
   
 
