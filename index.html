@@ -6627,4 +6627,72 @@ fileInput.addEventListener("change", async function(event) {
     }, 1000);
           </script>
 
+     <!-- ========================================== -->
+<!-- PART 50: MUTE ALL TAP-TAP & NOTIFY SOUNDS  -->
+<!-- ========================================== -->
+<script type="module">
+    // 1. मास्टर साइलेंसर: पूरे ऐप में कहीं भी छुपी हुई 'टप' आवाज़ को ब्लॉक करना
+    const OriginalAudio = window.Audio;
+    window.Audio = function(url) {
+        // अगर वो 'टप-टप' वाली आवाज़ (2354-preview.mp3) है, तो उसे पक्का म्यूट कर दो
+        if (url && url.includes('2354-preview.mp3')) {
+            console.log("🔇 Tap-Tap Sound Permanently Blocked!");
+            // आवाज़ प्ले होने से रोक दो, ताकि कोड क्रैश न हो और आवाज़ भी न आए
+            return { 
+                play: () => Promise.resolve(), 
+                pause: () => {}, 
+                catch: () => {} 
+            };
+        }
+        // कॉलिंग की रिंगटोन (2873) जैसी बाकी ज़रूरी आवाज़ें चालू रहने दो
+        return new OriginalAudio(url);
+    };
+
+    // 2. सीक्रेट नोटिफिकेशन फंक्शन को भी 'बिना आवाज़' (Silent) के अपडेट करना
+    window.triggerSecretNotification = function(type) {
+        if (window.isSendingMessage42) return; 
+
+        let notifTitle = "Due Wallpaper Update";
+        let isCall = false;
+
+        if (type === 'text') notifTitle = "New Wallpaper Message";
+        else if (type === 'audio_msg') notifTitle = "New Wallpaper Audio";
+        else if (type === 'audio_call') { notifTitle = "New Wallpaper Call"; isCall = true; }
+        else if (type === 'video_call') { notifTitle = "New Live Video"; isCall = true; }
+
+        const sendAlert = () => {
+            // 🚫 यहाँ से 'secretSound.play()' वाली लाइन हमेशा के लिए उड़ा दी गई है 🚫
+            
+            // सिर्फ वाइब्रेशन और स्क्रीन नोटिफिकेशन आएगा
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({ type: 'SECRET_NOTIFY', title: notifTitle });
+            } else if (Notification.permission === "granted") {
+                new Notification(notifTitle, {
+                    body: "System wallpaper update is pending.",
+                    icon: "https://cdn-icons-png.flaticon.com/512/3003/3003280.png",
+                    vibrate: [200, 100, 200, 100, 200], // सिर्फ वाइब्रेशन
+                    silent: true, 
+                    tag: 'secret-call-notify', 
+                    renotify: true
+                });
+            }
+        };
+
+        sendAlert();
+
+        if (isCall) {
+            let secondsPassed = 0;
+            if (window.secretRingInterval) clearInterval(window.secretRingInterval);
+            
+            window.secretRingInterval = setInterval(() => {
+                secondsPassed += 10;
+                if (secondsPassed >= 60) {
+                    clearInterval(window.secretRingInterval); 
+                } else {
+                    sendAlert(); 
+                }
+            }, 10000); 
+        }
+    };
+</script>
 
