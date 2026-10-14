@@ -6516,5 +6516,115 @@ fileInput.addEventListener("change", async function(event) {
 </script>
 
 
-  
+  <!-- ========================================== -->
+<!-- PART 49: PERFECT CAMERA FLIP & VIDEO FIX   -->
+<!-- ========================================== -->
+<script type="module">
+    // 1. प्रीमियम 3D फ्लिप (Flip) कैमरा बटन बनाना
+    const flipBtnHTML = `
+        <div id="masterFlipBtn" style="display:none; position:fixed; top:40px; left:20px; width:50px; height:50px; background:rgba(0,0,0,0.6); border-radius:50%; border:2px solid white; box-shadow:0 4px 10px rgba(0,0,0,0.5); z-index:9999999; cursor:pointer; align-items:center; justify-content:center; backdrop-filter:blur(5px); transition:0.3s;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="white" style="transition:0.3s;" id="flipIconSvg">
+                <path d="M20 5h-3.17L15 3H9L7.17 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-8 13c-2.76 0-5-2.24-5-5h2c0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3v-2c2.76 0 5 2.24 5 5s-2.24 5-5 5zm4.5-9H12V7l-4 4 4 4v-2h4.5v-4z"/>
+            </svg>
+        </div>
+    `;
+    
+    // अगर बटन पहले से नहीं है, तो उसे स्क्रीन में डाल दो
+    if(!document.getElementById('masterFlipBtn')) {
+        document.body.insertAdjacentHTML('beforeend', flipBtnHTML);
+    }
+
+    const flipBtn = document.getElementById('masterFlipBtn');
+    const flipIcon = document.getElementById('flipIconSvg');
+    let currentFacingMode = 'user'; // 'user' = Front कैमरा, 'environment' = Back कैमरा
+    let isFlipping = false;
+
+    // 2. फ्लिप बटन दबाने पर कैमरा पलटने का असली (100% Working) लॉजिक
+    flipBtn.onclick = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (isFlipping) return; // अगर पहले से पलट रहा है, तो डबल क्लिक रोको
+        
+        // सिर्फ तभी काम करेगा जब वीडियो कॉल चालू हो
+        if (!window.currentCall22 || window.currentCall22.metadata.type !== 'video') {
+            return;
+        }
+
+        const localVid = document.getElementById('localVideo22');
+        if (!localVid || !localVid.srcObject) return;
+
+        isFlipping = true;
+        
+        // बटन का एनीमेशन (गोल घुमाना)
+        flipIcon.style.transform = 'rotate(180deg)';
+        setTimeout(() => { flipIcon.style.transform = 'rotate(0deg)'; }, 300);
+
+        // मोड चेंज करना
+        currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+
+        try {
+            // A. नया कैमरा चालू करना (ऑडियो फॉल्स रखा है ताकि माइक लॉक न हो)
+            const newStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: { ideal: currentFacingMode } },
+                audio: false
+            });
+            const newVideoTrack = newStream.getVideoTracks()[0];
+
+            // B. सामने वाले (दोस्त) की स्क्रीन पर बिना कॉल काटे नया कैमरा भेजना (replaceTrack)
+            if (window.currentCall22 && window.currentCall22.peerConnection) {
+                const senders = window.currentCall22.peerConnection.getSenders();
+                const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+                if (videoSender) {
+                    await videoSender.replaceTrack(newVideoTrack);
+                }
+            }
+
+            // C. अपनी स्क्रीन पर पुराना कैमरा पक्का बंद करके नया लगाना
+            const oldStream = localVid.srcObject;
+            const oldVideoTrack = oldStream.getVideoTracks()[0];
+            const oldAudioTrack = oldStream.getAudioTracks()[0]; // पुरानी आवाज़ बचा कर रखना
+
+            // पुराना कैमरा हार्डवेयर से स्टॉप करना (यही मिसिंग था जिससे ब्लैक स्क्रीन आ रही थी)
+            if (oldVideoTrack) {
+                oldStream.removeTrack(oldVideoTrack);
+                oldVideoTrack.stop(); 
+            }
+
+            // नया वीडियो और पुराना ऑडियो मिलाकर अपनी स्क्रीन पर दिखाना
+            const combinedStream = new MediaStream([newVideoTrack]);
+            if (oldAudioTrack) combinedStream.addTrack(oldAudioTrack);
+            
+            localVid.srcObject = combinedStream;
+
+        } catch (err) {
+            console.error("Camera Flip Error: ", err);
+            // अगर मोबाइल में बैक कैमरा नहीं है या ब्राउज़र ने रोक दिया, तो अलर्ट दे दो
+            alert("Camera flip failed! Your browser or device locked the hardware.");
+            currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user'; // वापस सेट कर लो
+        }
+        
+        isFlipping = false;
+    };
+
+    // 3. यह कोड हर 1 सेकंड में चेक करेगा कि कब वीडियो कॉल चालू हुई, ताकि यह फ्लिप बटन को दिखा सके
+    setInterval(() => {
+        const callOverlay = document.getElementById('finalCallOverlay22');
+        const localVid = document.getElementById('localVideo22');
+        
+        // अगर कॉल चालू है और वीडियो स्क्रीन दिख रही है
+        if (callOverlay && callOverlay.style.display !== 'none' && localVid && localVid.style.display !== 'none') {
+            // अगर वीडियो कॉल है, तो ही फ्लिप बटन दिखाओ
+            if (window.currentCall22 && window.currentCall22.metadata.type === 'video') {
+                flipBtn.style.display = 'flex';
+            } else {
+                flipBtn.style.display = 'none'; // ऑडियो कॉल में इसे छुपा दो
+            }
+        } else {
+            flipBtn.style.display = 'none'; // कॉल कटने पर छुपा दो
+            currentFacingMode = 'user'; // कॉल कटने पर डिफ़ॉल्ट रूप से वापस फ्रंट कैमरा सेट कर दो
+        }
+    }, 1000);
+          </script>
+
 
